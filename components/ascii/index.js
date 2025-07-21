@@ -507,9 +507,43 @@ const Scene = () => {
     }
   }, [stopCamera])
 
+  // Debug camera state
+  useEffect(() => {
+    console.log('Camera Debug State:', {
+      cameraActive,
+      cameraVideo: !!cameraVideo,
+      texture: !!texture,
+      textureType: texture?.isVideoTexture ? 'video' : texture ? 'other' : 'none',
+      model: !!model,
+      videoDimensions: cameraVideo ? `${cameraVideo.videoWidth}x${cameraVideo.videoHeight}` : 'none',
+    })
+  }, [cameraActive, cameraVideo, texture, model])
+
   return (
     <>
       <ui.In>
+        {/* Debug info overlay */}
+        {cameraActive && (
+          <div style={{
+            position: 'fixed',
+            top: '10px',
+            left: '10px',
+            background: 'rgba(0,0,0,0.7)',
+            color: 'white',
+            padding: '10px',
+            fontSize: '12px',
+            fontFamily: 'monospace',
+            zIndex: 1000,
+            maxWidth: '300px',
+          }}>
+            <div>Camera: {cameraActive ? 'ACTIVE' : 'INACTIVE'}</div>
+            <div>Video Element: {cameraVideo ? 'READY' : 'NOT SET'}</div>
+            <div>Texture: {texture ? (texture.isVideoTexture ? 'VIDEO TEXTURE' : 'OTHER TEXTURE') : 'NONE'}</div>
+            <div>Video Dims: {cameraVideo ? `${cameraVideo.videoWidth}x${cameraVideo.videoHeight}` : 'N/A'}</div>
+            <div>Model: {model ? 'VISIBLE' : 'HIDDEN'}</div>
+          </div>
+        )}
+        
         {drag && (
           <div
             ref={dropzone}
@@ -587,7 +621,19 @@ const Scene = () => {
         {texture && (
           <mesh scale={fit ? scale : [viewport.width, viewport.height, 1]}>
             <planeGeometry />
-            <meshBasicMaterial map={texture} />
+            <meshBasicMaterial 
+              map={texture} 
+              side={THREE.DoubleSide}
+              transparent={false}
+            />
+          </mesh>
+        )}
+        
+        {/* Debug: Show when we have a texture but no visible content */}
+        {texture && !model && (
+          <mesh position={[0, 0, -1]} scale={[50, 50, 1]}>
+            <planeGeometry />
+            <meshBasicMaterial color="red" opacity={0.3} transparent />
           </mesh>
         )}
       </group>
@@ -617,6 +663,20 @@ function Postprocessing() {
     fit,
   } = useContext(AsciiContext)
 
+  // Debug ASCII effect inputs
+  useEffect(() => {
+    if (charactersTexture || granularity || color) {
+      console.log('ASCII Effect State:', {
+        charactersTexture: !!charactersTexture,
+        granularity: granularity * Math.min(viewport.dpr, 2),
+        charactersLimit,
+        color,
+        viewport: `${viewport.width}x${viewport.height}`,
+        dpr: viewport.dpr,
+      })
+    }
+  }, [charactersTexture, granularity, charactersLimit, color, viewport])
+
   return (
     <EffectComposer>
       <ASCIIEffect
@@ -638,6 +698,7 @@ function Postprocessing() {
 
 function Inner() {
   const [renderError, setRenderError] = useState(false)
+  const { debugMode } = useContext(AsciiContext)
 
   if (renderError) {
     return (
@@ -714,7 +775,7 @@ function Inner() {
             }}
           >
             <Scene />
-            <Postprocessing />
+            {!debugMode && <Postprocessing />}
           </Canvas>
         </div>
       </div>
@@ -746,6 +807,7 @@ const DEFAULT = {
   cameraActive: false,
   handTrackingEnabled: false,
   handControlledGranularity: false,
+  debugMode: false, // Show raw video without ASCII effect
 }
 
 export function ASCII({ children }) {
@@ -785,6 +847,7 @@ export function ASCII({ children }) {
   const [handControlledGranularity, setHandControlledGranularity] = useState(
     DEFAULT.handControlledGranularity
   )
+  const [debugMode, setDebugMode] = useState(DEFAULT.debugMode)
   const [handTracking, setHandTracking] = useState(null)
 
   const [
@@ -911,6 +974,11 @@ export function ASCII({ children }) {
         onChange: setHandControlledGranularity,
         disabled: !handTrackingEnabled || !cameraActive,
       },
+      'debug mode (raw video)': {
+        value: debugMode,
+        onChange: setDebugMode,
+        disabled: !cameraActive,
+      },
       ...(handTracking?.handDetected && {
         'calibrate hand depth': button(
           () => {
@@ -950,6 +1018,7 @@ export function ASCII({ children }) {
       cameraFacing,
       handTrackingEnabled,
       handControlledGranularity,
+      debugMode,
       handTracking,
     ]
   )
@@ -1035,6 +1104,7 @@ export function ASCII({ children }) {
           cameraActive,
           handTrackingEnabled,
           handControlledGranularity,
+          debugMode,
           handTracking,
           set,
         }}
