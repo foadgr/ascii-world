@@ -5,6 +5,14 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 const nextConfig = {
   reactStrictMode: true,
   devIndicators: false,
+  productionBrowserSourceMaps: false, // Disable source maps to prevent CORS errors on mobile
+  webpack: (config, { dev, isServer }) => {
+    // Completely disable source map generation in production
+    if (!dev) {
+      config.devtool = false
+    }
+    return config
+  },
   experimental: {
     // optimizeCss: true,
     reactCompiler: true,
@@ -40,6 +48,7 @@ const nextConfig = {
       },
     ]
   },
+
   turbopack: {
     rules: {
       '*.svg': {
@@ -116,7 +125,32 @@ const nextConfig = {
           },
         ],
       },
-    ]
+      {
+        source: '/(.+)\\.(glb|gltf)$',
+        headers: [
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, HEAD, OPTIONS',
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'Content-Type, Range',
+          },
+          {
+            key: 'Content-Type',
+            value: 'model/gltf-binary',
+          },
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+              },
+      ]
   },
 }
 

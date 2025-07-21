@@ -60,11 +60,17 @@ const HAND_CONNECTIONS = [
   [0, 17], // Palm base
 ]
 
-// Create Skia paint objects for drawing
+// Create Skia paint objects for drawing (desktop only)
 const createSkiaPaints = async () => {
   try {
-    // Only load CanvasKit in browser environment
-    if (typeof window === 'undefined') {
+    // Only load CanvasKit in browser environment and not on mobile
+    if (
+      typeof window === 'undefined' ||
+      /Mobi|Android/i.test(navigator.userAgent)
+    ) {
+      console.log(
+        'Mobile detected: Hand tracking will work without visual overlay'
+      )
       return { landmarkPaint: null, connectionPaint: null, CanvasKit: null }
     }
 
@@ -76,6 +82,9 @@ const createSkiaPaints = async () => {
         script.onload = resolve
         script.onerror = reject
         document.head.appendChild(script)
+
+        // Add timeout for mobile networks
+        setTimeout(() => reject(new Error('CanvasKit load timeout')), 10000)
       })
     }
 
@@ -130,10 +139,22 @@ const Scene = () => {
   useEffect(() => {
     const setupSkia = async () => {
       try {
+        if (isMobile()) {
+          // Skip CanvasKit entirely on mobile
+          console.log(
+            'Mobile detected: skipping CanvasKit, enabling hand tracking'
+          )
+          setSkiaReady(true)
+          return
+        }
         await initializeSkia()
         setSkiaReady(true)
       } catch (error) {
         console.warn('Failed to initialize CanvasKit:', error)
+        // On desktop, if CanvasKit fails, still allow basic functionality
+        if (!isMobile()) {
+          setSkiaReady(false)
+        }
       }
     }
 
@@ -142,14 +163,27 @@ const Scene = () => {
     }
   }, [])
 
-  // Hand tracking integration
+  // Hand tracking integration with error handling
   const handTracking = useHandTracking({
     videoElement: cameraVideo,
-    enabled: handTrackingEnabled && cameraActive && skiaReady,
+    enabled:
+      handTrackingEnabled &&
+      cameraActive &&
+      skiaReady &&
+      cameraVideo &&
+      cameraVideo.videoWidth > 0 &&
+      cameraVideo.videoHeight > 0, // Ensure video has valid dimensions
     granularityRange: { min: 4, max: 32 },
     onDepthChange: (data) => {
-      if (handControlledGranularity && data.handDetected) {
-        set({ granularity: data.granularity })
+      try {
+        if (handControlledGranularity && data.handDetected && cameraVideo) {
+          // Additional safety check
+          if (cameraVideo.videoWidth > 0 && cameraVideo.videoHeight > 0) {
+            set({ granularity: data.granularity })
+          }
+        }
+      } catch (error) {
+        console.warn('Hand tracking update error:', error)
       }
     },
   })
@@ -162,12 +196,23 @@ const Scene = () => {
   const startCamera = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          facingMode: 'user',
-        },
+        video: isMobile()
+          ? {
+              width: { ideal: 640 },
+              height: { ideal: 480 },
+              facingMode: cameraFacing,
+            }
+          : {
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+              facingMode: cameraFacing,
+            },
       })
+
+      console.log(
+        'Camera stream obtained:',
+        stream.getVideoTracks()[0]?.getSettings()
+      )
 
       const video = document.createElement('video')
       video.srcObject = stream
@@ -176,18 +221,65 @@ const Scene = () => {
       video.autoplay = true
 
       video.onloadedmetadata = () => {
-        video.play()
-        setCameraVideo(video)
-        setTexture(new VideoTexture(video))
-        // Clear other content when camera starts
-        setModel(null)
+        video.play().catch((playError) => {
+          console.warn('Video play failed:', playError)
+        })
+      }
+
+      // Wait for actual video frame data before enabling hand tracking
+      video.oncanplay = () => {
+        console.log(
+          'Video ready for hand tracking:',
+          video.videoWidth,
+          'x',
+          video.videoHeight
+        )
+        if (video.videoWidth > 0 && video.videoHeight > 0) {
+          console.log('Setting camera video and creating texture...')
+          setCameraVideo(video)
+          try {
+            const videoTexture = new VideoTexture(video)
+            setTexture(videoTexture)
+            console.log('Video texture created successfully:', videoTexture)
+          } catch (textureError) {
+            console.warn('Video texture creation failed:', textureError)
+          }
+          // Clear other content when camera starts
+          setModel(null)
+        } else {
+          console.warn(
+            'Video dimensions are zero, waiting for valid dimensions...'
+          )
+        }
+      }
+
+      // Fallback: if oncanplay doesn't fire within 3 seconds, try anyway
+      setTimeout(() => {
+        if (!cameraVideo && video.videoWidth > 0 && video.videoHeight > 0) {
+          console.log('Fallback: enabling video after timeout')
+          setCameraVideo(video)
+          try {
+            setTexture(new VideoTexture(video))
+          } catch (textureError) {
+            console.warn(
+              'Fallback video texture creation failed:',
+              textureError
+            )
+          }
+          setModel(null)
+        }
+      }, 3000)
+
+      video.onerror = (videoError) => {
+        console.warn('Video error:', videoError)
       }
 
       setCameraStream(stream)
     } catch (error) {
       console.error('Error accessing camera:', error)
+      // Don't throw - just log and continue
     }
-  }, [])
+  }, [cameraVideo, cameraFacing])
 
   const stopCamera = useCallback(() => {
     if (cameraStream) {
@@ -232,9 +324,12 @@ const Scene = () => {
     ) {
       const group = new Group()
 
+      console.log('Loading GLB model from:', src)
+
       gltfLoader.load(
         src,
         ({ scene, animations }) => {
+          console.log('GLB model loaded successfully:', { scene, animations })
           const mixer = new AnimationMixer(scene)
           setMixer(mixer)
           const clips = animations
@@ -262,9 +357,17 @@ const Scene = () => {
           // Stop camera when loading other assets
           stopCamera()
         },
-        undefined,
+        (progress) => {
+          console.log('GLB loading progress:', progress)
+        },
         (error) => {
           console.error('Error loading GLTF:', error)
+          console.error('Failed URL:', src)
+          console.error('Error details:', {
+            type: error.type,
+            target: error.target,
+            message: error.message,
+          })
         }
       )
     }
@@ -279,6 +382,22 @@ const Scene = () => {
   useEffect(() => {
     if (texture && !cameraVideo) setModel(null)
   }, [texture, cameraVideo])
+
+  // Debug texture state changes
+  useEffect(() => {
+    console.log(
+      'Texture state changed:',
+      texture ? 'TEXTURE SET' : 'NO TEXTURE',
+      texture
+    )
+    if (texture?.isVideoTexture) {
+      console.log('Video texture details:', {
+        width: texture.image?.videoWidth,
+        height: texture.image?.videoHeight,
+        readyState: texture.image?.readyState,
+      })
+    }
+  }, [texture])
 
   useEffect(() => {
     const src = asset
@@ -388,9 +507,43 @@ const Scene = () => {
     }
   }, [stopCamera])
 
+  // Debug camera state
+  useEffect(() => {
+    console.log('Camera Debug State:', {
+      cameraActive,
+      cameraVideo: !!cameraVideo,
+      texture: !!texture,
+      textureType: texture?.isVideoTexture ? 'video' : texture ? 'other' : 'none',
+      model: !!model,
+      videoDimensions: cameraVideo ? `${cameraVideo.videoWidth}x${cameraVideo.videoHeight}` : 'none',
+    })
+  }, [cameraActive, cameraVideo, texture, model])
+
   return (
     <>
       <ui.In>
+        {/* Debug info overlay */}
+        {cameraActive && (
+          <div style={{
+            position: 'fixed',
+            top: '10px',
+            left: '10px',
+            background: 'rgba(0,0,0,0.7)',
+            color: 'white',
+            padding: '10px',
+            fontSize: '12px',
+            fontFamily: 'monospace',
+            zIndex: 1000,
+            maxWidth: '300px',
+          }}>
+            <div>Camera: {cameraActive ? 'ACTIVE' : 'INACTIVE'}</div>
+            <div>Video Element: {cameraVideo ? 'READY' : 'NOT SET'}</div>
+            <div>Texture: {texture ? (texture.isVideoTexture ? 'VIDEO TEXTURE' : 'OTHER TEXTURE') : 'NONE'}</div>
+            <div>Video Dims: {cameraVideo ? `${cameraVideo.videoWidth}x${cameraVideo.videoHeight}` : 'N/A'}</div>
+            <div>Model: {model ? 'VISIBLE' : 'HIDDEN'}</div>
+          </div>
+        )}
+        
         {drag && (
           <div
             ref={dropzone}
@@ -459,7 +612,7 @@ const Scene = () => {
               zoomSpeed={0.8}
               panSpeed={0.8}
             />
-            <group scale={1000}>
+            <group scale={isMobile() ? 300 : 400}>
               <primitive object={model} />
             </group>
           </>
@@ -468,7 +621,19 @@ const Scene = () => {
         {texture && (
           <mesh scale={fit ? scale : [viewport.width, viewport.height, 1]}>
             <planeGeometry />
-            <meshBasicMaterial map={texture} />
+            <meshBasicMaterial 
+              map={texture} 
+              side={THREE.DoubleSide}
+              transparent={false}
+            />
+          </mesh>
+        )}
+        
+        {/* Debug: Show when we have a texture but no visible content */}
+        {texture && !model && (
+          <mesh position={[0, 0, -1]} scale={[50, 50, 1]}>
+            <planeGeometry />
+            <meshBasicMaterial color="red" opacity={0.3} transparent />
           </mesh>
         )}
       </group>
@@ -498,11 +663,25 @@ function Postprocessing() {
     fit,
   } = useContext(AsciiContext)
 
+  // Debug ASCII effect inputs
+  useEffect(() => {
+    if (charactersTexture || granularity || color) {
+      console.log('ASCII Effect State:', {
+        charactersTexture: !!charactersTexture,
+        granularity: granularity * Math.min(viewport.dpr, 2),
+        charactersLimit,
+        color,
+        viewport: `${viewport.width}x${viewport.height}`,
+        dpr: viewport.dpr,
+      })
+    }
+  }, [charactersTexture, granularity, charactersLimit, color, viewport])
+
   return (
     <EffectComposer>
       <ASCIIEffect
         charactersTexture={charactersTexture}
-        granularity={granularity * viewport.dpr}
+        granularity={granularity * Math.min(viewport.dpr, 2)} // Cap DPR multiplier for mobile
         charactersLimit={charactersLimit}
         fillPixels={fillPixels}
         color={color}
@@ -518,6 +697,33 @@ function Postprocessing() {
 }
 
 function Inner() {
+  const [renderError, setRenderError] = useState(false)
+  const { debugMode } = useContext(AsciiContext)
+
+  if (renderError) {
+    return (
+      <div
+        style={{
+          padding: '20px',
+          textAlign: 'center',
+          color: 'white',
+          background: '#1a1a1a',
+          height: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+        }}
+      >
+        <h2>ASCII Art Viewer</h2>
+        <p>
+          This device may not support WebGL features required for 3D rendering.
+        </p>
+        <p>Try refreshing the page or use a different device.</p>
+      </div>
+    )
+  }
+
   return (
     <>
       <div className={s.ascii}>
@@ -534,29 +740,58 @@ function Inner() {
               alpha: true,
               depth: true,
               stencil: false,
-              powerPreference: 'high-performance',
+              powerPreference:
+                typeof window !== 'undefined' &&
+                /Mobi|Android/i.test(navigator.userAgent)
+                  ? 'low-power'
+                  : 'high-performance',
               // Mobile optimizations
-              failIfMajorPerformanceCaveat: false,
+              failIfMajorPerformanceCaveat: true, // Fail gracefully on weak mobile GPUs
               preserveDrawingBuffer: false,
             }}
             // Better performance on mobile
             frameloop="demand"
-            dpr={[1, 2]} // Limit pixel ratio on mobile
+            dpr={
+              typeof window !== 'undefined' &&
+              /Mobi|Android/i.test(navigator.userAgent)
+                ? [1, 1.5]
+                : [1, 2]
+            } // Lower DPR on mobile
+            onCreated={(state) => {
+              try {
+                // Test WebGL support
+                const gl = state.gl.getContext()
+                if (!gl) {
+                  setRenderError(true)
+                }
+              } catch (error) {
+                console.warn('WebGL context creation error:', error)
+                setRenderError(true)
+              }
+            }}
+            onError={(error) => {
+              console.warn('Three.js Canvas error:', error)
+              setRenderError(true)
+            }}
           >
             <Scene />
-            <Postprocessing />
+            {!debugMode && <Postprocessing />}
           </Canvas>
         </div>
       </div>
-      <FontEditor />
+      {!isMobile() && <FontEditor />}
       <ui.Out />
     </>
   )
 }
 
+// Mobile detection helper
+const isMobile = () =>
+  typeof window !== 'undefined' && /Mobi|Android/i.test(navigator.userAgent)
+
 const DEFAULT = {
   characters: ' *,    ./O#DE',
-  granularity: 4,
+  granularity: isMobile() ? 6 : 4, // Higher granularity (lower detail) on mobile
   charactersLimit: 16,
   fontSize: 100,
   fillPixels: false,
@@ -572,6 +807,7 @@ const DEFAULT = {
   cameraActive: false,
   handTrackingEnabled: false,
   handControlledGranularity: false,
+  debugMode: false, // Show raw video without ASCII effect
 }
 
 export function ASCII({ children }) {
@@ -586,15 +822,32 @@ export function ASCII({ children }) {
     setIsClient(true)
   }, [])
 
+  // Handle unhandled promise rejections on mobile
+  useEffect(() => {
+    const handleUnhandledRejection = (event) => {
+      console.warn('Unhandled promise rejection (caught):', event.reason)
+      // Prevent the error from being thrown
+      event.preventDefault()
+    }
+
+    window.addEventListener('unhandledrejection', handleUnhandledRejection)
+
+    return () => {
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection)
+    }
+  }, [])
+
   const [charactersTexture, setCharactersTexture] = useState(null)
   const [canvas, setCanvas] = useState()
   const [cameraActive, setCameraActive] = useState(DEFAULT.cameraActive)
+  const [cameraFacing, setCameraFacing] = useState('user') // 'user' = front, 'environment' = back
   const [handTrackingEnabled, setHandTrackingEnabled] = useState(
     DEFAULT.handTrackingEnabled
   )
   const [handControlledGranularity, setHandControlledGranularity] = useState(
     DEFAULT.handControlledGranularity
   )
+  const [debugMode, setDebugMode] = useState(DEFAULT.debugMode)
   const [handTracking, setHandTracking] = useState(null)
 
   const [
@@ -702,6 +955,15 @@ export function ASCII({ children }) {
         },
         { disabled: false }
       ),
+      'camera direction': {
+        value: cameraFacing,
+        options: {
+          'Front (Selfie)': 'user',
+          'Back Camera': 'environment',
+        },
+        onChange: setCameraFacing,
+        disabled: cameraActive, // Can't change while camera is active
+      },
       'hand tracking': {
         value: handTrackingEnabled,
         onChange: setHandTrackingEnabled,
@@ -711,6 +973,11 @@ export function ASCII({ children }) {
         value: handControlledGranularity,
         onChange: setHandControlledGranularity,
         disabled: !handTrackingEnabled || !cameraActive,
+      },
+      'debug mode (raw video)': {
+        value: debugMode,
+        onChange: setDebugMode,
+        disabled: !cameraActive,
       },
       ...(handTracking?.handDetected && {
         'calibrate hand depth': button(
@@ -748,8 +1015,10 @@ export function ASCII({ children }) {
     [
       canvas,
       cameraActive,
+      cameraFacing,
       handTrackingEnabled,
       handControlledGranularity,
+      debugMode,
       handTracking,
     ]
   )
@@ -782,11 +1051,21 @@ export function ASCII({ children }) {
     return params
   })()
 
+  // Debounce URL updates on mobile to prevent Safari security errors
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window === 'undefined') return
+
+    // Skip URL updates entirely on mobile to prevent replaceState limit
+    if (isMobile()) {
+      return
+    }
+
+    const timeoutId = setTimeout(() => {
       const url = `${window.origin}?${UrlParams.toString()}`
       window.history.replaceState({}, null, url)
-    }
+    }, 500) // Debounce by 500ms
+
+    return () => clearTimeout(timeoutId)
   }, [UrlParams])
 
   function set({ charactersTexture, canvas, handTracking, ...props }) {
@@ -825,6 +1104,7 @@ export function ASCII({ children }) {
           cameraActive,
           handTrackingEnabled,
           handControlledGranularity,
+          debugMode,
           handTracking,
           set,
         }}

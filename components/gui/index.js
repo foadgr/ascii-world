@@ -23,7 +23,7 @@ export function GUI() {
       </button>
       <header className={s.title}>
         <Logo />
-        <h1>ANISO_ASCII_TOOL</h1>
+        <h1>ASCII_WORLD</h1>
       </header>
       <div className={s.main}>
         <div className={s.leva}>
@@ -40,9 +40,9 @@ export function GUI() {
         </div>
         <div className={s.description}>
           <p>
-            the Aniso ascii tool is an open-source ASCII tool built by{' '}
-            <a href="https://darkroom.engineering">darkroom.engineering</a> to
-            generate and customize character-based imagery.
+            the ASCII World is an open-source ASCII tool built by{' '}
+            <a href="https://foadgr.com">foadgr.com</a> to generate and
+            customize character-based imagery.
           </p>
           <br />
           <p>
@@ -54,16 +54,16 @@ export function GUI() {
           <a
             target="_blank"
             rel="noopener noreferrer"
-            href="https://github.com/darkroomengineering/aniso"
+            href="https://github.com/foadgr/ascii-world"
           >
             github
           </a>
           <a
             target="_blank"
             rel="noopener noreferrer"
-            href="https://darkroom.engineering"
+            href="https://foadgr.com"
           >
-            darkroom.engineering
+            foadgr.com
           </a>
         </div>
       </div>

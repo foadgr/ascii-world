@@ -1,7 +1,7 @@
 {
-  "name": "Aniso",
-  "short_name": "Aniso",
-  "description": "An open-source ASCII tool built by darkroom.engineering to generate and customize character-based imagery.",
+  "name": "ASCII World",
+  "short_name": "ASCII World",
+  "description": "ASCII World is a tool that allows you to control the ASCII World.",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",

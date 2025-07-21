@@ -33,7 +33,7 @@ export function CustomHead({ title = '', description, image, keywords }) {
         <meta httpEquiv="x-dns-prefetch-control" content="off" />
         <meta httpEquiv="Window-Target" content="_value" />
         <meta name="geo.region" content="US" />
-        <meta name="apple-mobile-web-app-title" content="Aniso" />
+        <meta name="apple-mobile-web-app-title" content="ASCII World" />
 
         <title>{title}</title>
       </NextHead>
