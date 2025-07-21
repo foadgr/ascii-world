@@ -6,6 +6,13 @@ const nextConfig = {
   reactStrictMode: true,
   devIndicators: false,
   productionBrowserSourceMaps: false, // Disable source maps to prevent CORS errors on mobile
+  webpack: (config, { dev, isServer }) => {
+    // Completely disable source map generation in production
+    if (!dev) {
+      config.devtool = false
+    }
+    return config
+  },
   experimental: {
     // optimizeCss: true,
     reactCompiler: true,
@@ -41,6 +48,7 @@ const nextConfig = {
       },
     ]
   },
+
   turbopack: {
     rules: {
       '*.svg': {
@@ -141,8 +149,8 @@ const nextConfig = {
             value: 'public, max-age=31536000, immutable',
           },
         ],
-      },
-    ]
+              },
+      ]
   },
 }
 
