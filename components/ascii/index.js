@@ -63,8 +63,12 @@ const HAND_CONNECTIONS = [
 // Create Skia paint objects for drawing
 const createSkiaPaints = async () => {
   try {
-    // Only load CanvasKit in browser environment
-    if (typeof window === 'undefined') {
+    // Only load CanvasKit in browser environment and not on mobile
+    if (
+      typeof window === 'undefined' ||
+      /Mobi|Android/i.test(navigator.userAgent)
+    ) {
+      console.log('Skipping CanvasKit on mobile for better performance')
       return { landmarkPaint: null, connectionPaint: null, CanvasKit: null }
     }
 
@@ -76,6 +80,9 @@ const createSkiaPaints = async () => {
         script.onload = resolve
         script.onerror = reject
         document.head.appendChild(script)
+
+        // Add timeout for mobile networks
+        setTimeout(() => reject(new Error('CanvasKit load timeout')), 10000)
       })
     }
 
@@ -162,11 +169,17 @@ const Scene = () => {
   const startCamera = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          facingMode: 'user',
-        },
+        video: isMobile()
+          ? {
+              width: { ideal: 640 },
+              height: { ideal: 480 },
+              facingMode: 'user',
+            }
+          : {
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+              facingMode: 'user',
+            },
       })
 
       const video = document.createElement('video')
@@ -459,7 +472,7 @@ const Scene = () => {
               zoomSpeed={0.8}
               panSpeed={0.8}
             />
-            <group scale={1000}>
+            <group scale={isMobile() ? 300 : 400}>
               <primitive object={model} />
             </group>
           </>
@@ -502,7 +515,7 @@ function Postprocessing() {
     <EffectComposer>
       <ASCIIEffect
         charactersTexture={charactersTexture}
-        granularity={granularity * viewport.dpr}
+        granularity={granularity * Math.min(viewport.dpr, 2)} // Cap DPR multiplier for mobile
         charactersLimit={charactersLimit}
         fillPixels={fillPixels}
         color={color}
@@ -518,6 +531,32 @@ function Postprocessing() {
 }
 
 function Inner() {
+  const [renderError, setRenderError] = useState(false)
+
+  if (renderError) {
+    return (
+      <div
+        style={{
+          padding: '20px',
+          textAlign: 'center',
+          color: 'white',
+          background: '#1a1a1a',
+          height: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+        }}
+      >
+        <h2>ASCII Art Viewer</h2>
+        <p>
+          This device may not support WebGL features required for 3D rendering.
+        </p>
+        <p>Try refreshing the page or use a different device.</p>
+      </div>
+    )
+  }
+
   return (
     <>
       <div className={s.ascii}>
@@ -534,29 +573,50 @@ function Inner() {
               alpha: true,
               depth: true,
               stencil: false,
-              powerPreference: 'high-performance',
+              powerPreference:
+                typeof window !== 'undefined' &&
+                /Mobi|Android/i.test(navigator.userAgent)
+                  ? 'low-power'
+                  : 'high-performance',
               // Mobile optimizations
-              failIfMajorPerformanceCaveat: false,
+              failIfMajorPerformanceCaveat: true, // Fail gracefully on weak mobile GPUs
               preserveDrawingBuffer: false,
             }}
             // Better performance on mobile
             frameloop="demand"
-            dpr={[1, 2]} // Limit pixel ratio on mobile
+            dpr={
+              typeof window !== 'undefined' &&
+              /Mobi|Android/i.test(navigator.userAgent)
+                ? [1, 1.5]
+                : [1, 2]
+            } // Lower DPR on mobile
+            onCreated={(state) => {
+              // Test WebGL support
+              const gl = state.gl.getContext()
+              if (!gl) {
+                setRenderError(true)
+              }
+            }}
+            onError={() => setRenderError(true)}
           >
             <Scene />
             <Postprocessing />
           </Canvas>
         </div>
       </div>
-      <FontEditor />
+      {!isMobile() && <FontEditor />}
       <ui.Out />
     </>
   )
 }
 
+// Mobile detection helper
+const isMobile = () =>
+  typeof window !== 'undefined' && /Mobi|Android/i.test(navigator.userAgent)
+
 const DEFAULT = {
   characters: ' *,    ./O#DE',
-  granularity: 4,
+  granularity: isMobile() ? 6 : 4, // Higher granularity (lower detail) on mobile
   charactersLimit: 16,
   fontSize: 100,
   fillPixels: false,
