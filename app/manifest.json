@@ -1,10 +1,10 @@
 {
-  "name": "Aniso",
-  "short_name": "Aniso",
+  "name": "ASCII World",
+  "short_name": "ASCII World",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",
-      "sizes": "192x192",
+      "sizes": "192x192", 
       "type": "image/png",
       "purpose": "maskable"
     },

@@ -3,11 +3,11 @@ import { CustomHead } from 'components/custom-head'
 
 export function Layout({
   seo = {
-    title: 'Aniso - ASCII Tool',
+    title: 'ASCII World - Control the ASCII World',
     description:
-      'An open-source ASCII tool built by darkroom.engineering to generate and customize character-based imagery.',
+      'ASCII World is a tool that allows you to control the ASCII World.',
     image: '',
-    keywords: ['ascii', 'renderer', 'webgl', 'react-three-fiber'],
+    keywords: ['ascii', 'world', 'control', 'webgl', 'react-three-fiber'],
   },
   children,
   theme = 'light',
