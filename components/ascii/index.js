@@ -166,12 +166,21 @@ const Scene = () => {
   // Hand tracking integration with error handling
   const handTracking = useHandTracking({
     videoElement: cameraVideo,
-    enabled: handTrackingEnabled && cameraActive && skiaReady, // Mobile sets skiaReady=true immediately
+    enabled:
+      handTrackingEnabled &&
+      cameraActive &&
+      skiaReady &&
+      cameraVideo &&
+      cameraVideo.videoWidth > 0 &&
+      cameraVideo.videoHeight > 0, // Ensure video has valid dimensions
     granularityRange: { min: 4, max: 32 },
     onDepthChange: (data) => {
       try {
-        if (handControlledGranularity && data.handDetected) {
-          set({ granularity: data.granularity })
+        if (handControlledGranularity && data.handDetected && cameraVideo) {
+          // Additional safety check
+          if (cameraVideo.videoWidth > 0 && cameraVideo.videoHeight > 0) {
+            set({ granularity: data.granularity })
+          }
         }
       } catch (error) {
         console.warn('Hand tracking update error:', error)
@@ -210,11 +219,44 @@ const Scene = () => {
         video.play().catch((playError) => {
           console.warn('Video play failed:', playError)
         })
-        setCameraVideo(video)
-        setTexture(new VideoTexture(video))
-        // Clear other content when camera starts
-        setModel(null)
       }
+
+      // Wait for actual video frame data before enabling hand tracking
+      video.oncanplay = () => {
+        console.log(
+          'Video ready for hand tracking:',
+          video.videoWidth,
+          'x',
+          video.videoHeight
+        )
+        if (video.videoWidth > 0 && video.videoHeight > 0) {
+          setCameraVideo(video)
+          try {
+            setTexture(new VideoTexture(video))
+          } catch (textureError) {
+            console.warn('Video texture creation failed:', textureError)
+          }
+          // Clear other content when camera starts
+          setModel(null)
+        }
+      }
+
+      // Fallback: if oncanplay doesn't fire within 3 seconds, try anyway
+      setTimeout(() => {
+        if (!cameraVideo && video.videoWidth > 0 && video.videoHeight > 0) {
+          console.log('Fallback: enabling video after timeout')
+          setCameraVideo(video)
+          try {
+            setTexture(new VideoTexture(video))
+          } catch (textureError) {
+            console.warn(
+              'Fallback video texture creation failed:',
+              textureError
+            )
+          }
+          setModel(null)
+        }
+      }, 3000)
 
       video.onerror = (videoError) => {
         console.warn('Video error:', videoError)
