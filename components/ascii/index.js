@@ -7,7 +7,7 @@ import { HandTrackingStatus } from 'components/hand-tracking-status'
 import { useHandTracking } from 'hooks/use-hand-tracking'
 import { button, useControls } from 'leva'
 import { text } from 'lib/leva/text'
-import { useContext, useEffect, useRef, useState } from 'react'
+import { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import {
   AnimationMixer,
@@ -159,13 +159,41 @@ const Scene = () => {
   })
 
   // Camera stream management
-  const startCamera = async () => {
+  const stopCamera = useCallback(() => {
     try {
+      if (cameraStream) {
+        for (const track of cameraStream.getTracks()) {
+          track.stop()
+        }
+        setCameraStream(null)
+      }
+      if (cameraVideo) {
+        if (cameraVideo.srcObject) {
+          cameraVideo.srcObject = null
+        }
+        setCameraVideo(null)
+      }
+      setTexture(null)
+    } catch (error) {
+      console.warn('Error stopping camera:', error)
+    }
+  }, [cameraStream, cameraVideo])
+
+  const startCamera = useCallback(async () => {
+    try {
+      // Stop any existing camera stream first to prevent conflicts
+      stopCamera()
+
+      // Small delay to ensure cleanup is complete
+      await new Promise((resolve) => setTimeout(resolve, 100))
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: { ideal: 1280 },
           height: { ideal: 720 },
           facingMode: 'user',
+          // More mobile-friendly constraints
+          frameRate: { ideal: 30, max: 30 },
         },
       })
 
@@ -174,34 +202,63 @@ const Scene = () => {
       video.muted = true
       video.playsInline = true
       video.autoplay = true
+      // Important for mobile - prevent screen lock
+      video.setAttribute('webkit-playsinline', 'true')
+      video.setAttribute('playsinline', 'true')
 
-      video.onloadedmetadata = () => {
-        video.play()
-        setCameraVideo(video)
-        setTexture(new VideoTexture(video))
-        // Clear other content when camera starts
-        setModel(null)
+      // Handle video loading with proper promise handling for mobile
+      const handleVideoReady = async () => {
+        try {
+          console.log('Video metadata loaded, attempting to play...')
+          
+          // Ensure video actually plays (critical for mobile)
+          await video.play()
+          console.log('Video is playing successfully')
+          
+          // Wait a bit to ensure video is actually streaming
+          await new Promise(resolve => setTimeout(resolve, 500))
+          
+          setCameraVideo(video)
+          setTexture(new VideoTexture(video))
+          // Clear other content when camera starts
+          setModel(null)
+          
+          console.log('Camera video setup complete')
+        } catch (playError) {
+          console.error('Video play failed:', playError)
+          throw playError
+        }
       }
+
+      video.onloadedmetadata = handleVideoReady
+      
+             // Fallback for when loadedmetadata doesn't fire (some mobile browsers)
+       setTimeout(() => {
+         if (video.readyState >= 1 && video.srcObject) {
+           console.log('Fallback: metadata timeout, trying to play video anyway...')
+           handleVideoReady().catch(err => console.warn('Fallback video setup failed:', err))
+         }
+       }, 2000)
 
       setCameraStream(stream)
     } catch (error) {
       console.error('Error accessing camera:', error)
-    }
-  }
 
-  const stopCamera = () => {
-    if (cameraStream) {
-      for (const track of cameraStream.getTracks()) {
-        track.stop()
+      // Handle specific error types
+      if (error.name === 'AbortError') {
+        console.warn('Camera request was aborted - try again')
+      } else if (error.name === 'NotAllowedError') {
+        console.warn('Camera permission denied')
+      } else if (error.name === 'NotFoundError') {
+        console.warn('No camera found')
+      } else if (error.name === 'NotReadableError') {
+        console.warn('Camera is already in use')
       }
-      setCameraStream(null)
+
+      // Reset camera state on error
+      setCameraActive(false)
     }
-    if (cameraVideo) {
-      cameraVideo.srcObject = null
-      setCameraVideo(null)
-    }
-    setTexture(null)
-  }
+  }, [stopCamera])
 
   // React to camera active state changes
   useEffect(() => {
@@ -210,7 +267,7 @@ const Scene = () => {
     } else {
       stopCamera()
     }
-  }, [cameraActive])
+  }, [cameraActive, startCamera, stopCamera])
 
   // Share hand tracking state with context
   useEffect(() => {
@@ -268,7 +325,7 @@ const Scene = () => {
         }
       )
     }
-  }, [asset])
+  }, [asset, stopCamera])
 
   const [texture, setTexture] = useState()
 
@@ -277,8 +334,12 @@ const Scene = () => {
   }, [model])
 
   useEffect(() => {
-    if (texture && !cameraVideo) setModel(null)
-  }, [texture, cameraVideo])
+    // Only clear model if we have a texture that's NOT from camera
+    // This prevents race conditions on mobile where cameraVideo isn't set yet
+    if (texture && !cameraVideo && !cameraActive) {
+      setModel(null)
+    }
+  }, [texture, cameraVideo, cameraActive])
 
   useEffect(() => {
     const src = asset
@@ -320,7 +381,7 @@ const Scene = () => {
         setTexture(texture)
       })
     }
-  }, [asset])
+  }, [asset, stopCamera])
 
   const { viewport, camera } = useThree()
 
@@ -386,7 +447,7 @@ const Scene = () => {
     return () => {
       stopCamera()
     }
-  }, [])
+  }, [stopCamera])
 
   return (
     <>
@@ -482,7 +543,7 @@ function Postprocessing() {
 
   useEffect(() => {
     set({ canvas: gl.domElement })
-  }, [gl])
+  }, [gl, set])
 
   const {
     charactersTexture,
@@ -754,40 +815,8 @@ export function ASCII({ children }) {
     ]
   )
 
-  const UrlParams = (() => {
-    if (typeof window === 'undefined') return new URLSearchParams()
-
-    const params = new URLSearchParams()
-    params.set('characters', characters)
-    params.set('granularity', granularity)
-    params.set('charactersLimit', charactersLimit)
-    params.set('fontSize', fontSize)
-    params.set('matrix', matrix === true)
-    params.set('invert', invert === true)
-    params.set('greyscale', greyscale === true)
-    params.set('fillPixels', fillPixels === true)
-    if (setTime) {
-      params.set('time', time)
-    } else {
-      params.delete('time')
-    }
-
-    if (setColor) {
-      params.set('color', color.replace('#', ''))
-    } else {
-      params.delete('color')
-    }
-
-    params.set('background', background.replace('#', ''))
-    return params
-  })()
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const url = `${window.origin}?${UrlParams.toString()}`
-      window.history.replaceState({}, null, url)
-    }
-  }, [UrlParams])
+  // We removed the constant URL updating to prevent hitting browser security limits on mobile
+  // The initial URL parameters are still read when the component first loads
 
   function set({ charactersTexture, canvas, handTracking, ...props }) {
     if (charactersTexture) setCharactersTexture(charactersTexture)
