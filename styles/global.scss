@@ -1,13 +1,13 @@
-@import './_reset.scss';
-@import './_fonts.scss';
-@import './_colors.scss';
-@import './_easings.scss';
-@import './_scroll.scss';
-@import './_functions.scss';
-@import './_layout.scss';
-@import './_utils.scss';
-@import './_font-style.scss';
-@import './_themes.scss';
+@use './_reset.scss';
+@use './_fonts.scss';
+@use './_colors.scss';
+@use './_easings.scss';
+@use './_scroll.scss';
+@use './_functions.scss' as *;
+@use './_layout.scss';
+@use './_utils.scss';
+@use './_font-style.scss';
+@use './_themes.scss';
 
 :root {
   --header-height: #{mobile-vw(58px)};

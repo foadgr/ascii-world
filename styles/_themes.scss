@@ -1,5 +1,6 @@
 @use 'sass:map';
 @use 'sass:color';
+@use './_colors.scss' as *;
 
 // css classes exposed globally:
 // --theme-{name}: applies css variables from theme

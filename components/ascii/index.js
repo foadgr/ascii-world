@@ -1,13 +1,12 @@
 import { OrbitControls, useAspect } from '@react-three/drei'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { EffectComposer } from '@react-three/postprocessing'
-import cn from 'clsx'
 import { ASCIIEffect } from 'components/ascii-effect/index'
 import { FontEditor } from 'components/font-editor'
-import { GUI } from 'components/gui'
+import { HandTrackingStatus } from 'components/hand-tracking-status'
+import { useHandTracking } from 'hooks/use-hand-tracking'
 import { button, useControls } from 'leva'
 import { text } from 'lib/leva/text'
-import { useStore } from 'lib/store'
 import { useContext, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import {
@@ -36,15 +35,192 @@ dracoLoader.setDecoderPath(
 const gltfLoader = new GLTFLoader()
 gltfLoader.setDRACOLoader(dracoLoader)
 
+// Hand landmark connections for drawing skeleton
+const HAND_CONNECTIONS = [
+  [0, 1],
+  [1, 2],
+  [2, 3],
+  [3, 4], // Thumb
+  [0, 5],
+  [5, 6],
+  [6, 7],
+  [7, 8], // Index finger
+  [5, 9],
+  [9, 10],
+  [10, 11],
+  [11, 12], // Middle finger
+  [9, 13],
+  [13, 14],
+  [14, 15],
+  [15, 16], // Ring finger
+  [13, 17],
+  [17, 18],
+  [18, 19],
+  [19, 20], // Pinky
+  [0, 17], // Palm base
+]
+
+// Create Skia paint objects for drawing
+const createSkiaPaints = async () => {
+  try {
+    // Only load CanvasKit in browser environment
+    if (typeof window === 'undefined') {
+      return { landmarkPaint: null, connectionPaint: null, CanvasKit: null }
+    }
+
+    // Load CanvasKit from external CDN to avoid webpack bundling
+    if (!window.CanvasKitInit) {
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = 'https://unpkg.com/canvaskit-wasm@0.40.0/bin/canvaskit.js'
+        script.onload = resolve
+        script.onerror = reject
+        document.head.appendChild(script)
+      })
+    }
+
+    const CanvasKit = await window.CanvasKitInit({
+      locateFile: (file) => {
+        return `https://unpkg.com/canvaskit-wasm@0.40.0/bin/${file}`
+      },
+    })
+
+    const landmarkPaint = new CanvasKit.Paint()
+    landmarkPaint.setAntiAlias(true)
+    landmarkPaint.setColor(CanvasKit.Color(0, 255, 136, 1.0)) // #00ff88
+    landmarkPaint.setStyle(CanvasKit.PaintStyle.Fill)
+
+    const connectionPaint = new CanvasKit.Paint()
+    connectionPaint.setAntiAlias(true)
+    connectionPaint.setColor(CanvasKit.Color(255, 255, 255, 1.0)) // #ffffff
+    connectionPaint.setStrokeWidth(2)
+    connectionPaint.setStyle(CanvasKit.PaintStyle.Stroke)
+
+    return { landmarkPaint, connectionPaint, CanvasKit }
+  } catch (error) {
+    console.warn('CanvasKit not available for hand landmark drawing:', error)
+    return { landmarkPaint: null, connectionPaint: null, CanvasKit: null }
+  }
+}
+
+// Initialize Skia asynchronously
+let skiaInitialized = false
+let skiaPaints = { landmarkPaint: null, connectionPaint: null, CanvasKit: null }
+
+const initializeSkia = async () => {
+  if (!skiaInitialized) {
+    skiaPaints = await createSkiaPaints()
+    skiaInitialized = true
+  }
+  return skiaPaints
+}
+
 const Scene = () => {
   const ref = useRef()
   const [asset, setAsset] = useState('/darkroom-move.glb')
   const [mixer, setMixer] = useState()
   const [model, setModel] = useState()
+  const [cameraStream, setCameraStream] = useState(null)
+  const [cameraVideo, setCameraVideo] = useState(null)
+  const [skiaReady, setSkiaReady] = useState(false)
+  const { cameraActive, handTrackingEnabled, handControlledGranularity, set } =
+    useContext(AsciiContext)
+
+  // Initialize CanvasKit when component mounts
+  useEffect(() => {
+    const setupSkia = async () => {
+      try {
+        await initializeSkia()
+        setSkiaReady(true)
+      } catch (error) {
+        console.warn('Failed to initialize CanvasKit:', error)
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      setupSkia()
+    }
+  }, [])
+
+  // Hand tracking integration
+  const handTracking = useHandTracking({
+    videoElement: cameraVideo,
+    enabled: handTrackingEnabled && cameraActive && skiaReady,
+    granularityRange: { min: 4, max: 32 },
+    onDepthChange: (data) => {
+      if (handControlledGranularity && data.handDetected) {
+        set({ granularity: data.granularity })
+      }
+    },
+  })
 
   useFrame((state, delta) => {
     mixer?.update(delta)
   })
+
+  // Camera stream management
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          facingMode: 'user',
+        },
+      })
+
+      const video = document.createElement('video')
+      video.srcObject = stream
+      video.muted = true
+      video.playsInline = true
+      video.autoplay = true
+
+      video.onloadedmetadata = () => {
+        video.play()
+        setCameraVideo(video)
+        setTexture(new VideoTexture(video))
+        // Clear other content when camera starts
+        setModel(null)
+      }
+
+      setCameraStream(stream)
+    } catch (error) {
+      console.error('Error accessing camera:', error)
+    }
+  }
+
+  const stopCamera = () => {
+    if (cameraStream) {
+      for (const track of cameraStream.getTracks()) {
+        track.stop()
+      }
+      setCameraStream(null)
+    }
+    if (cameraVideo) {
+      cameraVideo.srcObject = null
+      setCameraVideo(null)
+    }
+    setTexture(null)
+  }
+
+  // React to camera active state changes
+  useEffect(() => {
+    if (cameraActive) {
+      startCamera()
+    } else {
+      stopCamera()
+    }
+  }, [cameraActive])
+
+  // Share hand tracking state with context
+  useEffect(() => {
+    set({
+      handTracking: {
+        ...handTracking,
+        isEnabled: handTrackingEnabled,
+      },
+    })
+  }, [handTracking, handTrackingEnabled, set])
 
   useEffect(() => {
     if (!asset) return
@@ -83,6 +259,8 @@ const Scene = () => {
             }
           })
           setModel(group)
+          // Stop camera when loading other assets
+          stopCamera()
         },
         undefined,
         (error) => {
@@ -99,6 +277,10 @@ const Scene = () => {
   }, [model])
 
   useEffect(() => {
+    if (texture && !cameraVideo) setModel(null)
+  }, [texture, cameraVideo])
+
+  useEffect(() => {
     const src = asset
 
     if (
@@ -107,6 +289,9 @@ const Scene = () => {
       src.includes('.webm') ||
       src.includes('.mov')
     ) {
+      // Stop camera when loading video files
+      stopCamera()
+
       const video = document.createElement('video')
 
       function onLoad() {
@@ -128,6 +313,9 @@ const Scene = () => {
       src.includes('.png') ||
       src.includes('.jpeg')
     ) {
+      // Stop camera when loading images
+      stopCamera()
+
       new TextureLoader().load(src, (texture) => {
         setTexture(texture)
       })
@@ -193,6 +381,13 @@ const Scene = () => {
     camera.updateProjectionMatrix()
   }, [camera, texture])
 
+  // Cleanup camera stream on unmount
+  useEffect(() => {
+    return () => {
+      stopCamera()
+    }
+  }, [])
+
   return (
     <>
       <ui.In>
@@ -251,7 +446,19 @@ const Scene = () => {
       <group ref={ref}>
         {model && (
           <>
-            <OrbitControls makeDefault enableDamping />
+            <OrbitControls
+              makeDefault
+              enableDamping
+              dampingFactor={0.05}
+              // Touch-friendly settings
+              enableZoom={true}
+              enablePan={true}
+              enableRotate={true}
+              // Touch sensitivity
+              rotateSpeed={0.7}
+              zoomSpeed={0.8}
+              panSpeed={0.8}
+            />
             <group scale={200}>
               <primitive object={model} />
             </group>
@@ -288,8 +495,8 @@ function Postprocessing() {
     matrix,
     time,
     background,
+    fit,
   } = useContext(AsciiContext)
-  console.log('background', background)
 
   return (
     <EffectComposer>
@@ -311,13 +518,11 @@ function Postprocessing() {
 }
 
 function Inner() {
-  const gui = useStore((state) => state.gui)
-
   return (
     <>
       <div className={s.ascii}>
-        <GUI />
-        <div className={cn(s.canvas, gui && s.open)}>
+        <HandTrackingStatus />
+        <div className={s.canvas}>
           <Canvas
             flat
             linear
@@ -327,10 +532,16 @@ function Inner() {
             gl={{
               antialias: false,
               alpha: true,
-              depth: false,
+              depth: true,
               stencil: false,
               powerPreference: 'high-performance',
+              // Mobile optimizations
+              failIfMajorPerformanceCaveat: false,
+              preserveDrawingBuffer: false,
             }}
+            // Better performance on mobile
+            frameloop="demand"
+            dpr={[1, 2]} // Limit pixel ratio on mobile
           >
             <Scene />
             <Postprocessing />
@@ -358,13 +569,33 @@ const DEFAULT = {
   setTime: false,
   time: 0,
   fit: true,
+  cameraActive: false,
+  handTrackingEnabled: false,
+  handControlledGranularity: false,
 }
 
 export function ASCII({ children }) {
-  const initialUrlParams = new URLSearchParams(window.location.search)
+  const [isClient, setIsClient] = useState(false)
+  const initialUrlParams = new URLSearchParams(
+    typeof window !== 'undefined' ? window.location.search : ''
+  )
+  const sceneRef = useRef()
+
+  // Ensure we're on the client side
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   const [charactersTexture, setCharactersTexture] = useState(null)
   const [canvas, setCanvas] = useState()
+  const [cameraActive, setCameraActive] = useState(DEFAULT.cameraActive)
+  const [handTrackingEnabled, setHandTrackingEnabled] = useState(
+    DEFAULT.handTrackingEnabled
+  )
+  const [handControlledGranularity, setHandControlledGranularity] = useState(
+    DEFAULT.handControlledGranularity
+  )
+  const [handTracking, setHandTracking] = useState(null)
 
   const [
     {
@@ -463,24 +694,69 @@ export function ASCII({ children }) {
   )
 
   useControls(
+    'Camera & Hand Tracking',
     () => ({
-      export: button(() => {
-        const a = document.createElement('a')
-        a.download = 'ASCII'
-
-        requestAnimationFrame(() => {
-          a.href = canvas.toDataURL('image/png;base64')
-          a.click()
-        })
+      [cameraActive ? 'stop camera' : 'start camera']: button(
+        () => {
+          setCameraActive(!cameraActive)
+        },
+        { disabled: false }
+      ),
+      'hand tracking': {
+        value: handTrackingEnabled,
+        onChange: setHandTrackingEnabled,
+        disabled: !cameraActive,
+      },
+      'hand controls granularity': {
+        value: handControlledGranularity,
+        onChange: setHandControlledGranularity,
+        disabled: !handTrackingEnabled || !cameraActive,
+      },
+      ...(handTracking?.handDetected && {
+        'calibrate hand depth': button(
+          () => {
+            if (handTracking?.calibrateDepth()) {
+              console.log('Hand depth calibrated!')
+            }
+          },
+          {
+            disabled: !handTracking?.handDetected,
+          }
+        ),
+        'reset calibration': button(
+          () => {
+            handTracking?.resetCalibration()
+            console.log('Hand calibration reset')
+          },
+          {
+            disabled: !handTracking?.isCalibrated,
+          }
+        ),
       }),
-      reset: button(() => {
-        _set(DEFAULT)
+      screenshot: button(() => {
+        if (canvas) {
+          const a = document.createElement('a')
+          a.download = 'ASCII'
+
+          requestAnimationFrame(() => {
+            a.href = canvas.toDataURL('image/png;base64')
+            a.click()
+          })
+        }
       }),
     }),
-    [canvas]
+    [
+      canvas,
+      cameraActive,
+      handTrackingEnabled,
+      handControlledGranularity,
+      handTracking,
+    ]
   )
 
   const UrlParams = (() => {
+    if (typeof window === 'undefined') return new URLSearchParams()
+
     const params = new URLSearchParams()
     params.set('characters', characters)
     params.set('granularity', granularity)
@@ -507,14 +783,22 @@ export function ASCII({ children }) {
   })()
 
   useEffect(() => {
-    const url = `${window.origin}?${UrlParams.toString()}`
-    window.history.replaceState({}, null, url)
+    if (typeof window !== 'undefined') {
+      const url = `${window.origin}?${UrlParams.toString()}`
+      window.history.replaceState({}, null, url)
+    }
   }, [UrlParams])
 
-  function set({ charactersTexture, canvas, ...props }) {
+  function set({ charactersTexture, canvas, handTracking, ...props }) {
     if (charactersTexture) setCharactersTexture(charactersTexture)
     if (canvas) setCanvas(canvas)
+    if (handTracking) setHandTracking(handTracking)
     _set(props)
+  }
+
+  // Only render on client side to avoid SSR issues
+  if (!isClient) {
+    return <div>Loading...</div>
   }
 
   return (
@@ -538,6 +822,10 @@ export function ASCII({ children }) {
           matrix,
           time: setTime ? time : undefined,
           background,
+          cameraActive,
+          handTrackingEnabled,
+          handControlledGranularity,
+          handTracking,
           set,
         }}
       >

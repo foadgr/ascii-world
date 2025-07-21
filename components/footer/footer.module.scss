@@ -1,4 +1,4 @@
-@import 'styles/_functions';
+@use 'styles/_functions' as *;
 
 .footer {
   color: var(--theme-primary);

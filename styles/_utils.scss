@@ -1,3 +1,5 @@
+@use './_functions.scss' as *;
+
 .aspect-ratio {
   position: relative;
   padding-bottom: calc(100% / var(--aspect-ratio));

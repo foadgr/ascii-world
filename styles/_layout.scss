@@ -14,6 +14,8 @@
 // .layout-grid-inner: same as .layout-grid but using padding instead of margin
 
 @use 'sass:map';
+@use 'sass:list';
+@use './_functions.scss' as *;
 
 // config to fill
 // 'variable': (mobile, desktop)
@@ -34,16 +36,9 @@ $layout: (
 
 //internal process, do not touch
 :root {
-  --layout-columns-count: #{nth(map.get($layout, 'columns-count'), 1)};
-  --layout-columns-gap: #{mobile-vw(nth(map.get($layout, 'columns-gap'), 1))};
-  --layout-margin: #{mobile-vw(nth(map.get($layout, 'margin'), 1))};
-
-  @include desktop {
-    --layout-columns-count: #{nth(map.get($layout, 'columns-count'), 2)};
-    --layout-columns-gap: #{desktop-vw(nth(map.get($layout, 'columns-gap'), 2))};
-    --layout-margin: #{desktop-vw(nth(map.get($layout, 'margin'), 2))};
-  }
-
+  --layout-columns-count: #{list.nth(map.get($layout, 'columns-count'), 1)};
+  --layout-columns-gap: #{mobile-vw(list.nth(map.get($layout, 'columns-gap'), 1))};
+  --layout-margin: #{mobile-vw(list.nth(map.get($layout, 'margin'), 1))};
   --layout-width: calc(100vw - (2 * var(--layout-margin)));
   --layout-column-width: calc(
     (
@@ -51,6 +46,12 @@ $layout: (
           ((var(--layout-columns-count) - 1) * var(--layout-columns-gap))
       ) / var(--layout-columns-count)
   );
+
+  @include desktop {
+    --layout-columns-count: #{list.nth(map.get($layout, 'columns-count'), 2)};
+    --layout-columns-gap: #{desktop-vw(list.nth(map.get($layout, 'columns-gap'), 2))};
+    --layout-margin: #{desktop-vw(list.nth(map.get($layout, 'margin'), 2))};
+  }
 }
 
 .layout-block {
