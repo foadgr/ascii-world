@@ -754,40 +754,8 @@ export function ASCII({ children }) {
     ]
   )
 
-  const UrlParams = (() => {
-    if (typeof window === 'undefined') return new URLSearchParams()
-
-    const params = new URLSearchParams()
-    params.set('characters', characters)
-    params.set('granularity', granularity)
-    params.set('charactersLimit', charactersLimit)
-    params.set('fontSize', fontSize)
-    params.set('matrix', matrix === true)
-    params.set('invert', invert === true)
-    params.set('greyscale', greyscale === true)
-    params.set('fillPixels', fillPixels === true)
-    if (setTime) {
-      params.set('time', time)
-    } else {
-      params.delete('time')
-    }
-
-    if (setColor) {
-      params.set('color', color.replace('#', ''))
-    } else {
-      params.delete('color')
-    }
-
-    params.set('background', background.replace('#', ''))
-    return params
-  })()
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const url = `${window.origin}?${UrlParams.toString()}`
-      window.history.replaceState({}, null, url)
-    }
-  }, [UrlParams])
+  // We removed the constant URL updating to prevent hitting browser security limits on mobile
+  // The initial URL parameters are still read when the component first loads
 
   function set({ charactersTexture, canvas, handTracking, ...props }) {
     if (charactersTexture) setCharactersTexture(charactersTexture)
