@@ -7,7 +7,7 @@ import { HandTrackingStatus } from 'components/hand-tracking-status'
 import { useHandTracking } from 'hooks/use-hand-tracking'
 import { button, useControls } from 'leva'
 import { text } from 'lib/leva/text'
-import { useContext, useEffect, useRef, useState } from 'react'
+import { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import {
   AnimationMixer,
@@ -159,7 +159,7 @@ const Scene = () => {
   })
 
   // Camera stream management
-  const startCamera = async () => {
+  const startCamera = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
@@ -187,9 +187,9 @@ const Scene = () => {
     } catch (error) {
       console.error('Error accessing camera:', error)
     }
-  }
+  }, [])
 
-  const stopCamera = () => {
+  const stopCamera = useCallback(() => {
     if (cameraStream) {
       for (const track of cameraStream.getTracks()) {
         track.stop()
@@ -201,7 +201,7 @@ const Scene = () => {
       setCameraVideo(null)
     }
     setTexture(null)
-  }
+  }, [cameraStream, cameraVideo])
 
   // React to camera active state changes
   useEffect(() => {
@@ -210,7 +210,7 @@ const Scene = () => {
     } else {
       stopCamera()
     }
-  }, [cameraActive])
+  }, [cameraActive, startCamera, stopCamera])
 
   // Share hand tracking state with context
   useEffect(() => {
@@ -268,7 +268,7 @@ const Scene = () => {
         }
       )
     }
-  }, [asset])
+  }, [asset, stopCamera])
 
   const [texture, setTexture] = useState()
 
@@ -320,7 +320,7 @@ const Scene = () => {
         setTexture(texture)
       })
     }
-  }, [asset])
+  }, [asset, stopCamera])
 
   const { viewport, camera } = useThree()
 
@@ -386,7 +386,7 @@ const Scene = () => {
     return () => {
       stopCamera()
     }
-  }, [])
+  }, [stopCamera])
 
   return (
     <>
@@ -482,7 +482,7 @@ function Postprocessing() {
 
   useEffect(() => {
     set({ canvas: gl.domElement })
-  }, [gl])
+  }, [gl, set])
 
   const {
     charactersTexture,
