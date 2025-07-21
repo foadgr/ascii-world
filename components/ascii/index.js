@@ -267,7 +267,7 @@ const Scene = () => {
       console.error('Error accessing camera:', error)
       // Don't throw - just log and continue
     }
-  }, [])
+  }, [cameraVideo])
 
   const stopCamera = useCallback(() => {
     if (cameraStream) {
