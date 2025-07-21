@@ -192,6 +192,8 @@ const Scene = () => {
           width: { ideal: 1280 },
           height: { ideal: 720 },
           facingMode: 'user',
+          // More mobile-friendly constraints
+          frameRate: { ideal: 30, max: 30 },
         },
       })
 
@@ -200,14 +202,43 @@ const Scene = () => {
       video.muted = true
       video.playsInline = true
       video.autoplay = true
+      // Important for mobile - prevent screen lock
+      video.setAttribute('webkit-playsinline', 'true')
+      video.setAttribute('playsinline', 'true')
 
-      video.onloadedmetadata = () => {
-        video.play()
-        setCameraVideo(video)
-        setTexture(new VideoTexture(video))
-        // Clear other content when camera starts
-        setModel(null)
+      // Handle video loading with proper promise handling for mobile
+      const handleVideoReady = async () => {
+        try {
+          console.log('Video metadata loaded, attempting to play...')
+          
+          // Ensure video actually plays (critical for mobile)
+          await video.play()
+          console.log('Video is playing successfully')
+          
+          // Wait a bit to ensure video is actually streaming
+          await new Promise(resolve => setTimeout(resolve, 500))
+          
+          setCameraVideo(video)
+          setTexture(new VideoTexture(video))
+          // Clear other content when camera starts
+          setModel(null)
+          
+          console.log('Camera video setup complete')
+        } catch (playError) {
+          console.error('Video play failed:', playError)
+          throw playError
+        }
       }
+
+      video.onloadedmetadata = handleVideoReady
+      
+             // Fallback for when loadedmetadata doesn't fire (some mobile browsers)
+       setTimeout(() => {
+         if (video.readyState >= 1 && video.srcObject) {
+           console.log('Fallback: metadata timeout, trying to play video anyway...')
+           handleVideoReady().catch(err => console.warn('Fallback video setup failed:', err))
+         }
+       }, 2000)
 
       setCameraStream(stream)
     } catch (error) {
@@ -303,8 +334,12 @@ const Scene = () => {
   }, [model])
 
   useEffect(() => {
-    if (texture && !cameraVideo) setModel(null)
-  }, [texture, cameraVideo])
+    // Only clear model if we have a texture that's NOT from camera
+    // This prevents race conditions on mobile where cameraVideo isn't set yet
+    if (texture && !cameraVideo && !cameraActive) {
+      setModel(null)
+    }
+  }, [texture, cameraVideo, cameraActive])
 
   useEffect(() => {
     const src = asset
