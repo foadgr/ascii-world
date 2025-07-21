@@ -158,7 +158,7 @@ const Scene = () => {
     mixer?.update(delta)
   })
 
-    // Camera stream management
+  // Camera stream management
   const stopCamera = useCallback(() => {
     try {
       if (cameraStream) {
@@ -183,10 +183,10 @@ const Scene = () => {
     try {
       // Stop any existing camera stream first to prevent conflicts
       stopCamera()
-      
+
       // Small delay to ensure cleanup is complete
       await new Promise((resolve) => setTimeout(resolve, 100))
-      
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: { ideal: 1280 },
@@ -212,7 +212,7 @@ const Scene = () => {
       setCameraStream(stream)
     } catch (error) {
       console.error('Error accessing camera:', error)
-      
+
       // Handle specific error types
       if (error.name === 'AbortError') {
         console.warn('Camera request was aborted - try again')
@@ -223,7 +223,7 @@ const Scene = () => {
       } else if (error.name === 'NotReadableError') {
         console.warn('Camera is already in use')
       }
-      
+
       // Reset camera state on error
       setCameraActive(false)
     }
