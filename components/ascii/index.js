@@ -200,14 +200,19 @@ const Scene = () => {
           ? {
               width: { ideal: 640 },
               height: { ideal: 480 },
-              facingMode: 'user',
+              facingMode: cameraFacing,
             }
           : {
               width: { ideal: 1280 },
               height: { ideal: 720 },
-              facingMode: 'user',
+              facingMode: cameraFacing,
             },
       })
+
+      console.log(
+        'Camera stream obtained:',
+        stream.getVideoTracks()[0]?.getSettings()
+      )
 
       const video = document.createElement('video')
       video.srcObject = stream
@@ -230,14 +235,21 @@ const Scene = () => {
           video.videoHeight
         )
         if (video.videoWidth > 0 && video.videoHeight > 0) {
+          console.log('Setting camera video and creating texture...')
           setCameraVideo(video)
           try {
-            setTexture(new VideoTexture(video))
+            const videoTexture = new VideoTexture(video)
+            setTexture(videoTexture)
+            console.log('Video texture created successfully:', videoTexture)
           } catch (textureError) {
             console.warn('Video texture creation failed:', textureError)
           }
           // Clear other content when camera starts
           setModel(null)
+        } else {
+          console.warn(
+            'Video dimensions are zero, waiting for valid dimensions...'
+          )
         }
       }
 
@@ -267,7 +279,7 @@ const Scene = () => {
       console.error('Error accessing camera:', error)
       // Don't throw - just log and continue
     }
-  }, [cameraVideo])
+  }, [cameraVideo, cameraFacing])
 
   const stopCamera = useCallback(() => {
     if (cameraStream) {
@@ -312,9 +324,12 @@ const Scene = () => {
     ) {
       const group = new Group()
 
+      console.log('Loading GLB model from:', src)
+
       gltfLoader.load(
         src,
         ({ scene, animations }) => {
+          console.log('GLB model loaded successfully:', { scene, animations })
           const mixer = new AnimationMixer(scene)
           setMixer(mixer)
           const clips = animations
@@ -342,9 +357,17 @@ const Scene = () => {
           // Stop camera when loading other assets
           stopCamera()
         },
-        undefined,
+        (progress) => {
+          console.log('GLB loading progress:', progress)
+        },
         (error) => {
           console.error('Error loading GLTF:', error)
+          console.error('Failed URL:', src)
+          console.error('Error details:', {
+            type: error.type,
+            target: error.target,
+            message: error.message,
+          })
         }
       )
     }
@@ -359,6 +382,22 @@ const Scene = () => {
   useEffect(() => {
     if (texture && !cameraVideo) setModel(null)
   }, [texture, cameraVideo])
+
+  // Debug texture state changes
+  useEffect(() => {
+    console.log(
+      'Texture state changed:',
+      texture ? 'TEXTURE SET' : 'NO TEXTURE',
+      texture
+    )
+    if (texture?.isVideoTexture) {
+      console.log('Video texture details:', {
+        width: texture.image?.videoWidth,
+        height: texture.image?.videoHeight,
+        readyState: texture.image?.readyState,
+      })
+    }
+  }, [texture])
 
   useEffect(() => {
     const src = asset
@@ -739,6 +778,7 @@ export function ASCII({ children }) {
   const [charactersTexture, setCharactersTexture] = useState(null)
   const [canvas, setCanvas] = useState()
   const [cameraActive, setCameraActive] = useState(DEFAULT.cameraActive)
+  const [cameraFacing, setCameraFacing] = useState('user') // 'user' = front, 'environment' = back
   const [handTrackingEnabled, setHandTrackingEnabled] = useState(
     DEFAULT.handTrackingEnabled
   )
@@ -852,6 +892,15 @@ export function ASCII({ children }) {
         },
         { disabled: false }
       ),
+      'camera direction': {
+        value: cameraFacing,
+        options: {
+          'Front (Selfie)': 'user',
+          'Back Camera': 'environment',
+        },
+        onChange: setCameraFacing,
+        disabled: cameraActive, // Can't change while camera is active
+      },
       'hand tracking': {
         value: handTrackingEnabled,
         onChange: setHandTrackingEnabled,
@@ -898,6 +947,7 @@ export function ASCII({ children }) {
     [
       canvas,
       cameraActive,
+      cameraFacing,
       handTrackingEnabled,
       handControlledGranularity,
       handTracking,

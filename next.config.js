@@ -117,6 +117,31 @@ const nextConfig = {
           },
         ],
       },
+      {
+        source: '/(.+)\\.(glb|gltf)$',
+        headers: [
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, HEAD, OPTIONS',
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'Content-Type, Range',
+          },
+          {
+            key: 'Content-Type',
+            value: 'model/gltf-binary',
+          },
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
     ]
   },
 }
