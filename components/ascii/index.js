@@ -576,9 +576,6 @@ const DEFAULT = {
 
 export function ASCII({ children }) {
   const [isClient, setIsClient] = useState(false)
-  const initialUrlParams = new URLSearchParams(
-    typeof window !== 'undefined' ? window.location.search : ''
-  )
   const sceneRef = useRef()
 
   // Ensure we're on the client side
@@ -617,76 +614,67 @@ export function ASCII({ children }) {
     _set,
   ] = useControls(
     () => ({
-      characters: text(
-        initialUrlParams.get('characters') || DEFAULT.characters
-      ),
+      characters: text(DEFAULT.characters),
       granularity: {
         min: 4,
-        max: 32,
-        value: initialUrlParams.get('granularity') || DEFAULT.granularity,
+        max: 50,
+        value: DEFAULT.granularity,
         step: 1,
         label: 'granularity',
       },
       charactersLimit: {
         min: 1,
         max: 48,
-        value:
-          initialUrlParams.get('charactersLimit') || DEFAULT.charactersLimit,
+        value: DEFAULT.charactersLimit,
         step: 1,
         label: 'charLimit',
       },
       fontSize: {
         min: 1,
         max: 128,
-        value: initialUrlParams.get('fontSize') || DEFAULT.fontSize,
+        value: DEFAULT.fontSize,
         step: 1,
         label: 'font size',
       },
       greyscale: {
-        value:
-          initialUrlParams.get('greyscale') === 'true' || DEFAULT.greyscale,
+        value: DEFAULT.greyscale,
       },
       invert: {
-        value: initialUrlParams.get('invert') === 'true' || DEFAULT.invert,
+        value: DEFAULT.invert,
       },
       fillPixels: {
-        value:
-          initialUrlParams.get('fillPixels') === 'true' || DEFAULT.fillPixels,
+        value: DEFAULT.fillPixels,
         label: 'fill pixels',
       },
       fit: {
-        value: initialUrlParams.get('fit') || DEFAULT.fit,
+        value: DEFAULT.fit,
       },
       matrix: {
-        value: initialUrlParams.get('matrix') === 'true' || DEFAULT.matrix,
+        value: DEFAULT.matrix,
       },
       setTime: {
-        value: !!initialUrlParams.get('time') || DEFAULT.setTime,
+        value: DEFAULT.setTime,
         label: 'set time',
         render: (get) => get('matrix') === true,
       },
       time: {
         min: 0,
-        value: Number.parseFloat(initialUrlParams.get('time')) || DEFAULT.time,
+        value: DEFAULT.time,
         max: 1,
         step: 0.01,
         render: (get) => get('setTime') === true,
       },
       setColor: {
-        value: !!initialUrlParams.get('color') || DEFAULT.setColor,
+        value: DEFAULT.setColor,
         label: 'set color',
       },
       color: {
-        value: initialUrlParams.get('color')
-          ? `#${initialUrlParams.get('color')}`
-          : DEFAULT.color,
+        value: DEFAULT.color,
         label: 'color',
         render: (get) => get('setColor') === true,
       },
       background: {
-        value: initialUrlParams.get('background')
-          ? `#${initialUrlParams.get('background')}`
-          : DEFAULT.background,
+        value: DEFAULT.background,
         label: 'background',
       },
     }),
@@ -753,41 +741,6 @@ export function ASCII({ children }) {
       handTracking,
     ]
   )
-
-  const UrlParams = (() => {
-    if (typeof window === 'undefined') return new URLSearchParams()
-
-    const params = new URLSearchParams()
-    params.set('characters', characters)
-    params.set('granularity', granularity)
-    params.set('charactersLimit', charactersLimit)
-    params.set('fontSize', fontSize)
-    params.set('matrix', matrix === true)
-    params.set('invert', invert === true)
-    params.set('greyscale', greyscale === true)
-    params.set('fillPixels', fillPixels === true)
-    if (setTime) {
-      params.set('time', time)
-    } else {
-      params.delete('time')
-    }
-
-    if (setColor) {
-      params.set('color', color.replace('#', ''))
-    } else {
-      params.delete('color')
-    }
-
-    params.set('background', background.replace('#', ''))
-    return params
-  })()
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const url = `${window.origin}?${UrlParams.toString()}`
-      window.history.replaceState({}, null, url)
-    }
-  }, [UrlParams])
 
   function set({ charactersTexture, canvas, handTracking, ...props }) {
     if (charactersTexture) setCharactersTexture(charactersTexture)
