@@ -41,7 +41,8 @@ export function GUI() {
         <div className={s.description}>
           <p>
             the ASCII World is an open-source ASCII tool built by{' '}
-            <a href="https://foadgr.com">foadgr.com</a> to generate and customize character-based imagery.
+            <a href="https://foadgr.com">foadgr.com</a> to generate and
+            customize character-based imagery.
           </p>
           <br />
           <p>
