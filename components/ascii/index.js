@@ -163,14 +163,18 @@ const Scene = () => {
     }
   }, [])
 
-  // Hand tracking integration
+  // Hand tracking integration with error handling
   const handTracking = useHandTracking({
     videoElement: cameraVideo,
     enabled: handTrackingEnabled && cameraActive && skiaReady, // Mobile sets skiaReady=true immediately
     granularityRange: { min: 4, max: 32 },
     onDepthChange: (data) => {
-      if (handControlledGranularity && data.handDetected) {
-        set({ granularity: data.granularity })
+      try {
+        if (handControlledGranularity && data.handDetected) {
+          set({ granularity: data.granularity })
+        }
+      } catch (error) {
+        console.warn('Hand tracking update error:', error)
       }
     },
   })
@@ -203,16 +207,23 @@ const Scene = () => {
       video.autoplay = true
 
       video.onloadedmetadata = () => {
-        video.play()
+        video.play().catch((playError) => {
+          console.warn('Video play failed:', playError)
+        })
         setCameraVideo(video)
         setTexture(new VideoTexture(video))
         // Clear other content when camera starts
         setModel(null)
       }
 
+      video.onerror = (videoError) => {
+        console.warn('Video error:', videoError)
+      }
+
       setCameraStream(stream)
     } catch (error) {
       console.error('Error accessing camera:', error)
+      // Don't throw - just log and continue
     }
   }, [])
 
@@ -605,13 +616,21 @@ function Inner() {
                 : [1, 2]
             } // Lower DPR on mobile
             onCreated={(state) => {
-              // Test WebGL support
-              const gl = state.gl.getContext()
-              if (!gl) {
+              try {
+                // Test WebGL support
+                const gl = state.gl.getContext()
+                if (!gl) {
+                  setRenderError(true)
+                }
+              } catch (error) {
+                console.warn('WebGL context creation error:', error)
                 setRenderError(true)
               }
             }}
-            onError={() => setRenderError(true)}
+            onError={(error) => {
+              console.warn('Three.js Canvas error:', error)
+              setRenderError(true)
+            }}
           >
             <Scene />
             <Postprocessing />
@@ -658,6 +677,21 @@ export function ASCII({ children }) {
   // Ensure we're on the client side
   useEffect(() => {
     setIsClient(true)
+  }, [])
+
+  // Handle unhandled promise rejections on mobile
+  useEffect(() => {
+    const handleUnhandledRejection = (event) => {
+      console.warn('Unhandled promise rejection (caught):', event.reason)
+      // Prevent the error from being thrown
+      event.preventDefault()
+    }
+
+    window.addEventListener('unhandledrejection', handleUnhandledRejection)
+
+    return () => {
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection)
+    }
   }, [])
 
   const [charactersTexture, setCharactersTexture] = useState(null)
