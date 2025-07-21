@@ -158,9 +158,35 @@ const Scene = () => {
     mixer?.update(delta)
   })
 
-  // Camera stream management
+    // Camera stream management
+  const stopCamera = useCallback(() => {
+    try {
+      if (cameraStream) {
+        for (const track of cameraStream.getTracks()) {
+          track.stop()
+        }
+        setCameraStream(null)
+      }
+      if (cameraVideo) {
+        if (cameraVideo.srcObject) {
+          cameraVideo.srcObject = null
+        }
+        setCameraVideo(null)
+      }
+      setTexture(null)
+    } catch (error) {
+      console.warn('Error stopping camera:', error)
+    }
+  }, [cameraStream, cameraVideo])
+
   const startCamera = useCallback(async () => {
     try {
+      // Stop any existing camera stream first to prevent conflicts
+      stopCamera()
+      
+      // Small delay to ensure cleanup is complete
+      await new Promise((resolve) => setTimeout(resolve, 100))
+      
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: { ideal: 1280 },
@@ -186,22 +212,22 @@ const Scene = () => {
       setCameraStream(stream)
     } catch (error) {
       console.error('Error accessing camera:', error)
-    }
-  }, [])
-
-  const stopCamera = useCallback(() => {
-    if (cameraStream) {
-      for (const track of cameraStream.getTracks()) {
-        track.stop()
+      
+      // Handle specific error types
+      if (error.name === 'AbortError') {
+        console.warn('Camera request was aborted - try again')
+      } else if (error.name === 'NotAllowedError') {
+        console.warn('Camera permission denied')
+      } else if (error.name === 'NotFoundError') {
+        console.warn('No camera found')
+      } else if (error.name === 'NotReadableError') {
+        console.warn('Camera is already in use')
       }
-      setCameraStream(null)
+      
+      // Reset camera state on error
+      setCameraActive(false)
     }
-    if (cameraVideo) {
-      cameraVideo.srcObject = null
-      setCameraVideo(null)
-    }
-    setTexture(null)
-  }, [cameraStream, cameraVideo])
+  }, [stopCamera])
 
   // React to camera active state changes
   useEffect(() => {
