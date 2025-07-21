@@ -5,6 +5,7 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 const nextConfig = {
   reactStrictMode: true,
   devIndicators: false,
+  productionBrowserSourceMaps: false, // Disable source maps to prevent CORS errors on mobile
   experimental: {
     // optimizeCss: true,
     reactCompiler: true,
