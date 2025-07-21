@@ -856,11 +856,21 @@ export function ASCII({ children }) {
     return params
   })()
 
+  // Debounce URL updates on mobile to prevent Safari security errors
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window === 'undefined') return
+
+    // Skip URL updates entirely on mobile to prevent replaceState limit
+    if (isMobile()) {
+      return
+    }
+
+    const timeoutId = setTimeout(() => {
       const url = `${window.origin}?${UrlParams.toString()}`
       window.history.replaceState({}, null, url)
-    }
+    }, 500) // Debounce by 500ms
+
+    return () => clearTimeout(timeoutId)
   }, [UrlParams])
 
   function set({ charactersTexture, canvas, handTracking, ...props }) {
