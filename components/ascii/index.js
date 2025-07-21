@@ -117,7 +117,7 @@ const initializeSkia = async () => {
 
 const Scene = () => {
   const ref = useRef()
-  const [asset, setAsset] = useState('/darkroom-move.glb')
+  const [asset, setAsset] = useState('/cutest-penguin-astronaut.glb')
   const [mixer, setMixer] = useState()
   const [model, setModel] = useState()
   const [cameraStream, setCameraStream] = useState(null)
@@ -459,7 +459,7 @@ const Scene = () => {
               zoomSpeed={0.8}
               panSpeed={0.8}
             />
-            <group scale={200}>
+            <group scale={1000}>
               <primitive object={model} />
             </group>
           </>
@@ -557,10 +557,10 @@ function Inner() {
 const DEFAULT = {
   characters: ' *,    ./O#DE',
   granularity: 4,
-  charactersLimit: 25,
-  fontSize: 87,
+  charactersLimit: 16,
+  fontSize: 100,
   fillPixels: false,
-  setColor: true,
+  setColor: false,
   color: '#E30613',
   background: '#6a3a3a',
   greyscale: false,
