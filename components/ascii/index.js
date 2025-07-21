@@ -60,7 +60,7 @@ const HAND_CONNECTIONS = [
   [0, 17], // Palm base
 ]
 
-// Create Skia paint objects for drawing
+// Create Skia paint objects for drawing (desktop only)
 const createSkiaPaints = async () => {
   try {
     // Only load CanvasKit in browser environment and not on mobile
@@ -68,7 +68,9 @@ const createSkiaPaints = async () => {
       typeof window === 'undefined' ||
       /Mobi|Android/i.test(navigator.userAgent)
     ) {
-      console.log('Skipping CanvasKit on mobile for better performance')
+      console.log(
+        'Mobile detected: Hand tracking will work without visual overlay'
+      )
       return { landmarkPaint: null, connectionPaint: null, CanvasKit: null }
     }
 
@@ -137,10 +139,22 @@ const Scene = () => {
   useEffect(() => {
     const setupSkia = async () => {
       try {
+        if (isMobile()) {
+          // Skip CanvasKit entirely on mobile
+          console.log(
+            'Mobile detected: skipping CanvasKit, enabling hand tracking'
+          )
+          setSkiaReady(true)
+          return
+        }
         await initializeSkia()
         setSkiaReady(true)
       } catch (error) {
         console.warn('Failed to initialize CanvasKit:', error)
+        // On desktop, if CanvasKit fails, still allow basic functionality
+        if (!isMobile()) {
+          setSkiaReady(false)
+        }
       }
     }
 
@@ -152,7 +166,7 @@ const Scene = () => {
   // Hand tracking integration
   const handTracking = useHandTracking({
     videoElement: cameraVideo,
-    enabled: handTrackingEnabled && cameraActive && skiaReady,
+    enabled: handTrackingEnabled && cameraActive && skiaReady, // Mobile sets skiaReady=true immediately
     granularityRange: { min: 4, max: 32 },
     onDepthChange: (data) => {
       if (handControlledGranularity && data.handDetected) {
