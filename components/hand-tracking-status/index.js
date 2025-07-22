@@ -17,8 +17,8 @@ export const HandTrackingStatus = () => {
     isInitialized,
   } = handTracking
 
-  // Calculate granularity percentage (assuming range is 4-32)
-  const granularityRange = { min: 4, max: 32 }
+  // Calculate granularity percentage (assuming range is 1-50)
+  const granularityRange = { min: 1, max: 50 }
   const granularityPercent =
     ((granularity - granularityRange.min) /
       (granularityRange.max - granularityRange.min)) *

@@ -5,8 +5,6 @@ import { ASCIIEffect } from 'components/ascii-effect/index'
 import { FontEditor } from 'components/font-editor'
 import { HandTrackingStatus } from 'components/hand-tracking-status'
 import { useHandTracking } from 'hooks/use-hand-tracking'
-import { button, useControls } from 'leva'
-import { text } from 'lib/leva/text'
 import { useContext, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import {
@@ -20,6 +18,7 @@ import {
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import tunnel from 'tunnel-rat'
+import { ControlPanel } from '../control-panel'
 import s from './ascii.module.scss'
 import { AsciiContext } from './context'
 
@@ -146,7 +145,7 @@ const Scene = () => {
   const handTracking = useHandTracking({
     videoElement: cameraVideo,
     enabled: handTrackingEnabled && cameraActive && skiaReady,
-    granularityRange: { min: 4, max: 32 },
+    granularityRange: { min: 1, max: 50 },
     onDepthChange: (data) => {
       if (handControlledGranularity && data.handDetected) {
         set({ granularity: data.granularity })
@@ -556,7 +555,7 @@ function Inner() {
 
 const DEFAULT = {
   characters: ' *,    ./O#DE',
-  granularity: 4,
+  granularity: 1,
   charactersLimit: 16,
   fontSize: 100,
   fillPixels: false,
@@ -594,159 +593,64 @@ export function ASCII({ children }) {
   )
   const [handTracking, setHandTracking] = useState(null)
 
-  const [
-    {
-      characters,
-      granularity,
-      charactersLimit,
-      fontSize,
-      fillPixels,
-      setColor,
-      color,
-      fit,
-      greyscale,
-      invert,
-      matrix,
-      setTime,
-      time,
-      background,
-    },
-    _set,
-  ] = useControls(
-    () => ({
-      characters: text(DEFAULT.characters),
-      granularity: {
-        min: 4,
-        max: 50,
-        value: DEFAULT.granularity,
-        step: 1,
-        label: 'granularity',
-      },
-      charactersLimit: {
-        min: 1,
-        max: 48,
-        value: DEFAULT.charactersLimit,
-        step: 1,
-        label: 'charLimit',
-      },
-      fontSize: {
-        min: 1,
-        max: 128,
-        value: DEFAULT.fontSize,
-        step: 1,
-        label: 'font size',
-      },
-      greyscale: {
-        value: DEFAULT.greyscale,
-      },
-      invert: {
-        value: DEFAULT.invert,
-      },
-      fillPixels: {
-        value: DEFAULT.fillPixels,
-        label: 'fill pixels',
-      },
-      fit: {
-        value: DEFAULT.fit,
-      },
-      matrix: {
-        value: DEFAULT.matrix,
-      },
-      setTime: {
-        value: DEFAULT.setTime,
-        label: 'set time',
-        render: (get) => get('matrix') === true,
-      },
-      time: {
-        min: 0,
-        value: DEFAULT.time,
-        max: 1,
-        step: 0.01,
-        render: (get) => get('setTime') === true,
-      },
-      setColor: {
-        value: DEFAULT.setColor,
-        label: 'set color',
-      },
-      color: {
-        value: DEFAULT.color,
-        label: 'color',
-        render: (get) => get('setColor') === true,
-      },
-      background: {
-        value: DEFAULT.background,
-        label: 'background',
-      },
-    }),
-    []
+  // Control states
+  const [characters, setCharacters] = useState(DEFAULT.characters)
+  const [granularity, setGranularity] = useState(DEFAULT.granularity)
+  const [charactersLimit, setCharactersLimit] = useState(
+    DEFAULT.charactersLimit
   )
+  const [fontSize, setFontSize] = useState(DEFAULT.fontSize)
+  const [fillPixels, setFillPixels] = useState(DEFAULT.fillPixels)
+  const [enableColor, setEnableColor] = useState(DEFAULT.setColor)
+  const [color, setColor] = useState(DEFAULT.color)
+  const [fit, setFit] = useState(DEFAULT.fit)
+  const [greyscale, setGreyscale] = useState(DEFAULT.greyscale)
+  const [invert, setInvert] = useState(DEFAULT.invert)
+  const [matrix, setMatrix] = useState(DEFAULT.matrix)
+  const [enableTime, setEnableTime] = useState(DEFAULT.setTime)
+  const [time, setTime] = useState(DEFAULT.time)
+  const [background, setBackground] = useState(DEFAULT.background)
 
-  useControls(
-    'Camera & Hand Tracking',
-    () => ({
-      [cameraActive ? 'stop camera' : 'start camera']: button(
-        () => {
-          setCameraActive(!cameraActive)
-        },
-        { disabled: false }
-      ),
-      'hand tracking': {
-        value: handTrackingEnabled,
-        onChange: setHandTrackingEnabled,
-        disabled: !cameraActive,
-      },
-      'hand controls granularity': {
-        value: handControlledGranularity,
-        onChange: setHandControlledGranularity,
-        disabled: !handTrackingEnabled || !cameraActive,
-      },
-      ...(handTracking?.handDetected && {
-        'calibrate hand depth': button(
-          () => {
-            if (handTracking?.calibrateDepth()) {
-              console.log('Hand depth calibrated!')
-            }
-          },
-          {
-            disabled: !handTracking?.handDetected,
-          }
-        ),
-        'reset calibration': button(
-          () => {
-            handTracking?.resetCalibration()
-            console.log('Hand calibration reset')
-          },
-          {
-            disabled: !handTracking?.isCalibrated,
-          }
-        ),
-      }),
-      screenshot: button(() => {
-        if (canvas) {
-          const a = document.createElement('a')
-          a.download = 'ASCII'
+  // Handler functions for control panel
+  const handleCameraToggle = () => {
+    setCameraActive(!cameraActive)
+  }
 
-          requestAnimationFrame(() => {
-            a.href = canvas.toDataURL('image/png;base64')
-            a.click()
-          })
-        }
-      }),
-    }),
-    [
-      canvas,
-      cameraActive,
-      handTrackingEnabled,
-      handControlledGranularity,
-      handTracking,
-    ]
-  )
+  const handleCalibrateHandDepth = () => {
+    if (handTracking?.calibrateDepth()) {
+      console.log('Hand depth calibrated!')
+    }
+  }
 
-  function set({ charactersTexture, canvas, handTracking, ...props }) {
+  const handleResetCalibration = () => {
+    handTracking?.resetCalibration()
+    console.log('Hand calibration reset')
+  }
+
+  const handleScreenshot = () => {
+    if (canvas) {
+      const a = document.createElement('a')
+      a.download = 'ASCII'
+
+      requestAnimationFrame(() => {
+        a.href = canvas.toDataURL('image/png;base64')
+        a.click()
+      })
+    }
+  }
+
+  function set({
+    charactersTexture,
+    canvas,
+    handTracking,
+    granularity: newGranularity,
+    ...props
+  }) {
     if (charactersTexture) setCharactersTexture(charactersTexture)
     if (canvas) setCanvas(canvas)
     if (handTracking) setHandTracking(handTracking)
-    _set(props)
+    if (newGranularity !== undefined) setGranularity(newGranularity)
+    // Handle other props if needed
   }
 
   // Only render on client side to avoid SSR issues
@@ -768,12 +672,12 @@ export function ASCII({ children }) {
           charactersLimit,
           fontSize,
           fillPixels,
-          color: setColor ? color : undefined,
+          color: enableColor ? color : undefined,
           fit,
           greyscale,
           invert,
           matrix,
-          time: setTime ? time : undefined,
+          time: enableTime ? time : undefined,
           background,
           cameraActive,
           handTrackingEnabled,
@@ -783,6 +687,50 @@ export function ASCII({ children }) {
         }}
       >
         <Inner />
+        <ControlPanel
+          // Visual controls
+          characters={characters}
+          granularity={granularity}
+          charactersLimit={charactersLimit}
+          fontSize={fontSize}
+          fillPixels={fillPixels}
+          setColor={enableColor}
+          color={color}
+          fit={fit}
+          greyscale={greyscale}
+          invert={invert}
+          matrix={matrix}
+          setTime={enableTime}
+          time={time}
+          background={background}
+          // Camera & Hand Tracking
+          cameraActive={cameraActive}
+          handTrackingEnabled={handTrackingEnabled}
+          handControlledGranularity={handControlledGranularity}
+          handTracking={handTracking}
+          canvas={canvas}
+          // Handlers
+          onCharactersChange={setCharacters}
+          onGranularityChange={setGranularity}
+          onCharactersLimitChange={setCharactersLimit}
+          onFontSizeChange={setFontSize}
+          onFillPixelsChange={setFillPixels}
+          onSetColorChange={setEnableColor}
+          onColorChange={setColor}
+          onFitChange={setFit}
+          onGreyscaleChange={setGreyscale}
+          onInvertChange={setInvert}
+          onMatrixChange={setMatrix}
+          onSetTimeChange={setEnableTime}
+          onTimeChange={setTime}
+          onBackgroundChange={setBackground}
+          onCameraToggle={handleCameraToggle}
+          onHandTrackingChange={setHandTrackingEnabled}
+          onHandControlledGranularityChange={setHandControlledGranularity}
+          onCalibrateHandDepth={handleCalibrateHandDepth}
+          onResetCalibration={handleResetCalibration}
+          onScreenshot={handleScreenshot}
+        />
       </AsciiContext.Provider>
     </>
   )

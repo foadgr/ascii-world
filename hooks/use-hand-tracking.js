@@ -46,7 +46,7 @@ export const useHandTracking = ({
   videoElement,
   enabled = false,
   onDepthChange,
-  granularityRange = { min: 4, max: 32 },
+  granularityRange = { min: 1, max: 50 },
 }) => {
   const handsRef = useRef(null)
   const [isInitialized, setIsInitialized] = useState(false)
@@ -167,7 +167,7 @@ export const useHandTracking = ({
               // Map relative depth to granularity with high sensitivity (INVERTED)
               // At -3% depth (closer): granularity = MAXIMUM (32) - more detail when closer
               // At 0% depth (calibrated): granularity = 50% (18)
-              // At +10% depth (further): granularity = MINIMUM (4) - less detail when further
+              // At +10% depth (further): granularity = MINIMUM (1) - less detail when further
 
               // Define the depth range that maps to full granularity range
               const minDepthForMaxGranularity = -0.08 // -3% = max granularity
