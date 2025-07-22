@@ -33,21 +33,24 @@ const DraggableModal = ({ open, onOpenChange, children }) => {
     })
   }
 
-  const handleMouseMove = useCallback((e) => {
-    if (!isDragging) return
+  const handleMouseMove = useCallback(
+    (e) => {
+      if (!isDragging) return
 
-    const newX = e.clientX - dragStart.x
-    const newY = e.clientY - dragStart.y
+      const newX = e.clientX - dragStart.x
+      const newY = e.clientY - dragStart.y
 
-    // Keep modal within viewport bounds
-    const maxX = window.innerWidth - 500 // modal width
-    const maxY = window.innerHeight - 600 // modal height
+      // Keep modal within viewport bounds
+      const maxX = window.innerWidth - 500 // modal width
+      const maxY = window.innerHeight - 600 // modal height
 
-    setPosition({
-      x: Math.max(0, Math.min(newX, maxX)),
-      y: Math.max(0, Math.min(newY, maxY)),
-    })
-  }, [isDragging, dragStart])
+      setPosition({
+        x: Math.max(0, Math.min(newX, maxX)),
+        y: Math.max(0, Math.min(newY, maxY)),
+      })
+    },
+    [isDragging, dragStart]
+  )
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false)
@@ -68,8 +71,8 @@ const DraggableModal = ({ open, onOpenChange, children }) => {
 
   return (
     <>
-      <div 
-        className={s.modalOverlay} 
+      <div
+        className={s.modalOverlay}
         onClick={() => onOpenChange(false)}
         onKeyDown={(e) => e.key === 'Escape' && onOpenChange(false)}
         role="button"
@@ -90,9 +93,9 @@ const DraggableModal = ({ open, onOpenChange, children }) => {
           style={{ cursor: 'grab' }}
         >
           <h2 className={s.modalTitle}>world controls</h2>
-          <button 
+          <button
             type="button"
-            className={s.closeButton} 
+            className={s.closeButton}
             onClick={() => onOpenChange(false)}
           >
             ×
@@ -144,7 +147,9 @@ const ColorInput = ({ label, value, onChange }) => {
   const id = `color-${label.replace(/\s+/g, '-').toLowerCase()}`
   return (
     <div className={s.control}>
-      <label className={s.label} htmlFor={id}>{label}:</label>
+      <label className={s.label} htmlFor={id}>
+        {label}:
+      </label>
       <input
         id={id}
         type="color"
@@ -160,7 +165,9 @@ const TextInput = ({ label, value, onChange }) => {
   const id = `text-${label.replace(/\s+/g, '-').toLowerCase()}`
   return (
     <div className={s.control}>
-      <label className={s.label} htmlFor={id}>{label}:</label>
+      <label className={s.label} htmlFor={id}>
+        {label}:
+      </label>
       <input
         id={id}
         type="text"
@@ -236,7 +243,11 @@ export function ControlPanel({
     <>
       {isDesktop ? (
         <>
-          <button type="button" className={s.trigger} onClick={() => setOpen(true)}>
+          <button
+            type="button"
+            className={s.trigger}
+            onClick={() => setOpen(true)}
+          >
             <svg
               width="24"
               height="24"
