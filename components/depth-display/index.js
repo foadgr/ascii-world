@@ -86,9 +86,7 @@ export const DepthDisplay = () => {
             <span className={s.desktopText}>
               Move closer for max detail, further for min detail.
             </span>
-            <span className={s.mobileText}>
-              Closer = max detail
-            </span>
+            <span className={s.mobileText}>Closer = max detail</span>
           </div>
         </div>
       </div>
