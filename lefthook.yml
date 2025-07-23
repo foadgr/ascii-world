@@ -8,7 +8,7 @@ pre-commit:
 post-merge:
   commands:
     update-env:
-      run: bunx vercel env pull
+      run: pnpm dlx vercel env pull
     install-deps:
       run: pnpm i
 
