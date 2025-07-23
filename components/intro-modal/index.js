@@ -185,6 +185,16 @@ export function IntroModal() {
             @hafezverde <IconBrandX size={14} className={s.xIcon} />
           </a>
         </p>
+        <div className={s.quickLinks}>
+          <a href="/contact">Contact & Support</a>
+          <a
+            href="https://ai.google.dev/edge/mediapipe/solutions/guide"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Learn About Google AI MediaPipe
+          </a>
+        </div>
       </div>
 
       <div className={s.steps}>
