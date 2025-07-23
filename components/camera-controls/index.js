@@ -1,6 +1,6 @@
+import { IconCameraRotate, IconCameraSelfie } from '@tabler/icons-react'
 import { track } from '@vercel/analytics'
 import { Hand, ScanFace } from 'lucide-react'
-import { IconCameraSelfie, IconCameraRotate } from '@tabler/icons-react'
 import { useEffect } from 'react'
 import s from './camera-controls.module.scss'
 
@@ -58,8 +58,8 @@ export function CameraControls({
         type="button"
         className={`${s.cameraButton} ${cameraActive ? s.active : ''}`}
         onClick={() => {
-          track('Camera Toggle', { 
-            action: cameraActive ? 'disable' : 'enable' 
+          track('Camera Toggle', {
+            action: cameraActive ? 'disable' : 'enable',
           })
           onCameraToggle()
         }}

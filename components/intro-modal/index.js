@@ -140,30 +140,33 @@ export function IntroModal() {
     {
       number: 1,
       title: 'Start your camera',
-      description: 'Tap the camera icon to begin'
+      description: 'Tap the camera icon to begin',
     },
     {
       number: 2,
       title: 'Choose tracking mode',
-      description: 'Select either hand or face tracking'
+      description: 'Select either hand or face tracking',
     },
     {
       number: 3,
       title: 'Calibrate your distance',
-      description: 'When you toggle tracking on, tap the orange icon to lock in your current position'
+      description:
+        'When you toggle tracking on, tap the orange icon to lock in your current position',
     },
     {
       number: 4,
       title: 'Control the detail',
-      description: 'Move closer to the camera for maximum detail, or further away for minimum detail'
-    }
+      description:
+        'Move closer to the camera for maximum detail, or further away for minimum detail',
+    },
   ]
 
   if (isMobile && canSwitchCamera) {
     steps.push({
       number: 5,
       title: 'Switch cameras',
-      description: 'Use the camera switch button to toggle between front and back cameras'
+      description:
+        'Use the camera switch button to toggle between front and back cameras',
     })
   }
 
@@ -173,9 +176,9 @@ export function IntroModal() {
         <h3 className={s.subtitle}>Transform your world into ASCII art</h3>
         <p className={s.description}>
           A free project built by{' '}
-          <a 
-            href="https://x.com/hafezverde" 
-            target="_blank" 
+          <a
+            href="https://x.com/hafezverde"
+            target="_blank"
             rel="noopener noreferrer"
             className={s.creditLink}
           >
@@ -220,7 +223,9 @@ export function IntroModal() {
             <Drawer.Content className={s.drawerContent}>
               <div className={s.drawerHeader}>
                 <div className={s.handle} />
-                <Drawer.Title className={s.drawerTitle}>Welcome to ASCII World</Drawer.Title>
+                <Drawer.Title className={s.drawerTitle}>
+                  Welcome to ASCII World
+                </Drawer.Title>
               </div>
               {modalContent}
             </Drawer.Content>
@@ -229,4 +234,4 @@ export function IntroModal() {
       )}
     </>
   )
-} 
+}
