@@ -56,20 +56,84 @@ export const useFaceTracking = ({
   const generateDepthMap = useCallback((landmarks) => {
     if (!landmarks || landmarks.length < 468) return null
 
-    // Create a simplified depth map based on facial regions
+    // Create a much more detailed depth map using specific MediaPipe landmark regions
+    // Reference: https://github.com/google/mediapipe/blob/master/docs/solutions/face_mesh.md
+
     const regions = {
-      nose: [1, 2, 5, 6, 19, 20], // Nose tip area
-      forehead: [9, 10, 151, 337, 299, 333], // Forehead area
-      cheeks: [116, 117, 118, 119, 120, 345, 346, 347, 348, 349], // Cheek areas
-      chin: [18, 175, 199, 200, 398, 399], // Chin area
+      // Central nose area (tip and bridge)
+      noseTip: [
+        1, 2, 5, 6, 19, 20, 94, 125, 141, 235, 236, 237, 238, 239, 240, 241,
+        242,
+      ],
+
+      // Forehead region (more detailed mapping)
+      forehead: [
+        9, 10, 151, 337, 299, 333, 298, 301, 284, 251, 389, 356, 454, 323, 361,
+        340,
+      ],
+
+      // Left and right cheek regions
+      leftCheek: [
+        116, 117, 118, 119, 120, 121, 126, 142, 36, 205, 206, 207, 213, 192,
+        147,
+      ],
+      rightCheek: [
+        345, 346, 347, 348, 349, 350, 355, 371, 266, 425, 426, 427, 436, 416,
+        376,
+      ],
+
+      // Chin and jaw area
+      chin: [
+        18, 175, 199, 200, 398, 399, 172, 136, 150, 149, 176, 148, 152, 377,
+        400, 378, 379, 365,
+      ],
+
+      // Eye regions for more detail
+      leftEye: [
+        33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161,
+        246,
+      ],
+      rightEye: [
+        362, 382, 381, 380, 374, 373, 390, 249, 263, 466, 388, 387, 386, 385,
+        384, 398,
+      ],
+
+      // Mouth area
+      mouth: [
+        61, 84, 17, 314, 405, 320, 307, 375, 321, 308, 324, 318, 78, 191, 80,
+        81, 82,
+      ],
+
+      // Temple regions
+      leftTemple: [
+        21, 54, 103, 67, 109, 10, 151, 9, 162, 127, 234, 93, 132, 58, 172, 136,
+      ],
+      rightTemple: [
+        251, 284, 332, 297, 338, 299, 333, 298, 301, 368, 264, 356, 454, 323,
+        361, 340,
+      ],
     }
 
     const regionDepths = {}
+
+    // Calculate average depth for each region
     for (const [region, indices] of Object.entries(regions)) {
-      const avgDepth =
-        indices.reduce((sum, idx) => sum + landmarks[idx].z, 0) / indices.length
-      regionDepths[region] = avgDepth
+      // Filter valid indices and calculate depth
+      const validLandmarks = indices.filter((idx) => idx < landmarks.length)
+      if (validLandmarks.length > 0) {
+        const avgDepth =
+          validLandmarks.reduce((sum, idx) => sum + landmarks[idx].z, 0) /
+          validLandmarks.length
+        regionDepths[region] = avgDepth
+      } else {
+        regionDepths[region] = 0.0
+      }
     }
+
+    // Also include the original 4 regions for backward compatibility
+    regionDepths.nose = regionDepths.noseTip
+    // forehead and chin already exist in regions, no need to reassign
+    regionDepths.cheeks = (regionDepths.leftCheek + regionDepths.rightCheek) / 2
 
     return regionDepths
   }, [])

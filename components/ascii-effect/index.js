@@ -47,6 +47,15 @@ class ASCIIEffectImpl extends Effect {
         ['uChinDepth', new Uniform(0.0)],
         ['uGranularityMin', new Uniform(granularityRange.min)],
         ['uGranularityMax', new Uniform(granularityRange.max)],
+        // Enhanced face region depth uniforms
+        ['uNoseTipDepth', new Uniform(0.0)],
+        ['uLeftCheekDepth', new Uniform(0.0)],
+        ['uRightCheekDepth', new Uniform(0.0)],
+        ['uLeftEyeDepth', new Uniform(0.0)],
+        ['uRightEyeDepth', new Uniform(0.0)],
+        ['uMouthDepth', new Uniform(0.0)],
+        ['uLeftTempleDepth', new Uniform(0.0)],
+        ['uRightTempleDepth', new Uniform(0.0)],
       ]),
     })
   }
@@ -97,15 +106,39 @@ export const ASCIIEffect = forwardRef((props, ref) => {
     effect.uniforms.get('uFaceDepthMode').value = faceDepthMode || false
 
     if (faceDepthMode && depthMap) {
+      // Original 4 regions for backward compatibility
       effect.uniforms.get('uNoseDepth').value = depthMap.nose || 0.0
       effect.uniforms.get('uForeheadDepth').value = depthMap.forehead || 0.0
       effect.uniforms.get('uCheeksDepth').value = depthMap.cheeks || 0.0
       effect.uniforms.get('uChinDepth').value = depthMap.chin || 0.0
+
+      // Enhanced detailed face regions
+      effect.uniforms.get('uNoseTipDepth').value =
+        depthMap.noseTip || depthMap.nose || 0.0
+      effect.uniforms.get('uLeftCheekDepth').value =
+        depthMap.leftCheek || depthMap.cheeks || 0.0
+      effect.uniforms.get('uRightCheekDepth').value =
+        depthMap.rightCheek || depthMap.cheeks || 0.0
+      effect.uniforms.get('uLeftEyeDepth').value = depthMap.leftEye || 0.0
+      effect.uniforms.get('uRightEyeDepth').value = depthMap.rightEye || 0.0
+      effect.uniforms.get('uMouthDepth').value = depthMap.mouth || 0.0
+      effect.uniforms.get('uLeftTempleDepth').value = depthMap.leftTemple || 0.0
+      effect.uniforms.get('uRightTempleDepth').value =
+        depthMap.rightTemple || 0.0
     } else {
+      // Reset all depth uniforms when face depth mode is disabled
       effect.uniforms.get('uNoseDepth').value = 0.0
       effect.uniforms.get('uForeheadDepth').value = 0.0
       effect.uniforms.get('uCheeksDepth').value = 0.0
       effect.uniforms.get('uChinDepth').value = 0.0
+      effect.uniforms.get('uNoseTipDepth').value = 0.0
+      effect.uniforms.get('uLeftCheekDepth').value = 0.0
+      effect.uniforms.get('uRightCheekDepth').value = 0.0
+      effect.uniforms.get('uLeftEyeDepth').value = 0.0
+      effect.uniforms.get('uRightEyeDepth').value = 0.0
+      effect.uniforms.get('uMouthDepth').value = 0.0
+      effect.uniforms.get('uLeftTempleDepth').value = 0.0
+      effect.uniforms.get('uRightTempleDepth').value = 0.0
     }
 
     if (granularityRange) {
