@@ -50,7 +50,9 @@ export function CameraControls({
           type="button"
           className={s.calibrateButton}
           onClick={
-            handTracking?.isCalibrated ? onResetCalibration : onCalibrateHandDepth
+            handTracking?.isCalibrated
+              ? onResetCalibration
+              : onCalibrateHandDepth
           }
         >
           <svg
@@ -78,4 +80,4 @@ export function CameraControls({
       )}
     </div>
   )
-} 
+}
