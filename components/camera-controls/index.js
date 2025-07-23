@@ -57,8 +57,8 @@ export function CameraControls({
         type="button"
         className={`${s.cameraButton} ${cameraActive ? s.active : ''}`}
         onClick={() => {
-          track('Camera Toggle', { 
-            action: cameraActive ? 'disable' : 'enable' 
+          track('Camera Toggle', {
+            action: cameraActive ? 'disable' : 'enable',
           })
           onCameraToggle()
         }}
