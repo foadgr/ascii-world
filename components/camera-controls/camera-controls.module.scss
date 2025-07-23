@@ -55,26 +55,7 @@
   }
 }
 
-// Status dot inside camera button
-.statusDot {
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  border: 1px solid rgba(0, 0, 0, 0.8);
-  
-  &.calibrated {
-    background: #00ff00;
-    box-shadow: 0 0 4px rgba(0, 255, 0, 0.5);
-  }
-  
-  &.notCalibrated {
-    background: #ff0000;
-    box-shadow: 0 0 4px rgba(255, 0, 0, 0.5);
-  }
-}
+
 
 // Camera flip button
 .flipButton {
@@ -217,10 +198,5 @@
     }
   }
   
-  .statusDot {
-    width: 6px;
-    height: 6px;
-    top: -1px;
-    right: -1px;
-  }
+
 } 

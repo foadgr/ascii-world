@@ -50,9 +50,16 @@ export const DepthDisplay = () => {
     return (
       <div className={s.depthDisplay}>
         <div className={s.instructionMessage}>
-          {trackingType === 'hand'
-            ? 'Show your hand in front of the camera to begin tracking'
-            : 'Show your face in front of the camera to begin tracking'}
+          <span className={s.desktopText}>
+            {trackingType === 'hand'
+              ? 'Show your hand in front of the camera to begin tracking'
+              : 'Show your face in front of the camera to begin tracking'}
+          </span>
+          <span className={s.mobileText}>
+            {trackingType === 'hand'
+              ? 'Show hand to track'
+              : 'Show face to track'}
+          </span>
         </div>
       </div>
     )
@@ -64,12 +71,24 @@ export const DepthDisplay = () => {
       <div className={s.depthDisplay}>
         <div className={s.instructionContainer}>
           <div className={s.instructionMessage}>
-            {trackingType === 'hand'
-              ? 'Place hand at your preferred distance and tap hand icon to lock the current detail.'
-              : 'Position your face at your preferred distance and tap face icon to lock the current detail.'}
+            <span className={s.desktopText}>
+              {trackingType === 'hand'
+                ? 'Place hand at your preferred distance and tap hand icon to lock the current detail.'
+                : 'Position your face at your preferred distance and tap face icon to lock the current detail.'}
+            </span>
+            <span className={s.mobileText}>
+              {trackingType === 'hand'
+                ? 'Set hand distance, tap hand icon to lock'
+                : 'Set face distance, tap face icon to lock'}
+            </span>
           </div>
           <div className={s.instructionSubtitle}>
-            Move closer for max detail, further for min detail.
+            <span className={s.desktopText}>
+              Move closer for max detail, further for min detail.
+            </span>
+            <span className={s.mobileText}>
+              Closer = max detail
+            </span>
           </div>
         </div>
       </div>

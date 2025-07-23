@@ -32,7 +32,7 @@
   max-width: 320px;
   
   @media (max-width: 768px) {
-    max-width: 280px;
+    max-width: 200px;
   }
 }
 
@@ -147,28 +147,45 @@
   letter-spacing: 0.5px;
 }
 
+// Text display controls for mobile/desktop
+.desktopText {
+  display: inline;
+  
+  @media (max-width: 768px) {
+    display: none;
+  }
+}
+
+.mobileText {
+  display: none;
+  
+  @media (max-width: 768px) {
+    display: inline;
+  }
+}
+
 // Responsive adjustments
 @media (max-width: 768px) {
   .depthDisplay {
-    top: 16px;
-    padding: 10px 16px;
-    gap: 12px;
-    font-size: 11px;
+    top: 70px; // Lowered to avoid overlap with camera controls
+    padding: 8px 12px; // Smaller padding
+    gap: 8px; // Reduced gap
+    font-size: 10px;
   }
   
   .depthValue,
   .granularityValue {
-    font-size: 13px;
+    font-size: 12px;
   }
   
   .depthLabel,
   .granularityLabel {
-    font-size: 9px;
+    font-size: 8px;
   }
   
   .depthBar {
-    min-width: 60px;
-    margin: 0 6px;
+    min-width: 50px; // Smaller bar
+    margin: 0 4px;
   }
   
   .depthBarTrack {
@@ -176,6 +193,6 @@
   }
   
   .calibrationMark {
-    font-size: 7px;
+    font-size: 6px;
   }
 } 
