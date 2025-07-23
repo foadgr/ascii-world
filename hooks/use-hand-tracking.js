@@ -46,13 +46,15 @@ export const useHandTracking = ({
   videoElement,
   enabled = false,
   onDepthChange,
-  granularityRange = { min: 4, max: 32 },
+  granularityRange = { min: 1, max: 50 },
+  currentGranularity = null, // Add current granularity prop
 }) => {
   const handsRef = useRef(null)
   const [isInitialized, setIsInitialized] = useState(false)
   const [handDetected, setHandDetected] = useState(false)
   const [isCalibrated, setIsCalibrated] = useState(false)
   const [calibrationDepth, setCalibrationDepth] = useState(null)
+  const [calibrationGranularity, setCalibrationGranularity] = useState(null) // Store calibration granularity
   const [currentDepth, setCurrentDepth] = useState(0)
   const [relativeDepth, setRelativeDepth] = useState(0)
   const [granularity, setGranularity] = useState(granularityRange.min)
@@ -160,39 +162,59 @@ export const useHandTracking = ({
             setCurrentDepth(depth)
 
             // Calculate relative depth if calibrated
-            if (isCalibrated && calibrationDepth !== null) {
-              const relative = depth - calibrationDepth
+            if (
+              isCalibrated &&
+              calibrationDepth !== null &&
+              calibrationGranularity !== null
+            ) {
+              // Invert the calculation: calibration is the reference plane (0)
+              // Hand further away (behind plane) = negative depth
+              // Hand closer (in front of plane) = positive depth
+              const relative = calibrationDepth - depth
               setRelativeDepth(relative)
 
-              // Map relative depth to granularity with high sensitivity (INVERTED)
-              // At -3% depth (closer): granularity = MAXIMUM (32) - more detail when closer
-              // At 0% depth (calibrated): granularity = 50% (18)
-              // At +10% depth (further): granularity = MINIMUM (4) - less detail when further
+              // Map relative depth to granularity
+              // At +8% depth (closer): granularity = MAXIMUM
+              // At 0% depth (calibrated): granularity = calibrationGranularity (preserve user's choice)
+              // At -5% depth (further): granularity = MINIMUM
 
               // Define the depth range that maps to full granularity range
-              const minDepthForMaxGranularity = -0.08 // -3% = max granularity
-              const maxDepthForMinGranularity = 0.1 // +10% = min granularity
+              const maxDepthForMaxGranularity = 0.08 // +8% = max granularity (closer)
+              const minDepthForMinGranularity = -0.05 // -5% = min granularity (further)
 
               // Calculate granularity based on depth position within this range
               let mappedGranularity
 
-              if (relative <= minDepthForMaxGranularity) {
-                // Closer than -3% = maximum granularity
+              if (relative >= maxDepthForMaxGranularity) {
+                // Closer than +8% = maximum granularity
                 mappedGranularity = granularityRange.max
-              } else if (relative >= maxDepthForMinGranularity) {
-                // Further than +10% = minimum granularity
+              } else if (relative <= minDepthForMinGranularity) {
+                // Further than -5% = minimum granularity
                 mappedGranularity = granularityRange.min
               } else {
-                // Linear interpolation between the range (INVERTED)
-                const depthRange =
-                  maxDepthForMinGranularity - minDepthForMaxGranularity // 0.13 total range
+                // Calculate how much range we have above and below the calibration point
+                const totalDepthRange =
+                  maxDepthForMaxGranularity - minDepthForMinGranularity // 0.18 total range
                 const depthPosition =
-                  (relative - minDepthForMaxGranularity) / depthRange // 0 to 1
+                  (relative - minDepthForMinGranularity) / totalDepthRange // 0 to 1
+                const calibrationPosition =
+                  (0 - minDepthForMinGranularity) / totalDepthRange // Where calibration sits in range (around 0.56)
 
-                // Map depth position to granularity range (INVERTED: 0 = max, 1 = min)
-                mappedGranularity =
-                  granularityRange.max -
-                  depthPosition * (granularityRange.max - granularityRange.min)
+                if (depthPosition > calibrationPosition) {
+                  // Closer than calibration: interpolate from calibration granularity to max
+                  const t =
+                    (depthPosition - calibrationPosition) /
+                    (1 - calibrationPosition)
+                  mappedGranularity =
+                    calibrationGranularity +
+                    t * (granularityRange.max - calibrationGranularity)
+                } else {
+                  // Further than calibration: interpolate from min to calibration granularity
+                  const t = depthPosition / calibrationPosition
+                  mappedGranularity =
+                    granularityRange.min +
+                    t * (calibrationGranularity - granularityRange.min)
+                }
               }
 
               const newGranularity = Math.round(
@@ -259,18 +281,26 @@ export const useHandTracking = ({
   // Calibration function
   const calibrateDepth = useCallback(() => {
     if (handDetected && currentDepth !== 0) {
+      const granularityToUse = currentGranularity || granularity
       setCalibrationDepth(currentDepth)
+      setCalibrationGranularity(granularityToUse)
       setIsCalibrated(true)
-      console.log('Hand depth calibrated at:', currentDepth)
+      console.log(
+        'Hand depth calibrated at:',
+        currentDepth,
+        'with granularity:',
+        granularityToUse
+      )
       return true
     }
     return false
-  }, [handDetected, currentDepth])
+  }, [handDetected, currentDepth, currentGranularity, granularity])
 
   // Reset calibration
   const resetCalibration = useCallback(() => {
     setIsCalibrated(false)
     setCalibrationDepth(null)
+    setCalibrationGranularity(null)
     setRelativeDepth(0)
     setGranularity(granularityRange.min)
   }, [granularityRange.min])
@@ -286,5 +316,6 @@ export const useHandTracking = ({
     calibrateDepth,
     resetCalibration,
     calibrationDepth,
+    calibrationGranularity,
   }
 }

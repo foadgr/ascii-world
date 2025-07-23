@@ -1,0 +1,204 @@
+// Button group container
+.buttonGroup {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+  display: flex;
+  gap: 8px;
+}
+
+// Camera button
+.cameraButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 12px 16px;
+  
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  
+  &:hover {
+    background: rgba(0, 0, 0, 0.9);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+  }
+  
+  &.active {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.4);
+    color: #00ff88;
+  }
+}
+
+// Camera icon container with status dot
+.cameraIconContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+}
+
+// Status dot inside camera button
+.statusDot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.8);
+  
+  &.calibrated {
+    background: #00ff00;
+    box-shadow: 0 0 4px rgba(0, 255, 0, 0.5);
+  }
+  
+  &.notCalibrated {
+    background: #ff0000;
+    box-shadow: 0 0 4px rgba(255, 0, 0, 0.5);
+  }
+}
+
+// Camera flip button
+.flipButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 12px;
+  
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  
+  &:hover {
+    background: rgba(0, 0, 0, 0.9);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+    color: #00ff88;
+  }
+  
+  svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+}
+
+// Hand detection/calibration button
+.handButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 12px;
+  
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  
+  &:hover:not(:disabled) {
+    background: rgba(0, 0, 0, 0.9);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+  }
+  
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+  
+  &.detected {
+    color: #00ff00;
+    border-color: rgba(0, 255, 0, 0.3);
+    box-shadow: 0 0 8px rgba(0, 255, 0, 0.2);
+    
+    &:hover:not(:disabled) {
+      background: rgba(0, 255, 0, 0.1);
+    }
+  }
+  
+  &.uncalibrated {
+    color: #ff8800;
+    border-color: rgba(255, 136, 0, 0.3);
+    box-shadow: 0 0 8px rgba(255, 136, 0, 0.2);
+    
+    &:hover:not(:disabled) {
+      background: rgba(255, 136, 0, 0.1);
+    }
+  }
+  
+  &.notDetected {
+    color: #ff0000;
+    border-color: rgba(255, 0, 0, 0.3);
+    box-shadow: 0 0 8px rgba(255, 0, 0, 0.2);
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .buttonGroup {
+    top: 16px;
+    left: 16px;
+    gap: 6px;
+  }
+  
+  .cameraButton {
+    padding: 10px 14px;
+    font-size: 13px;
+    
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
+  
+  .flipButton {
+    padding: 10px;
+    
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
+  
+  .handButton {
+    padding: 10px;
+    
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
+  
+  .statusDot {
+    width: 6px;
+    height: 6px;
+    top: -1px;
+    right: -1px;
+  }
+} 
