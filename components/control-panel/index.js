@@ -44,8 +44,8 @@ const DraggableModal = ({ children, open, onOpenChange }) => {
   if (!open) return null
 
   return (
-        <div 
-      className={s.modalOverlay} 
+    <div
+      className={s.modalOverlay}
       onClick={() => onOpenChange(false)}
       onKeyDown={(e) => {
         if (e.key === 'Escape') onOpenChange(false)
