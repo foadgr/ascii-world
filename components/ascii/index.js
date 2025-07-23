@@ -18,6 +18,8 @@ import {
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import tunnel from 'tunnel-rat'
+import { CameraControls } from '../camera-controls'
+import { ColorControls } from '../color-controls'
 import { ControlPanel } from '../control-panel'
 import s from './ascii.module.scss'
 import { AsciiContext } from './context'
@@ -610,6 +612,7 @@ export function ASCII({ children }) {
   const [enableTime, setEnableTime] = useState(DEFAULT.setTime)
   const [time, setTime] = useState(DEFAULT.time)
   const [background, setBackground] = useState(DEFAULT.background)
+  const [controlPanelOpen, setControlPanelOpen] = useState(false)
 
   // Handler functions for control panel
   const handleCameraToggle = () => {
@@ -625,18 +628,6 @@ export function ASCII({ children }) {
   const handleResetCalibration = () => {
     handTracking?.resetCalibration()
     console.log('Hand calibration reset')
-  }
-
-  const handleScreenshot = () => {
-    if (canvas) {
-      const a = document.createElement('a')
-      a.download = 'ASCII'
-
-      requestAnimationFrame(() => {
-        a.href = canvas.toDataURL('image/png;base64')
-        a.click()
-      })
-    }
   }
 
   function set({
@@ -694,42 +685,45 @@ export function ASCII({ children }) {
           charactersLimit={charactersLimit}
           fontSize={fontSize}
           fillPixels={fillPixels}
-          setColor={enableColor}
-          color={color}
           fit={fit}
           greyscale={greyscale}
           invert={invert}
           matrix={matrix}
           setTime={enableTime}
           time={time}
-          background={background}
-          // Camera & Hand Tracking
-          cameraActive={cameraActive}
-          handTrackingEnabled={handTrackingEnabled}
-          handControlledGranularity={handControlledGranularity}
-          handTracking={handTracking}
-          canvas={canvas}
           // Handlers
           onCharactersChange={setCharacters}
           onGranularityChange={setGranularity}
           onCharactersLimitChange={setCharactersLimit}
           onFontSizeChange={setFontSize}
           onFillPixelsChange={setFillPixels}
-          onSetColorChange={setEnableColor}
-          onColorChange={setColor}
           onFitChange={setFit}
           onGreyscaleChange={setGreyscale}
           onInvertChange={setInvert}
           onMatrixChange={setMatrix}
           onSetTimeChange={setEnableTime}
           onTimeChange={setTime}
+          onOpenChange={setControlPanelOpen}
+        />
+        <ColorControls
+          setColor={enableColor}
+          color={color}
+          background={background}
+          onSetColorChange={setEnableColor}
+          onColorChange={setColor}
           onBackgroundChange={setBackground}
+          hidden={controlPanelOpen}
+        />
+        <CameraControls
+          // Camera & Hand Tracking
+          cameraActive={cameraActive}
+          handTracking={handTracking}
+          // Camera Handlers
           onCameraToggle={handleCameraToggle}
           onHandTrackingChange={setHandTrackingEnabled}
           onHandControlledGranularityChange={setHandControlledGranularity}
           onCalibrateHandDepth={handleCalibrateHandDepth}
           onResetCalibration={handleResetCalibration}
-          onScreenshot={handleScreenshot}
         />
       </AsciiContext.Provider>
     </>

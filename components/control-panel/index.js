@@ -42,7 +42,7 @@ const DraggableModal = ({ open, onOpenChange, children }) => {
 
       // Keep modal within viewport bounds
       const maxX = window.innerWidth - 500 // modal width
-      const maxY = window.innerHeight - 600 // modal height
+      const maxY = window.innerHeight - 200 // modal height
 
       setPosition({
         x: Math.max(0, Math.min(newX, maxX)),
@@ -197,22 +197,12 @@ export function ControlPanel({
   charactersLimit,
   fontSize,
   fillPixels,
-  setColor,
-  color,
   fit,
   greyscale,
   invert,
   matrix,
   setTime,
   time,
-  background,
-
-  // Camera & Hand Tracking
-  cameraActive,
-  handTrackingEnabled,
-  handControlledGranularity,
-  handTracking,
-  canvas,
 
   // Handlers
   onCharactersChange,
@@ -220,24 +210,21 @@ export function ControlPanel({
   onCharactersLimitChange,
   onFontSizeChange,
   onFillPixelsChange,
-  onSetColorChange,
-  onColorChange,
   onFitChange,
   onGreyscaleChange,
   onInvertChange,
   onMatrixChange,
   onSetTimeChange,
   onTimeChange,
-  onBackgroundChange,
-  onCameraToggle,
-  onHandTrackingChange,
-  onHandControlledGranularityChange,
-  onCalibrateHandDepth,
-  onResetCalibration,
-  onScreenshot,
+  onOpenChange,
 }) {
   const [open, setOpen] = useState(false)
   const isDesktop = useIsDesktop()
+
+  const handleOpenChange = (newOpen) => {
+    setOpen(newOpen)
+    onOpenChange?.(newOpen)
+  }
 
   return (
     <>
@@ -246,7 +233,7 @@ export function ControlPanel({
           <button
             type="button"
             className={s.trigger}
-            onClick={() => setOpen(true)}
+            onClick={() => handleOpenChange(true)}
           >
             <svg
               width="24"
@@ -260,10 +247,9 @@ export function ControlPanel({
               <circle cx="12" cy="12" r="3" />
               <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1" />
             </svg>
-            controls
           </button>
 
-          <DraggableModal open={open} onOpenChange={setOpen}>
+          <DraggableModal open={open} onOpenChange={handleOpenChange}>
             <div className={s.controls}>
               {/* Visual Controls Section */}
               <div className={s.section}>
@@ -348,73 +334,12 @@ export function ControlPanel({
                     step={0.01}
                   />
                 )}
-
-                <div className={s.colorRow}>
-                  <Toggle
-                    label="set color"
-                    value={setColor}
-                    onChange={onSetColorChange}
-                  />
-
-                  {setColor && (
-                    <ColorInput
-                      label="color"
-                      value={color}
-                      onChange={onColorChange}
-                    />
-                  )}
-
-                  <ColorInput
-                    label="background"
-                    value={background}
-                    onChange={onBackgroundChange}
-                  />
-                </div>
-              </div>
-
-              {/* Camera & Hand Tracking Section */}
-              <div className={s.section}>
-                <h3 className={s.sectionTitle}>camera & hand tracking</h3>
-
-                <Button onClick={onCameraToggle}>
-                  {cameraActive ? 'stop camera' : 'start camera'}
-                </Button>
-
-                <Toggle
-                  label="hand tracking & controls"
-                  value={handTrackingEnabled}
-                  onChange={(value) => {
-                    onHandTrackingChange(value)
-                    onHandControlledGranularityChange(value)
-                  }}
-                  disabled={!cameraActive}
-                />
-
-                {handTracking?.handDetected && (
-                  <div className={s.handControls}>
-                    <Button
-                      onClick={onCalibrateHandDepth}
-                      disabled={!handTracking?.handDetected}
-                    >
-                      calibrate hand depth
-                    </Button>
-
-                    <Button
-                      onClick={onResetCalibration}
-                      disabled={!handTracking?.isCalibrated}
-                    >
-                      reset calibration
-                    </Button>
-                  </div>
-                )}
-
-                <Button onClick={onScreenshot}>screenshot</Button>
               </div>
             </div>
           </DraggableModal>
         </>
       ) : (
-        <Drawer.Root open={open} onOpenChange={setOpen}>
+        <Drawer.Root open={open} onOpenChange={handleOpenChange}>
           <Drawer.Trigger asChild>
             <button type="button" className={s.trigger}>
               <svg
@@ -429,7 +354,6 @@ export function ControlPanel({
                 <circle cx="12" cy="12" r="3" />
                 <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1" />
               </svg>
-              controls
             </button>
           </Drawer.Trigger>
 
@@ -525,67 +449,6 @@ export function ControlPanel({
                       step={0.01}
                     />
                   )}
-
-                  <div className={s.colorRow}>
-                    <Toggle
-                      label="set color"
-                      value={setColor}
-                      onChange={onSetColorChange}
-                    />
-
-                    {setColor && (
-                      <ColorInput
-                        label="color"
-                        value={color}
-                        onChange={onColorChange}
-                      />
-                    )}
-
-                    <ColorInput
-                      label="background"
-                      value={background}
-                      onChange={onBackgroundChange}
-                    />
-                  </div>
-                </div>
-
-                {/* Camera & Hand Tracking Section */}
-                <div className={s.section}>
-                  <h3 className={s.sectionTitle}>camera & hand tracking</h3>
-
-                  <Button onClick={onCameraToggle}>
-                    {cameraActive ? 'stop camera' : 'start camera'}
-                  </Button>
-
-                  <Toggle
-                    label="hand tracking & controls"
-                    value={handTrackingEnabled}
-                    onChange={(value) => {
-                      onHandTrackingChange(value)
-                      onHandControlledGranularityChange(value)
-                    }}
-                    disabled={!cameraActive}
-                  />
-
-                  {handTracking?.handDetected && (
-                    <div className={s.handControls}>
-                      <Button
-                        onClick={onCalibrateHandDepth}
-                        disabled={!handTracking?.handDetected}
-                      >
-                        calibrate hand depth
-                      </Button>
-
-                      <Button
-                        onClick={onResetCalibration}
-                        disabled={!handTracking?.isCalibrated}
-                      >
-                        reset calibration
-                      </Button>
-                    </div>
-                  )}
-
-                  <Button onClick={onScreenshot}>screenshot</Button>
                 </div>
               </div>
             </Drawer.Content>

@@ -262,20 +262,7 @@
   }
 }
 
-// Color row - horizontal layout for color controls
-.colorRow {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
 
-  @media (max-width: 480px) {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-  }
-}
 
 // Color input
 .colorInput {
