@@ -59,10 +59,10 @@ export function CameraControls({
         <button
           type="button"
           className={`${s.handButton} ${
-            !handTracking?.handDetected 
-              ? s.notDetected 
-              : handTracking?.isCalibrated 
-                ? s.detected 
+            !handTracking?.handDetected
+              ? s.notDetected
+              : handTracking?.isCalibrated
+                ? s.detected
                 : s.uncalibrated
           }`}
           onClick={
@@ -74,9 +74,9 @@ export function CameraControls({
           }
           disabled={!handTracking?.handDetected}
           title={
-            !handTracking?.handDetected 
-              ? 'No hand detected' 
-              : handTracking?.isCalibrated 
+            !handTracking?.handDetected
+              ? 'No hand detected'
+              : handTracking?.isCalibrated
                 ? 'Hand calibrated - click to reset'
                 : 'Hand detected - click to calibrate'
           }

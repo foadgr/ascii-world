@@ -124,8 +124,13 @@ const Scene = () => {
   const [cameraStream, setCameraStream] = useState(null)
   const [cameraVideo, setCameraVideo] = useState(null)
   const [skiaReady, setSkiaReady] = useState(false)
-  const { cameraActive, handTrackingEnabled, handControlledGranularity, granularity, set } =
-    useContext(AsciiContext)
+  const {
+    cameraActive,
+    handTrackingEnabled,
+    handControlledGranularity,
+    granularity,
+    set,
+  } = useContext(AsciiContext)
 
   // Initialize CanvasKit when component mounts
   useEffect(() => {
