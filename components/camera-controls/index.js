@@ -1,5 +1,6 @@
 import { track } from '@vercel/analytics'
-import { Hand, RotateCcw, ScanFace } from 'lucide-react'
+import { Hand, ScanFace } from 'lucide-react'
+import { IconCameraSelfie, IconCameraRotate } from '@tabler/icons-react'
 import { useEffect } from 'react'
 import s from './camera-controls.module.scss'
 
@@ -65,8 +66,8 @@ export function CameraControls({
       >
         <div className={s.cameraIconContainer}>
           <svg
-            width="18"
-            height="18"
+            width="23"
+            height="23"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -87,7 +88,11 @@ export function CameraControls({
           onClick={onCameraSwitch}
           title={`Switch to ${cameraFacingMode === 'user' ? 'back' : 'front'} camera`}
         >
-          <RotateCcw size={18} />
+          {cameraFacingMode === 'user' ? (
+            <IconCameraRotate size={23} />
+          ) : (
+            <IconCameraSelfie size={23} />
+          )}
         </button>
       )}
 
@@ -134,7 +139,7 @@ export function CameraControls({
                     : 'Hand detected - click to calibrate'
             }
           >
-            <Hand size={18} />
+            <Hand size={23} />
           </button>
 
           {/* Face Tracking Button */}
@@ -177,7 +182,7 @@ export function CameraControls({
                     : 'Face detected - click to calibrate'
             }
           >
-            <ScanFace size={18} />
+            <ScanFace size={23} />
           </button>
         </>
       )}
