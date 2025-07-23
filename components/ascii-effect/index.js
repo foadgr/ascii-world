@@ -1,7 +1,7 @@
 import { useThree } from '@react-three/fiber'
 import { BlendFunction, Effect } from 'postprocessing'
 import { forwardRef, useEffect, useMemo } from 'react'
-import { Color, Uniform } from 'three'
+import { Color, DataTexture, FloatType, NearestFilter, RedFormat, Uniform } from 'three'
 import fragmentShader from './fragment.glsl'
 
 // https://github.com/pmndrs/postprocessing/wiki/Custom-Effects
@@ -24,6 +24,9 @@ class ASCIIEffectImpl extends Effect {
     faceDepthMode = false,
     depthMap = null,
     granularityRange = { min: 1, max: 50 },
+    // Face landmark mode parameters (new face filter mode)
+    faceLandmarkMode = false,
+    landmarkTexture = null,
   } = {}) {
     super('ASCIIEffect', fragmentShader, {
       blendFunction: BlendFunction.NORMAL,
@@ -56,6 +59,10 @@ class ASCIIEffectImpl extends Effect {
         ['uMouthDepth', new Uniform(0.0)],
         ['uLeftTempleDepth', new Uniform(0.0)],
         ['uRightTempleDepth', new Uniform(0.0)],
+        // Face landmark mode uniforms (for face filter mode)
+        ['uFaceLandmarkMode', new Uniform(faceLandmarkMode)],
+        ['uLandmarkCount', new Uniform(0)],
+        ['uDepthTexture', new Uniform(null)],
       ]),
     })
   }
@@ -89,6 +96,8 @@ export const ASCIIEffect = forwardRef((props, ref) => {
       faceDepthMode,
       depthMap,
       granularityRange,
+      faceLandmarkMode,
+      landmarkTexture,
     } = props
 
     effect.uniforms.get('uCharactersTexture').value = charactersTexture
@@ -144,6 +153,49 @@ export const ASCIIEffect = forwardRef((props, ref) => {
     if (granularityRange) {
       effect.uniforms.get('uGranularityMin').value = granularityRange.min
       effect.uniforms.get('uGranularityMax').value = granularityRange.max
+    }
+
+    // Update face landmark mode uniforms
+    effect.uniforms.get('uFaceLandmarkMode').value = faceLandmarkMode || false
+    
+    if (faceLandmarkMode && landmarkTexture) {
+      effect.uniforms.get('uLandmarkCount').value = landmarkTexture.landmarkCount || 0
+      
+      // Create and pass the depth texture to the shader
+      if (landmarkTexture.depthTexture) {
+        const textureSize = landmarkTexture.textureSize || 64
+        
+        // Create a WebGL DataTexture from the depth data
+        const depthTexture = new DataTexture(
+          landmarkTexture.depthTexture, // Float32Array data
+          textureSize, // width
+          textureSize, // height
+          RedFormat, // format (single channel)
+          FloatType // type
+        )
+        
+        // Set texture parameters for proper sampling
+        depthTexture.minFilter = NearestFilter
+        depthTexture.magFilter = NearestFilter
+        depthTexture.needsUpdate = true
+        
+        // Pass the texture to the shader
+        effect.uniforms.get('uDepthTexture').value = depthTexture
+        
+        console.log('🎭 Face Filter Mode ACTIVE:', {
+          landmarkCount: landmarkTexture.landmarkCount,
+          textureSize: textureSize,
+          depthTextureLength: landmarkTexture.depthTexture.length,
+          faceLandmarkMode,
+          sampleDepthValues: Array.from(landmarkTexture.depthTexture.slice(0, 10))
+        })
+      }
+    } else {
+      effect.uniforms.get('uLandmarkCount').value = 0
+      effect.uniforms.get('uDepthTexture').value = null
+      if (faceLandmarkMode) {
+        console.log('⚠️ Face Filter Mode enabled but no landmark texture:', { faceLandmarkMode, landmarkTexture })
+      }
     }
 
     effect.overwriteTime = time !== undefined

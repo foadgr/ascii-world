@@ -181,6 +181,59 @@
   }
 }
 
+// Face filter mode button (special face mode)
+.filterButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 12px;
+  
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  
+  &:hover {
+    background: rgba(0, 0, 0, 0.9);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+  }
+  
+  // Active filter mode - special purple styling to distinguish from tracking modes
+  &.active {
+    background: rgba(138, 43, 226, 0.3);
+    border-color: rgba(138, 43, 226, 0.6);
+    color: #da70d6;
+    box-shadow: 0 0 12px rgba(138, 43, 226, 0.3);
+    
+    &:hover {
+      background: rgba(138, 43, 226, 0.4);
+      border-color: rgba(138, 43, 226, 0.8);
+    }
+  }
+  
+  // Inactive mode
+  &:not(.active) {
+    opacity: 0.8;
+    color: rgba(255, 255, 255, 0.9);
+    
+    &:hover {
+      opacity: 1;
+      color: #da70d6;
+    }
+  }
+  
+  svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+}
+
 // Responsive adjustments
 @media (max-width: 768px) {
   .buttonGroup {
@@ -209,6 +262,15 @@
   }
   
   .trackingButton {
+    padding: 10px;
+    
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
+  
+  .filterButton {
     padding: 10px;
     
     svg {

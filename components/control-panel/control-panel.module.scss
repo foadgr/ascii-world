@@ -249,6 +249,12 @@
   cursor: not-allowed;
 }
 
+.disabledNote {
+  color: #ff8800;
+  font-size: 12px;
+  font-weight: normal;
+}
+
 // Toggle grid - 2x2 for main toggles
 .toggleGrid {
   display: grid;

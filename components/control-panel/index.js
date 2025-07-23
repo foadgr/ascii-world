@@ -108,12 +108,13 @@ const DraggableModal = ({ open, onOpenChange, children }) => {
   )
 }
 
-const Slider = ({ label, value, onChange, min, max, step = 1 }) => {
+const Slider = ({ label, value, onChange, min, max, step = 1, disabled = false }) => {
   const id = `slider-${label.replace(/\s+/g, '-').toLowerCase()}`
   return (
     <div className={s.control}>
-      <label className={s.label} htmlFor={id}>
+      <label className={`${s.label} ${disabled ? s.disabled : ''}`} htmlFor={id}>
         {label}: <span className={s.value}>{value}</span>
+        {disabled && <span className={s.disabledNote}> (controlled by face filter)</span>}
       </label>
       <input
         id={id}
@@ -122,8 +123,9 @@ const Slider = ({ label, value, onChange, min, max, step = 1 }) => {
         max={max}
         step={step}
         value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className={s.slider}
+        onChange={(e) => !disabled && onChange(Number(e.target.value))}
+        disabled={disabled}
+        className={`${s.slider} ${disabled ? s.disabled : ''}`}
       />
     </div>
   )
@@ -162,19 +164,21 @@ const ColorInput = ({ label, value, onChange }) => {
   )
 }
 
-const TextInput = ({ label, value, onChange }) => {
+const TextInput = ({ label, value, onChange, disabled = false }) => {
   const id = `text-${label.replace(/\s+/g, '-').toLowerCase()}`
   return (
     <div className={s.control}>
-      <label className={s.label} htmlFor={id}>
+      <label className={`${s.label} ${disabled ? s.disabled : ''}`} htmlFor={id}>
         {label}:
+        {disabled && <span className={s.disabledNote}> (controlled by face filter)</span>}
       </label>
       <input
         id={id}
         type="text"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={s.textInput}
+        onChange={(e) => !disabled && onChange(e.target.value)}
+        disabled={disabled}
+        className={`${s.textInput} ${disabled ? s.disabled : ''}`}
       />
     </div>
   )
@@ -218,6 +222,9 @@ export function ControlPanel({
   onSetTimeChange,
   onTimeChange,
   onOpenChange,
+  
+  // New prop for face filter mode
+  faceFilterMode = false,
 }) {
   const [open, setOpen] = useState(false)
   const isDesktop = useIsDesktop()
@@ -249,6 +256,7 @@ export function ControlPanel({
                   label="characters"
                   value={characters}
                   onChange={onCharactersChange}
+                  disabled={faceFilterMode}
                 />
 
                 <Slider
@@ -258,6 +266,7 @@ export function ControlPanel({
                   min={1}
                   max={50}
                   step={1}
+                  disabled={faceFilterMode}
                 />
 
                 <Slider
@@ -267,6 +276,7 @@ export function ControlPanel({
                   min={1}
                   max={48}
                   step={1}
+                  disabled={faceFilterMode}
                 />
 
                 <Slider
@@ -353,6 +363,7 @@ export function ControlPanel({
                     label="characters"
                     value={characters}
                     onChange={onCharactersChange}
+                    disabled={faceFilterMode}
                   />
 
                   <Slider
@@ -362,6 +373,7 @@ export function ControlPanel({
                     min={1}
                     max={50}
                     step={1}
+                    disabled={faceFilterMode}
                   />
 
                   <Slider
@@ -371,6 +383,7 @@ export function ControlPanel({
                     min={1}
                     max={48}
                     step={1}
+                    disabled={faceFilterMode}
                   />
 
                   <Slider

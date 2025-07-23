@@ -25,6 +25,7 @@ export const useFaceTracking = ({
   onDepthChange,
   granularityRange = { min: 1, max: 50 },
   currentGranularity = null,
+  faceFilterMode = false, // New mode for direct landmark-to-pixel mapping
 }) => {
   const faceLandmarkerRef = useRef(null)
   const [isInitialized, setIsInitialized] = useState(false)
@@ -37,6 +38,7 @@ export const useFaceTracking = ({
   const [granularity, setGranularity] = useState(granularityRange.min)
   const [landmarks, setLandmarks] = useState([])
   const [depthMap, setDepthMap] = useState(null)
+  const [landmarkTexture, setLandmarkTexture] = useState(null) // For face filter mode
   const animationFrameRef = useRef()
 
   // Calculate average face depth from nose and surrounding landmarks
@@ -138,6 +140,102 @@ export const useFaceTracking = ({
     return regionDepths
   }, [])
 
+  // Generate a detailed landmark texture for face filter mode using all 468 landmarks
+  const generateLandmarkTexture = useCallback((landmarks) => {
+    if (!landmarks || landmarks.length < 468) return null
+
+    // Create a 64x64 depth texture (can be adjusted for quality vs performance)
+    const textureSize = 64
+    const depthData = new Float32Array(textureSize * textureSize)
+    
+    // Initialize with a base depth (far away)
+    depthData.fill(1.0)
+    
+    // Create a depth map by interpolating landmark depths across UV space
+    for (let y = 0; y < textureSize; y++) {
+      for (let x = 0; x < textureSize; x++) {
+        const u = x / (textureSize - 1)
+        const v = y / (textureSize - 1)
+        
+        // Find the closest landmarks to this UV coordinate
+        let closestDepth = 1.0
+        let totalWeight = 0
+        let weightedDepth = 0
+        
+        // Sample key landmarks for depth calculation
+        const keyLandmarks = [
+          // Nose tip and bridge (closest to camera)
+          { index: 1, weight: 2.0 },   // nose tip
+          { index: 2, weight: 1.5 },   // nose bridge
+          { index: 19, weight: 1.5 },  // nose bridge
+          { index: 94, weight: 1.0 },  // nose side
+          { index: 125, weight: 1.0 }, // nose side
+          
+          // Eyes (medium depth)
+          { index: 33, weight: 1.0 },  // left eye inner
+          { index: 133, weight: 1.0 }, // left eye outer
+          { index: 362, weight: 1.0 }, // right eye inner
+          { index: 263, weight: 1.0 }, // right eye outer
+          
+          // Cheeks (medium depth)
+          { index: 117, weight: 0.8 }, // left cheek
+          { index: 346, weight: 0.8 }, // right cheek
+          
+          // Forehead (further back)
+          { index: 10, weight: 0.6 },  // forehead center
+          { index: 151, weight: 0.6 }, // forehead
+          
+          // Chin (medium depth)
+          { index: 175, weight: 0.7 }, // chin
+          { index: 199, weight: 0.7 }, // chin
+        ]
+        
+        keyLandmarks.forEach(({ index, weight }) => {
+          if (landmarks[index]) {
+            const landmark = landmarks[index]
+            // Convert landmark x,y to UV space (landmarks are in normalized 0-1 range)
+            const landmarkU = landmark.x
+            const landmarkV = 1.0 - landmark.y // Flip Y coordinate
+            
+            // Calculate distance from current UV to landmark UV
+            const distance = Math.sqrt(
+              Math.pow(u - landmarkU, 2) + Math.pow(v - landmarkV, 2)
+            )
+            
+            // Use inverse distance weighting with falloff
+            const falloff = Math.exp(-distance * 8.0) // Exponential falloff
+            const landmarkWeight = weight * falloff
+            
+            if (landmarkWeight > 0.01) {
+              // Use the Z coordinate (depth) of the landmark
+              // Closer landmarks have smaller Z values, further have larger Z values
+              const landmarkDepth = landmark.z
+              
+              weightedDepth += landmarkDepth * landmarkWeight
+              totalWeight += landmarkWeight
+            }
+          }
+        })
+        
+        if (totalWeight > 0) {
+          closestDepth = weightedDepth / totalWeight
+          // Normalize depth: closer landmarks (smaller z) should give smaller granularity
+          // Further landmarks (larger z) should give larger granularity
+          closestDepth = Math.max(0.0, Math.min(1.0, closestDepth))
+        }
+        
+        depthData[y * textureSize + x] = closestDepth
+      }
+    }
+    
+    return {
+      landmarks,
+      depthTexture: depthData,
+      textureSize,
+      landmarkCount: landmarks.length,
+    }
+  }, [])
+
   // Initialize MediaPipe Face Landmarker
   useEffect(() => {
     if (!enabled) return
@@ -217,11 +315,20 @@ export const useFaceTracking = ({
             const faceDepthMap = generateDepthMap(detectedLandmarks)
             setDepthMap(faceDepthMap)
 
-            // Calculate relative depth if calibrated
+            // Generate detailed landmark texture for face filter mode (always when enabled)
+            let landmarkTextureData = null
+            if (faceFilterMode) {
+              landmarkTextureData = generateLandmarkTexture(detectedLandmarks)
+              setLandmarkTexture(landmarkTextureData)
+              console.log('Generated landmark texture with', landmarkTextureData?.landmarks?.length, 'landmarks')
+            }
+
+            // Calculate relative depth if calibrated (only for traditional face tracking)
             if (
               isCalibrated &&
               calibrationDepth !== null &&
-              calibrationGranularity !== null
+              calibrationGranularity !== null &&
+              !faceFilterMode // Don't use calibration logic in face filter mode
             ) {
               // Similar logic to hand tracking but for face
               const relative = calibrationDepth - depth
@@ -278,6 +385,22 @@ export const useFaceTracking = ({
                   faceDetected: true,
                   landmarks: detectedLandmarks,
                   depthMap: faceDepthMap,
+                  landmarkTexture: landmarkTextureData, // Add landmark texture for face filter mode
+                  faceFilterMode,
+                })
+              }
+            } else {
+              // Handle non-calibrated face detection (including face filter mode)
+              if (onDepthChange) {
+                onDepthChange({
+                  relativeDepth: 0,
+                  normalizedDepth: 0,
+                  granularity: granularityRange.min,
+                  faceDetected: true,
+                  landmarks: detectedLandmarks,
+                  depthMap: faceDepthMap,
+                  landmarkTexture: landmarkTextureData, // Include landmark texture even without calibration
+                  faceFilterMode,
                 })
               }
             }
@@ -285,6 +408,7 @@ export const useFaceTracking = ({
             setFaceDetected(false)
             setLandmarks([])
             setDepthMap(null)
+            setLandmarkTexture(null)
             if (onDepthChange) {
               onDepthChange({
                 relativeDepth: 0,
@@ -293,6 +417,8 @@ export const useFaceTracking = ({
                 faceDetected: false,
                 landmarks: [],
                 depthMap: null,
+                landmarkTexture: null,
+                faceFilterMode,
               })
             }
           }
@@ -315,11 +441,13 @@ export const useFaceTracking = ({
     videoElement,
     calculateFaceDepth,
     generateDepthMap,
+    generateLandmarkTexture,
     isCalibrated,
     calibrationDepth,
     calibrationGranularity,
     granularityRange,
     onDepthChange,
+    faceFilterMode,
   ])
 
   // Calibration function
@@ -348,6 +476,7 @@ export const useFaceTracking = ({
     setRelativeDepth(0)
     setGranularity(granularityRange.min)
     setDepthMap(null)
+    setLandmarkTexture(null)
   }, [granularityRange.min])
 
   return {
@@ -359,6 +488,7 @@ export const useFaceTracking = ({
     granularity,
     landmarks,
     depthMap,
+    landmarkTexture, // Add for face filter mode
     calibrateDepth,
     resetCalibration,
     calibrationDepth,

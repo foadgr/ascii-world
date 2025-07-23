@@ -9,6 +9,7 @@ export function CameraControls({
   handTracking,
   faceTracking,
   trackingMode, // 'hand' or 'face'
+  faceFilterMode = false, // New prop for face filter mode
   onCameraToggle,
   onCameraSwitch,
   onHandTrackingChange,
@@ -19,6 +20,7 @@ export function CameraControls({
   onCalibrateHandDepth,
   onCalibrateFaceDepth,
   onResetCalibration,
+  onFaceFilterModeChange,
 }) {
   // Auto-enable tracking when camera is active based on mode
   useEffect(() => {
@@ -178,6 +180,36 @@ export function CameraControls({
           >
             <ScanFace size={18} />
           </button>
+          
+          {/* Face Filter Mode Button - Only show when face tracking is active */}
+          {trackingMode === 'face' && faceTracking?.faceDetected && (
+            <button
+              type="button"
+              className={`${s.filterButton} ${faceFilterMode ? s.active : ''}`}
+              onClick={() => onFaceFilterModeChange(!faceFilterMode)}
+              title={
+                faceFilterMode
+                  ? 'Disable face filter mode (enable world controls)'
+                  : 'Enable face filter mode (face controls granularity)'
+              }
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <title>Face Filter</title>
+                <circle cx="12" cy="12" r="10" />
+                <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+                <line x1="9" y1="9" x2="9.01" y2="9" />
+                <line x1="15" y1="9" x2="15.01" y2="9" />
+                <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+              </svg>
+            </button>
+          )}
         </>
       )}
     </div>

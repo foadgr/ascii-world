@@ -133,6 +133,7 @@ const Scene = () => {
     handControlledGranularity,
     faceTrackingEnabled,
     faceControlledGranularity,
+    faceFilterMode,
     granularity,
     set,
   } = useContext(AsciiContext)
@@ -172,8 +173,10 @@ const Scene = () => {
     enabled: faceTrackingEnabled && cameraActive,
     granularityRange: { min: 1, max: 50 },
     currentGranularity: granularity,
+    faceFilterMode, // Add face filter mode support
     onDepthChange: (data) => {
-      if (faceControlledGranularity && data.faceDetected) {
+      if (faceControlledGranularity && data.faceDetected && !faceFilterMode) {
+        // Only control granularity manually when not in face filter mode
         set({ granularity: data.granularity })
       }
     },
@@ -549,13 +552,20 @@ function Postprocessing() {
     fit,
     trackingMode,
     faceTracking,
+    faceFilterMode,
   } = useContext(AsciiContext)
 
-  // Determine if we should use face depth mode
+  // Determine face rendering mode
   const faceDepthMode =
     trackingMode === 'face' &&
     faceTracking?.faceDetected &&
-    faceTracking?.depthMap
+    faceTracking?.depthMap &&
+    !faceFilterMode // Don't use face depth mode when face filter mode is active
+
+  const faceLandmarkMode = 
+    faceFilterMode &&
+    faceTracking?.faceDetected &&
+    faceTracking?.landmarkTexture
 
   return (
     <EffectComposer>
@@ -572,7 +582,9 @@ function Postprocessing() {
         time={time}
         background={background}
         faceDepthMode={faceDepthMode}
+        faceLandmarkMode={faceLandmarkMode}
         depthMap={faceTracking?.depthMap}
+        landmarkTexture={faceTracking?.landmarkTexture}
         granularityRange={{ min: 1, max: 50 }}
       />
     </EffectComposer>
@@ -637,6 +649,7 @@ const DEFAULT = {
   faceTrackingEnabled: false,
   faceControlledGranularity: false,
   trackingMode: 'hand', // 'hand' or 'face'
+  faceFilterMode: false, // New face filter mode that uses all landmarks for direct per-pixel control
   cameraFacingMode: 'user', // Add default facing mode
 }
 
@@ -670,6 +683,7 @@ export function ASCII({ children }) {
   const [trackingMode, setTrackingMode] = useState(DEFAULT.trackingMode)
   const [handTracking, setHandTracking] = useState(null)
   const [faceTracking, setFaceTracking] = useState(null)
+  const [faceFilterMode, setFaceFilterMode] = useState(DEFAULT.faceFilterMode)
 
   // Control states
   const [characters, setCharacters] = useState(DEFAULT.characters)
@@ -731,6 +745,17 @@ export function ASCII({ children }) {
     faceTracking?.resetCalibration()
   }
 
+  const handleFaceFilterModeChange = (enabled) => {
+    setFaceFilterMode(enabled)
+    // When enabling face filter mode, ensure face tracking is enabled
+    if (enabled) {
+      setFaceTrackingEnabled(true)
+      setTrackingMode('face')
+      // Reset calibrations as this mode works differently
+      faceTracking?.resetCalibration()
+    }
+  }
+
   function set({
     charactersTexture,
     canvas,
@@ -782,6 +807,7 @@ export function ASCII({ children }) {
           trackingMode,
           handTracking,
           faceTracking,
+          faceFilterMode,
           set,
         }}
       >
@@ -799,6 +825,7 @@ export function ASCII({ children }) {
           matrix={matrix}
           setTime={enableTime}
           time={time}
+          faceFilterMode={faceFilterMode}
           // Handlers
           onCharactersChange={setCharacters}
           onGranularityChange={setGranularity}
@@ -828,6 +855,7 @@ export function ASCII({ children }) {
           handTracking={handTracking}
           faceTracking={faceTracking}
           trackingMode={trackingMode}
+          faceFilterMode={faceFilterMode}
           cameraFacingMode={cameraFacingMode}
           supportsCameraSwitch={supportsCameraSwitch()}
           // Camera Handlers
@@ -841,6 +869,7 @@ export function ASCII({ children }) {
           onCalibrateHandDepth={handleCalibrateHandDepth}
           onCalibrateFaceDepth={handleCalibrateFaceDepth}
           onResetCalibration={handleResetCalibration}
+          onFaceFilterModeChange={handleFaceFilterModeChange}
         />
       </AsciiContext.Provider>
     </>
