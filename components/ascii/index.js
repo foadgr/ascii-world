@@ -23,6 +23,7 @@ import tunnel from 'tunnel-rat'
 import { CameraControls } from '../camera-controls'
 import { ColorControls } from '../color-controls'
 import { ControlPanel } from '../control-panel'
+import { InfoButton } from '../info-button'
 import { IntroModal } from '../intro-modal'
 import s from './ascii.module.scss'
 import { AsciiContext } from './context'
@@ -843,6 +844,7 @@ export function ASCII({ children }) {
           onCalibrateFaceDepth={handleCalibrateFaceDepth}
           onResetCalibration={handleResetCalibration}
         />
+        <InfoButton />
         <IntroModal />
       </AsciiContext.Provider>
     </>

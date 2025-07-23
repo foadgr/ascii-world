@@ -41,19 +41,37 @@ export const Link = forwardRef(
       href = `/${href}`
     }
 
-    return (
-      <NextLink href={href} passHref={isExternal || isAnchor}>
+    // For external links, return a regular anchor tag
+    if (isExternal) {
+      return (
         <a
+          href={href}
           ref={ref}
           onClick={onClick}
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}
-          {...(isExternal && { target: '_blank', rel: 'noopener noreferrer' })}
+          target="_blank"
+          rel="noopener noreferrer"
           className={className}
           style={style}
         >
           {children}
         </a>
+      )
+    }
+
+    // For internal links, use Next.js Link without nested <a>
+    return (
+      <NextLink
+        href={href}
+        ref={ref}
+        onClick={onClick}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+        className={className}
+        style={style}
+      >
+        {children}
       </NextLink>
     )
   }

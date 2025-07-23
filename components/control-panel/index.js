@@ -1,6 +1,6 @@
 import { track } from '@vercel/analytics'
 import { Settings2 } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Drawer } from 'vaul'
 import s from './control-panel.module.scss'
 
@@ -21,80 +21,48 @@ const useIsDesktop = () => {
   return isDesktop
 }
 
-// Draggable modal for desktop
-const DraggableModal = ({ open, onOpenChange, children }) => {
-  const [position, setPosition] = useState({ x: 50, y: 50 })
-  const [isDragging, setIsDragging] = useState(false)
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
-
-  const handleMouseDown = (e) => {
-    setIsDragging(true)
-    setDragStart({
-      x: e.clientX - position.x,
-      y: e.clientY - position.y,
-    })
-  }
-
-  const handleMouseMove = useCallback(
-    (e) => {
-      if (!isDragging) return
-
-      const newX = e.clientX - dragStart.x
-      const newY = e.clientY - dragStart.y
-
-      // Keep modal within viewport bounds
-      const maxX = window.innerWidth - 500 // modal width
-      const maxY = window.innerHeight - 200 // modal height
-
-      setPosition({
-        x: Math.max(0, Math.min(newX, maxX)),
-        y: Math.max(0, Math.min(newY, maxY)),
-      })
-    },
-    [isDragging, dragStart]
-  )
-
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false)
-  }, [])
-
+// Desktop modal component
+const DraggableModal = ({ children, open, onOpenChange }) => {
   useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove)
-      document.addEventListener('mouseup', handleMouseUp)
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove)
-        document.removeEventListener('mouseup', handleMouseUp)
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        onOpenChange(false)
       }
     }
-  }, [isDragging, handleMouseMove, handleMouseUp])
+
+    if (open) {
+      document.addEventListener('keydown', handleEscape)
+      document.body.style.overflow = 'hidden'
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape)
+      document.body.style.overflow = ''
+    }
+  }, [open, onOpenChange])
 
   if (!open) return null
 
   return (
-    <>
-      <div
-        className={s.modalOverlay}
-        onClick={() => onOpenChange(false)}
-        onKeyDown={(e) => e.key === 'Escape' && onOpenChange(false)}
-        role="button"
-        tabIndex={0}
-        aria-label="Close modal"
-      />
+        <div 
+      className={s.modalOverlay} 
+      onClick={() => onOpenChange(false)}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onOpenChange(false)
+      }}
+    >
       <div
         className={s.modalContent}
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
         style={{
-          left: `${position.x}px`,
-          top: `${position.y}px`,
-          cursor: isDragging ? 'grabbing' : 'auto',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
         }}
       >
-        <div
-          className={s.modalHeader}
-          onMouseDown={handleMouseDown}
-          style={{ cursor: 'grab' }}
-        >
-          <h2 className={s.modalTitle}>world controls</h2>
+        <div className={s.modalHeader}>
+          <h2 className={s.modalTitle}>Visual Settings</h2>
           <button
             type="button"
             className={s.closeButton}
@@ -103,93 +71,59 @@ const DraggableModal = ({ open, onOpenChange, children }) => {
             ×
           </button>
         </div>
-        <div className={s.modalBody}>{children}</div>
+        {children}
       </div>
-    </>
-  )
-}
-
-const Slider = ({ label, value, onChange, min, max, step = 1 }) => {
-  const id = `slider-${label.replace(/\s+/g, '-').toLowerCase()}`
-  return (
-    <div className={s.control}>
-      <label className={s.label} htmlFor={id}>
-        {label}: <span className={s.value}>{value}</span>
-      </label>
-      <input
-        id={id}
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className={s.slider}
-      />
     </div>
   )
 }
 
-const Toggle = ({ label, value, onChange, disabled = false }) => (
-  <div className={s.control}>
+// Input components
+const TextInput = ({ label, value, onChange }) => (
+  <div className={s.inputGroup}>
+    <label htmlFor={`text-${label}`} className={s.label}>
+      {label}
+    </label>
+    <input
+      id={`text-${label}`}
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className={s.textInput}
+    />
+  </div>
+)
+
+const Slider = ({ label, value, onChange, min, max, step }) => (
+  <div className={s.inputGroup}>
+    <label htmlFor={`slider-${label}`} className={s.label}>
+      {label}: {value}
+    </label>
+    <input
+      id={`slider-${label}`}
+      type="range"
+      min={min}
+      max={max}
+      step={step}
+      value={value}
+      onChange={(e) => onChange(Number(e.target.value))}
+      className={s.slider}
+    />
+  </div>
+)
+
+const Toggle = ({ label, value, onChange }) => (
+  <div className={s.toggleGroup}>
     <label className={s.toggleLabel}>
       <input
         type="checkbox"
         checked={value}
         onChange={(e) => onChange(e.target.checked)}
-        disabled={disabled}
-        className={s.checkbox}
+        className={s.toggleInput}
       />
-      <span className={disabled ? s.disabled : ''}>{label}</span>
+      <span className={s.toggleSlider} />
+      {label}
     </label>
   </div>
-)
-
-const ColorInput = ({ label, value, onChange }) => {
-  const id = `color-${label.replace(/\s+/g, '-').toLowerCase()}`
-  return (
-    <div className={s.control}>
-      <label className={s.label} htmlFor={id}>
-        {label}:
-      </label>
-      <input
-        id={id}
-        type="color"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={s.colorInput}
-      />
-    </div>
-  )
-}
-
-const TextInput = ({ label, value, onChange }) => {
-  const id = `text-${label.replace(/\s+/g, '-').toLowerCase()}`
-  return (
-    <div className={s.control}>
-      <label className={s.label} htmlFor={id}>
-        {label}:
-      </label>
-      <input
-        id={id}
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={s.textInput}
-      />
-    </div>
-  )
-}
-
-const Button = ({ children, onClick, disabled = false }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    disabled={disabled}
-    className={`${s.button} ${disabled ? s.disabled : ''}`}
-  >
-    {children}
-  </button>
 )
 
 export function ControlPanel({
@@ -338,25 +272,23 @@ export function ControlPanel({
             <button
               type="button"
               className={s.trigger}
-              onClick={() => track('Control Panel', { action: 'open' })}
+              onClick={() => {
+                track('Control Panel', { action: 'open' })
+              }}
             >
               <Settings2 size={23} />
             </button>
           </Drawer.Trigger>
-
           <Drawer.Portal>
             <Drawer.Overlay className={s.overlay} />
             <Drawer.Content className={s.content}>
               <div className={s.header}>
-                <Drawer.Title className={s.title}>world controls</Drawer.Title>
                 <div className={s.handle} />
+                <Drawer.Title className={s.title}>Visual Settings</Drawer.Title>
               </div>
 
               <div className={s.controls}>
-                {/* Visual Controls Section */}
                 <div className={s.section}>
-                  <h3 className={s.sectionTitle}>visual settings</h3>
-
                   <TextInput
                     label="characters"
                     value={characters}

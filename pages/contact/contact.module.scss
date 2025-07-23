@@ -1,0 +1,356 @@
+@use 'styles/_functions' as *;
+
+// Override global scroll lock for contact page
+:global(html) {
+  overflow: auto !important;
+  position: static !important;
+  
+  &.has-scroll-smooth {
+    overflow: auto !important;
+    position: static !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+  }
+}
+
+:global(body) {
+  overflow: auto !important;
+  position: static !important;
+}
+
+.contact {
+  padding: mobile-vw(20px) mobile-vw(20px) mobile-vw(40px);
+  background: var(--theme-secondary);
+  color: var(--theme-primary);
+
+  @include desktop {
+    padding: desktop-vw(30px) desktop-vw(40px) desktop-vw(60px);
+  }
+}
+
+// Breadcrumbs
+.breadcrumbs {
+  padding: mobile-vw(20px) mobile-vw(20px) 0;
+  background: var(--theme-secondary);
+  position: relative;
+  z-index: 1;
+
+  @include desktop {
+    padding: desktop-vw(30px) desktop-vw(40px) 0;
+  }
+}
+
+.breadcrumbLink {
+  color: var(--theme-primary);
+  text-decoration: none;
+  opacity: 0.7;
+  font-size: mobile-vw(14px);
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: mobile-vw(4px);
+
+  @include desktop {
+    font-size: desktop-vw(14px);
+    gap: desktop-vw(4px);
+  }
+
+  &:hover {
+    opacity: 1;
+    text-decoration: underline;
+    transform: translateX(-2px);
+  }
+}
+
+.breadcrumbSeparator {
+  margin: 0 mobile-vw(8px);
+  opacity: 0.5;
+  font-size: mobile-vw(14px);
+
+  @include desktop {
+    margin: 0 desktop-vw(8px);
+    font-size: desktop-vw(14px);
+  }
+}
+
+.breadcrumbCurrent {
+  font-size: mobile-vw(14px);
+  opacity: 1;
+
+  @include desktop {
+    font-size: desktop-vw(14px);
+  }
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: mobile-vw(60px);
+
+  @include desktop {
+    margin-bottom: desktop-vw(80px);
+  }
+
+  h1 {
+    font-size: mobile-vw(48px);
+    font-weight: 600;
+    margin-bottom: mobile-vw(16px);
+
+    @include desktop {
+      font-size: desktop-vw(64px);
+      margin-bottom: desktop-vw(20px);
+    }
+  }
+
+  p {
+    font-size: mobile-vw(18px);
+    opacity: 0.8;
+
+    @include desktop {
+      font-size: desktop-vw(20px);
+    }
+  }
+}
+
+.content {
+  section {
+    margin-bottom: mobile-vw(50px);
+
+    @include desktop {
+      margin-bottom: desktop-vw(60px);
+    }
+
+    h2 {
+      font-size: mobile-vw(28px);
+      font-weight: 500;
+      margin-bottom: mobile-vw(24px);
+      border-bottom: 1px solid var(--theme-primary);
+      padding-bottom: mobile-vw(8px);
+
+      @include desktop {
+        font-size: desktop-vw(32px);
+        margin-bottom: desktop-vw(30px);
+        padding-bottom: desktop-vw(10px);
+      }
+    }
+  }
+}
+
+// How to use section
+.howToUse {
+  margin-bottom: mobile-vw(50px);
+
+  @include desktop {
+    margin-bottom: desktop-vw(60px);
+  }
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: mobile-vw(20px);
+
+  @include desktop {
+    gap: desktop-vw(24px);
+  }
+}
+
+.step {
+  display: flex;
+  gap: mobile-vw(16px);
+  align-items: flex-start;
+
+  @include desktop {
+    gap: desktop-vw(20px);
+  }
+}
+
+.stepNumber {
+  flex-shrink: 0;
+  width: mobile-vw(32px);
+  height: mobile-vw(32px);
+  border-radius: 50%;
+  background: var(--theme-primary);
+  color: var(--theme-secondary);
+  font-weight: 700;
+  font-size: mobile-vw(14px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  @include desktop {
+    width: desktop-vw(36px);
+    height: desktop-vw(36px);
+    font-size: desktop-vw(16px);
+  }
+}
+
+.stepContent {
+  flex: 1;
+  padding-top: mobile-vw(2px);
+
+  @include desktop {
+    padding-top: desktop-vw(4px);
+  }
+
+  h3 {
+    font-size: mobile-vw(16px);
+    font-weight: 600;
+    margin-bottom: mobile-vw(4px);
+    color: var(--theme-primary);
+
+    @include desktop {
+      font-size: desktop-vw(18px);
+      margin-bottom: desktop-vw(6px);
+    }
+  }
+
+  p {
+    font-size: mobile-vw(14px);
+    color: var(--theme-primary);
+    opacity: 0.8;
+    margin: 0;
+    line-height: 1.4;
+
+    @include desktop {
+      font-size: desktop-vw(16px);
+      line-height: 1.5;
+    }
+  }
+}
+
+// About section
+.about {
+  margin-bottom: mobile-vw(50px);
+
+  @include desktop {
+    margin-bottom: desktop-vw(60px);
+  }
+
+  p {
+    font-size: mobile-vw(16px);
+    line-height: 1.6;
+    margin-bottom: mobile-vw(16px);
+    opacity: 0.9;
+
+    @include desktop {
+      font-size: desktop-vw(18px);
+      margin-bottom: desktop-vw(20px);
+    }
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    a {
+      color: var(--theme-primary);
+      text-decoration: underline;
+      opacity: 1;
+
+      &:hover {
+        opacity: 0.8;
+      }
+    }
+  }
+}
+
+.supportOptions {
+  display: grid;
+  gap: mobile-vw(24px);
+
+  @include desktop {
+    gap: desktop-vw(30px);
+  }
+}
+
+.option {
+  padding: mobile-vw(24px);
+  border: 1px solid var(--theme-primary);
+  border-radius: 8px;
+
+  @include desktop {
+    padding: desktop-vw(30px);
+  }
+
+  h3 {
+    font-size: mobile-vw(18px);
+    font-weight: 500;
+    margin-bottom: mobile-vw(8px);
+
+    @include desktop {
+      font-size: desktop-vw(20px);
+      margin-bottom: desktop-vw(10px);
+    }
+  }
+
+  p {
+    font-size: mobile-vw(14px);
+    opacity: 0.8;
+    margin-bottom: mobile-vw(16px);
+
+    @include desktop {
+      font-size: desktop-vw(16px);
+      margin-bottom: desktop-vw(20px);
+    }
+  }
+}
+
+.link {
+  display: inline-block;
+  padding: mobile-vw(8px) mobile-vw(16px);
+  border: 1px solid var(--theme-primary);
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: mobile-vw(14px);
+  transition: all 0.2s ease;
+
+  @include desktop {
+    padding: desktop-vw(10px) desktop-vw(20px);
+    font-size: desktop-vw(16px);
+  }
+
+  &:hover {
+    background: var(--theme-primary);
+    color: var(--theme-secondary);
+  }
+}
+
+.resourceLinks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: mobile-vw(16px);
+
+  @include desktop {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: desktop-vw(20px);
+  }
+}
+
+.resourceLink {
+  display: block;
+  padding: mobile-vw(16px);
+  border: 1px solid var(--theme-primary);
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: mobile-vw(14px);
+  text-align: center;
+  transition: all 0.2s ease;
+
+  @include desktop {
+    padding: desktop-vw(20px);
+    font-size: desktop-vw(16px);
+  }
+
+  &:hover {
+    background: var(--theme-primary);
+    color: var(--theme-secondary);
+  }
+}
+
+ 

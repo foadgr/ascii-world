@@ -5,7 +5,7 @@ import s from './home.module.scss'
 
 export default function Home() {
   return (
-    <Layout theme="light">
+    <Layout theme="light" showFooter={false}>
       <section className={s.hero}>
         <ClientOnly>
           <ASCII />

@@ -69,7 +69,7 @@ html[data-scroll-direction='horizontal'] .c-scrollbar {
   position: absolute;
   top: 0;
   right: 0;
-  background: red;
+  background: rgb(0, 0, 0);
   cursor: grab;
   width: 9px;
   border: 2px solid transparent;
@@ -104,7 +104,7 @@ html[data-scroll-direction='horizontal'] .c-scrollbar_thumb {
     &::-webkit-scrollbar-thumb:vertical {
       /* This is the EXACT color of Mac OS scrollbars.
        Yes, I pulled out digital color meter */
-      background: red;
+      background: rgb(0, 0, 0);
       background-clip: padding-box;
       border: 2px solid rgba(0, 0, 0, 0);
       -webkit-border-radius: 100px;

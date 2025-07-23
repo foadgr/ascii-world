@@ -41,29 +41,95 @@ export function GUI() {
         <div className={s.description}>
           <p>
             the ASCII World ascii tool is an open-source ASCII tool built by{' '}
-            <a href="https://darkroom.engineering">darkroom.engineering</a> to
-            generate and customize character-based imagery.
+            <a href="https://x.com/hafezverde">hafezverde</a> to create live
+            ASCII filters on your phone or webcam using{' '}
+            <a
+              href="https://ai.google.dev/edge/mediapipe/solutions/guide"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Google AI MediaPipe
+            </a>
+            ,{' '}
+            <a
+              href="https://threejs.org/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Three.js
+            </a>
+            , and{' '}
+            <a
+              href="https://github.com/pmndrs/react-three-fiber"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              React-Three-Fiber
+            </a>
+            .
           </p>
           <br />
           <p>
             DRAG AND DROP ANY FILE
             <br /> .glb, .mp4, .mov, .webm, .png, .webp, .avif
           </p>
+          <br />
+          <p>
+            Learn more about{' '}
+            <a
+              href="https://github.com/pmndrs/drei"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              React-Three-Fiber
+            </a>
+            ,{' '}
+            <a
+              href="https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              WebGL
+            </a>
+            , or{' '}
+            <a
+              href="https://www.khronos.org/webgl/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              WebGL specification
+            </a>
+            .
+          </p>
         </div>
         <div className={s.links}>
           <a
             target="_blank"
             rel="noopener noreferrer"
-            href="https://github.com/darkroomengineering/aniso"
+            href="https://x.com/hafezverde"
           >
-            github
+            X
           </a>
           <a
             target="_blank"
             rel="noopener noreferrer"
-            href="https://darkroom.engineering"
+            href="https://x.com/hafezverde"
           >
-            darkroom.engineering
+            X
+          </a>
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker"
+          >
+            hand tracking docs
+          </a>
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://threejs.org/examples/"
+          >
+            three.js examples
           </a>
         </div>
       </div>
