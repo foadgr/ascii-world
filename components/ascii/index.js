@@ -7,7 +7,7 @@ import { FontEditor } from 'components/font-editor'
 import { useFaceTracking } from 'hooks/use-face-tracking'
 import { useHandTracking } from 'hooks/use-hand-tracking'
 import { supportsCameraSwitch } from 'lib/device'
-import { useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { useContext, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import {
   AnimationMixer,
@@ -184,45 +184,42 @@ const Scene = () => {
   })
 
   // Camera stream management
-  const startCamera = useCallback(
-    async (facingMode = cameraFacingMode) => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            facingMode: facingMode,
-          },
-        })
+  const startCamera = async (facingMode = cameraFacingMode) => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          facingMode: facingMode,
+        },
+      })
 
-        const video = document.createElement('video')
-        video.srcObject = stream
-        video.muted = true
-        video.playsInline = true
-        video.autoplay = true
+      const video = document.createElement('video')
+      video.srcObject = stream
+      video.muted = true
+      video.playsInline = true
+      video.autoplay = true
 
-        video.onloadedmetadata = () => {
-          video.play()
-          setCameraVideo(video)
-          setTexture(new VideoTexture(video))
-          // Clear other content when camera starts
-          setModel(null)
-        }
-
-        setCameraStream(stream)
-      } catch (error) {
-        console.error('Error accessing camera:', error)
-        // If the preferred camera fails, try the other one
-        if (facingMode !== 'user') {
-          console.log('Falling back to front camera')
-          startCamera('user')
-        }
+      video.onloadedmetadata = () => {
+        video.play()
+        setCameraVideo(video)
+        setTexture(new VideoTexture(video))
+        // Clear other content when camera starts
+        setModel(null)
       }
-    },
-    [cameraFacingMode]
-  )
 
-  const stopCamera = useCallback(() => {
+      setCameraStream(stream)
+    } catch (error) {
+      console.error('Error accessing camera:', error)
+      // If the preferred camera fails, try the other one
+      if (facingMode !== 'user') {
+        console.log('Falling back to front camera')
+        startCamera('user')
+      }
+    }
+  }
+
+  const stopCamera = () => {
     if (cameraStream) {
       for (const track of cameraStream.getTracks()) {
         track.stop()
@@ -234,7 +231,7 @@ const Scene = () => {
       setCameraVideo(null)
     }
     setTexture(null)
-  }, [cameraStream, cameraVideo])
+  }
 
   // React to camera active state changes
   useEffect(() => {
@@ -243,7 +240,7 @@ const Scene = () => {
     } else {
       stopCamera()
     }
-  }, [cameraActive, startCamera, stopCamera])
+  }, [cameraActive])
 
   // React to camera facing mode changes
   useEffect(() => {
@@ -254,7 +251,7 @@ const Scene = () => {
         startCamera(cameraFacingMode)
       }, 100)
     }
-  }, [cameraFacingMode, cameraActive, startCamera, stopCamera])
+  }, [cameraFacingMode])
 
   // Share hand tracking state with context
   useEffect(() => {
@@ -322,7 +319,7 @@ const Scene = () => {
         }
       )
     }
-  }, [asset, stopCamera])
+  }, [asset])
 
   const [texture, setTexture] = useState()
 
@@ -374,7 +371,7 @@ const Scene = () => {
         setTexture(texture)
       })
     }
-  }, [asset, stopCamera])
+  }, [asset])
 
   const { viewport, camera } = useThree()
 
@@ -440,7 +437,7 @@ const Scene = () => {
     return () => {
       stopCamera()
     }
-  }, [stopCamera])
+  }, [])
 
   return (
     <>
