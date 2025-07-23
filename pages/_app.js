@@ -1,3 +1,4 @@
+import { Analytics } from '@vercel/analytics/next'
 import dynamic from 'next/dynamic'
 import 'resize-observer-polyfill'
 import { RealViewport } from '../components/real-viewport'
@@ -13,6 +14,7 @@ function MyApp({ Component, pageProps }) {
     <>
       <RealViewport />
       <Component {...pageProps} />
+      <Analytics />
     </>
   )
 }

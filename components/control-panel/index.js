@@ -1,3 +1,4 @@
+import { track } from '@vercel/analytics'
 import { Settings2 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Drawer } from 'vaul'
@@ -234,7 +235,10 @@ export function ControlPanel({
           <button
             type="button"
             className={s.trigger}
-            onClick={() => handleOpenChange(true)}
+            onClick={() => {
+              track('Control Panel', { action: 'open' })
+              handleOpenChange(true)
+            }}
           >
             <Settings2 size={18} />
           </button>
@@ -331,7 +335,11 @@ export function ControlPanel({
       ) : (
         <Drawer.Root open={open} onOpenChange={handleOpenChange}>
           <Drawer.Trigger asChild>
-            <button type="button" className={s.trigger}>
+            <button
+              type="button"
+              className={s.trigger}
+              onClick={() => track('Control Panel', { action: 'open' })}
+            >
               <Settings2 size={18} />
             </button>
           </Drawer.Trigger>
