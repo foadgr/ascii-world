@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://ascii-world.vercel.app/sitemap.xml
+
+# Block development/admin paths if any
+Disallow: /api/
+Disallow: /_next/
+Disallow: /admin/ 
