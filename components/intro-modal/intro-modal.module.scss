@@ -1,0 +1,326 @@
+// Desktop Modal Styles
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.6);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modalContent {
+  position: fixed;
+  z-index: 101;
+  width: 600px;
+  max-width: 90vw;
+  max-height: 80vh;
+  background: rgba(26, 26, 26, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  flex-direction: column;
+  color: white;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+.modalHeader {
+  padding: 24px 28px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  background: rgba(255, 255, 255, 0.02);
+  position: relative;
+}
+
+.modalTitle {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+  color: white;
+  background: linear-gradient(135deg, #00ff88, #0088ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-align: center;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 28px;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+  }
+}
+
+.modalBody {
+  padding: 0;
+  overflow-y: auto;
+}
+
+// Content
+.content {
+  padding: 28px;
+}
+
+.intro {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.subtitle {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.description {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.creditLink {
+  color: #00ff88;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    color: #00cc6a;
+    text-decoration: underline;
+  }
+}
+
+.xIcon {
+  transition: transform 0.2s ease;
+  
+  .creditLink:hover & {
+    transform: scale(1.1);
+  }
+}
+
+// Steps
+.stepsTitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 20px 0;
+  color: white;
+}
+
+.steps {
+  margin-bottom: 32px;
+}
+
+.step {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.stepNumber {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00ff88, #0088ff);
+  color: black;
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stepContent {
+  flex: 1;
+  padding-top: 2px;
+}
+
+.stepTitle {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+  color: white;
+}
+
+.stepDescription {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+  line-height: 1.4;
+}
+
+// Start button
+.startButton {
+  width: 100%;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #00ff88, #0088ff);
+  border: none;
+  border-radius: 12px;
+  color: black;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 255, 136, 0.3);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+// Mobile Drawer Styles
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.6);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.drawerContent {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 51;
+  max-height: 85vh;
+  background: rgba(26, 26, 26, 0.95);
+  backdrop-filter: blur(20px);
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s ease-out;
+  color: white;
+  overflow: hidden;
+}
+
+.drawerHeader {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.handle {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+}
+
+.drawerTitle {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+  background: linear-gradient(135deg, #00ff88, #0088ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+// Mobile responsive adjustments
+@media (max-width: 768px) {
+  .content {
+    padding: 20px;
+  }
+  
+  .intro {
+    margin-bottom: 24px;
+  }
+  
+  .subtitle {
+    font-size: 16px;
+  }
+  
+  .description {
+    font-size: 13px;
+  }
+  
+  .steps {
+    margin-bottom: 24px;
+  }
+  
+  .step {
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  
+  .stepNumber {
+    width: 28px;
+    height: 28px;
+    font-size: 13px;
+  }
+  
+  .stepTitle {
+    font-size: 13px;
+  }
+  
+  .stepDescription {
+    font-size: 12px;
+  }
+  
+  .startButton {
+    padding: 14px 20px;
+    font-size: 15px;
+  }
+  
+  .drawerContent {
+    max-height: 90vh;
+  }
+}
+
+// Animations
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(100%); 
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0); 
+  }
+} 

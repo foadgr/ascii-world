@@ -240,7 +240,7 @@ export function ControlPanel({
               handleOpenChange(true)
             }}
           >
-            <Settings2 size={18} />
+            <Settings2 size={23} />
           </button>
 
           <DraggableModal open={open} onOpenChange={handleOpenChange}>
@@ -340,7 +340,7 @@ export function ControlPanel({
               className={s.trigger}
               onClick={() => track('Control Panel', { action: 'open' })}
             >
-              <Settings2 size={18} />
+              <Settings2 size={23} />
             </button>
           </Drawer.Trigger>
 
