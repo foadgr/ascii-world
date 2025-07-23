@@ -2,8 +2,12 @@ import NextHead from 'next/head'
 
 export function CustomHead({ title = '', description, image, keywords }) {
   const siteUrl = 'https://asciiworld.app'
-  const fullTitle = title ? `${title} | ASCII World` : 'ASCII World - Control your world with ASCII'
-  const defaultDescription = description || 'An open-source ASCII tool built by @hafezverde to create live ASCII filters on your phone or webcam.'
+  const fullTitle = title
+    ? `${title} | ASCII World`
+    : 'ASCII World - Control your world with ASCII'
+  const defaultDescription =
+    description ||
+    'An open-source ASCII tool built by @hafezverde to create live ASCII filters on your phone or webcam.'
   const defaultImage = image || `${siteUrl}/twitter-card.png`
 
   // JSON-LD structured data
@@ -18,14 +22,16 @@ export function CustomHead({ title = '', description, image, keywords }) {
     offers: {
       '@type': 'Offer',
       price: '0',
-      priceCurrency: 'USD'
+      priceCurrency: 'USD',
     },
     creator: {
       '@type': 'Organization',
       name: 'hafezverde',
-      url: 'https://x.com/hafezverde'
+      url: 'https://x.com/hafezverde',
     },
-    keywords: keywords?.length ? keywords.join(', ') : 'ascii, art, mediapipe, computer vision, hand tracking, face tracking, generator, converter, text art, character art, webgl, react'
+    keywords: keywords?.length
+      ? keywords.join(', ')
+      : 'ascii, art, mediapipe, computer vision, hand tracking, face tracking, generator, converter, text art, character art, webgl, react',
   }
 
   return (
@@ -52,7 +58,11 @@ export function CustomHead({ title = '', description, image, keywords }) {
 
         <meta
           name="keywords"
-          content={keywords?.length ? keywords.join(',') : 'ascii,art,mediapipe,computer vision,hand tracking,face tracking,generator,converter,text,character,webgl,react,tool'}
+          content={
+            keywords?.length
+              ? keywords.join(',')
+              : 'ascii,art,mediapipe,computer vision,hand tracking,face tracking,generator,converter,text,character,webgl,react,tool'
+          }
         />
         <meta name="author" content="hafezverde" />
         <meta name="referrer" content="no-referrer" />
