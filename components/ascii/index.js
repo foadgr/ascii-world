@@ -612,7 +612,9 @@ export function ASCII({ children }) {
   const [charactersTexture, setCharactersTexture] = useState(null)
   const [canvas, setCanvas] = useState()
   const [cameraActive, setCameraActive] = useState(DEFAULT.cameraActive)
-  const [cameraFacingMode, setCameraFacingMode] = useState(DEFAULT.cameraFacingMode)
+  const [cameraFacingMode, setCameraFacingMode] = useState(
+    DEFAULT.cameraFacingMode
+  )
   const [handTrackingEnabled, setHandTrackingEnabled] = useState(
     DEFAULT.handTrackingEnabled
   )
@@ -647,7 +649,7 @@ export function ASCII({ children }) {
 
   const handleCameraSwitch = () => {
     if (!supportsCameraSwitch()) return
-    
+
     const newFacingMode = cameraFacingMode === 'user' ? 'environment' : 'user'
     setCameraFacingMode(newFacingMode)
   }
