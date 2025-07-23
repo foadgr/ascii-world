@@ -5,6 +5,7 @@ import { ASCIIEffect } from 'components/ascii-effect/index'
 import { DepthDisplay } from 'components/depth-display'
 import { FontEditor } from 'components/font-editor'
 import { useHandTracking } from 'hooks/use-hand-tracking'
+import { supportsCameraSwitch } from 'lib/device'
 import { useContext, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import {
@@ -126,6 +127,7 @@ const Scene = () => {
   const [skiaReady, setSkiaReady] = useState(false)
   const {
     cameraActive,
+    cameraFacingMode,
     handTrackingEnabled,
     handControlledGranularity,
     granularity,
@@ -166,13 +168,13 @@ const Scene = () => {
   })
 
   // Camera stream management
-  const startCamera = async () => {
+  const startCamera = async (facingMode = cameraFacingMode) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: { ideal: 1280 },
           height: { ideal: 720 },
-          facingMode: 'user',
+          facingMode: facingMode,
         },
       })
 
@@ -193,6 +195,11 @@ const Scene = () => {
       setCameraStream(stream)
     } catch (error) {
       console.error('Error accessing camera:', error)
+      // If the preferred camera fails, try the other one
+      if (facingMode !== 'user') {
+        console.log('Falling back to front camera')
+        startCamera('user')
+      }
     }
   }
 
@@ -218,6 +225,17 @@ const Scene = () => {
       stopCamera()
     }
   }, [cameraActive])
+
+  // React to camera facing mode changes
+  useEffect(() => {
+    if (cameraActive && cameraFacingMode) {
+      stopCamera()
+      // Small delay to ensure camera is properly stopped
+      setTimeout(() => {
+        startCamera(cameraFacingMode)
+      }, 100)
+    }
+  }, [cameraFacingMode])
 
   // Share hand tracking state with context
   useEffect(() => {
@@ -579,6 +597,7 @@ const DEFAULT = {
   cameraActive: false,
   handTrackingEnabled: false,
   handControlledGranularity: false,
+  cameraFacingMode: 'user', // Add default facing mode
 }
 
 export function ASCII({ children }) {
@@ -593,6 +612,7 @@ export function ASCII({ children }) {
   const [charactersTexture, setCharactersTexture] = useState(null)
   const [canvas, setCanvas] = useState()
   const [cameraActive, setCameraActive] = useState(DEFAULT.cameraActive)
+  const [cameraFacingMode, setCameraFacingMode] = useState(DEFAULT.cameraFacingMode)
   const [handTrackingEnabled, setHandTrackingEnabled] = useState(
     DEFAULT.handTrackingEnabled
   )
@@ -623,6 +643,13 @@ export function ASCII({ children }) {
   // Handler functions for control panel
   const handleCameraToggle = () => {
     setCameraActive(!cameraActive)
+  }
+
+  const handleCameraSwitch = () => {
+    if (!supportsCameraSwitch()) return
+    
+    const newFacingMode = cameraFacingMode === 'user' ? 'environment' : 'user'
+    setCameraFacingMode(newFacingMode)
   }
 
   const handleCalibrateHandDepth = () => {
@@ -677,6 +704,7 @@ export function ASCII({ children }) {
           time: enableTime ? time : undefined,
           background,
           cameraActive,
+          cameraFacingMode,
           handTrackingEnabled,
           handControlledGranularity,
           handTracking,
@@ -724,8 +752,11 @@ export function ASCII({ children }) {
           // Camera & Hand Tracking
           cameraActive={cameraActive}
           handTracking={handTracking}
+          cameraFacingMode={cameraFacingMode}
+          supportsCameraSwitch={supportsCameraSwitch()}
           // Camera Handlers
           onCameraToggle={handleCameraToggle}
+          onCameraSwitch={handleCameraSwitch}
           onHandTrackingChange={setHandTrackingEnabled}
           onHandControlledGranularityChange={setHandControlledGranularity}
           onCalibrateHandDepth={handleCalibrateHandDepth}

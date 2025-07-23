@@ -76,6 +76,36 @@
   }
 }
 
+// Camera flip button
+.flipButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 12px;
+  
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  
+  &:hover {
+    background: rgba(0, 0, 0, 0.9);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+    color: #00ff88;
+  }
+  
+  svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+}
+
 // Hand detection/calibration button
 .handButton {
   display: flex;
@@ -129,8 +159,6 @@
   }
 }
 
-
-
 // Responsive adjustments
 @media (max-width: 768px) {
   .buttonGroup {
@@ -142,6 +170,15 @@
   .cameraButton {
     padding: 10px 14px;
     font-size: 13px;
+    
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
+  
+  .flipButton {
+    padding: 10px;
     
     svg {
       width: 16px;

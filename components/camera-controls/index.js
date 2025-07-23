@@ -1,11 +1,14 @@
-import { Hand } from 'lucide-react'
+import { Hand, RotateCcw } from 'lucide-react'
 import { useEffect } from 'react'
 import s from './camera-controls.module.scss'
 
 export function CameraControls({
   cameraActive,
+  cameraFacingMode,
+  supportsCameraSwitch,
   handTracking,
   onCameraToggle,
+  onCameraSwitch,
   onHandTrackingChange,
   onHandControlledGranularityChange,
   onCalibrateHandDepth,
@@ -53,6 +56,18 @@ export function CameraControls({
           )}
         </div>
       </button>
+
+      {/* Camera Flip Button - Only show on mobile/tablet devices when camera is active */}
+      {cameraActive && supportsCameraSwitch && (
+        <button
+          type="button"
+          className={s.flipButton}
+          onClick={onCameraSwitch}
+          title={`Switch to ${cameraFacingMode === 'user' ? 'back' : 'front'} camera`}
+        >
+          <RotateCcw size={18} />
+        </button>
+      )}
 
       {/* Hand Detection/Calibration Button */}
       {cameraActive && (
