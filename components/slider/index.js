@@ -30,16 +30,16 @@ const Slider = ({
   )
 
   const scrollPrev = useCallback(() => {
-    embla && embla.scrollPrev()
+    embla?.scrollPrev()
   }, [embla])
 
   const scrollNext = useCallback(() => {
-    embla && embla.scrollNext()
+    embla?.scrollNext()
   }, [embla])
 
   const scrollTo = useCallback(
     (index) => {
-      embla && embla.scrollTo(index)
+      embla?.scrollTo(index)
     },
     [embla]
   )

@@ -1,4 +1,4 @@
-import { Hand, RotateCcw } from 'lucide-react'
+import { Hand, RotateCcw, ScanFace } from 'lucide-react'
 import { useEffect } from 'react'
 import s from './camera-controls.module.scss'
 
@@ -7,23 +7,47 @@ export function CameraControls({
   cameraFacingMode,
   supportsCameraSwitch,
   handTracking,
+  faceTracking,
+  trackingMode, // 'hand' or 'face'
   onCameraToggle,
   onCameraSwitch,
   onHandTrackingChange,
+  onFaceTrackingChange,
+  onTrackingModeChange,
   onHandControlledGranularityChange,
+  onFaceControlledGranularityChange,
   onCalibrateHandDepth,
+  onCalibrateFaceDepth,
   onResetCalibration,
 }) {
-  // Auto-enable hand tracking when camera is active
+  // Auto-enable tracking when camera is active based on mode
   useEffect(() => {
     if (cameraActive) {
-      onHandTrackingChange(true)
-      onHandControlledGranularityChange(true)
+      if (trackingMode === 'hand') {
+        onHandTrackingChange(true)
+        onHandControlledGranularityChange(true)
+        onFaceTrackingChange(false)
+        onFaceControlledGranularityChange(false)
+      } else if (trackingMode === 'face') {
+        onFaceTrackingChange(true)
+        onFaceControlledGranularityChange(true)
+        onHandTrackingChange(false)
+        onHandControlledGranularityChange(false)
+      }
     } else {
       onHandTrackingChange(false)
       onHandControlledGranularityChange(false)
+      onFaceTrackingChange(false)
+      onFaceControlledGranularityChange(false)
     }
-  }, [cameraActive, onHandTrackingChange, onHandControlledGranularityChange])
+  }, [
+    cameraActive,
+    trackingMode,
+    onHandTrackingChange,
+    onFaceTrackingChange,
+    onHandControlledGranularityChange,
+    onFaceControlledGranularityChange,
+  ])
 
   return (
     <div className={s.buttonGroup}>
@@ -47,10 +71,13 @@ export function CameraControls({
             <circle cx="12" cy="13" r="4" />
           </svg>
           {/* Calibration Status Dot */}
-          {cameraActive && handTracking && (
+          {cameraActive && (
             <div
               className={`${s.statusDot} ${
-                handTracking.isCalibrated ? s.calibrated : s.notCalibrated
+                (trackingMode === 'hand' && handTracking?.isCalibrated) ||
+                (trackingMode === 'face' && faceTracking?.isCalibrated)
+                  ? s.calibrated
+                  : s.notCalibrated
               }`}
             />
           )}
@@ -69,35 +96,89 @@ export function CameraControls({
         </button>
       )}
 
-      {/* Hand Detection/Calibration Button */}
+      {/* Tracking Mode Toggle Buttons */}
       {cameraActive && (
-        <button
-          type="button"
-          className={`${s.handButton} ${
-            !handTracking?.handDetected
-              ? s.notDetected
-              : handTracking?.isCalibrated
-                ? s.detected
-                : s.uncalibrated
-          }`}
-          onClick={
-            handTracking?.handDetected && !handTracking?.isCalibrated
-              ? onCalibrateHandDepth
-              : handTracking?.isCalibrated
-                ? onResetCalibration
-                : undefined
-          }
-          disabled={!handTracking?.handDetected}
-          title={
-            !handTracking?.handDetected
-              ? 'No hand detected'
-              : handTracking?.isCalibrated
-                ? 'Hand calibrated - click to reset'
-                : 'Hand detected - click to calibrate'
-          }
-        >
-          <Hand size={18} />
-        </button>
+        <>
+          {/* Hand Tracking Button */}
+          <button
+            type="button"
+            className={`${s.trackingButton} ${
+              trackingMode === 'hand' ? s.active : ''
+            } ${
+              trackingMode === 'hand' && !handTracking?.handDetected
+                ? s.notDetected
+                : trackingMode === 'hand' && handTracking?.isCalibrated
+                  ? s.detected
+                  : trackingMode === 'hand'
+                    ? s.uncalibrated
+                    : ''
+            }`}
+            onClick={() => {
+              if (trackingMode === 'hand') {
+                // If already in hand mode, handle calibration
+                if (handTracking?.handDetected && !handTracking?.isCalibrated) {
+                  onCalibrateHandDepth()
+                } else if (handTracking?.isCalibrated) {
+                  onResetCalibration()
+                }
+              } else {
+                // Switch to hand tracking mode
+                onTrackingModeChange('hand')
+              }
+            }}
+            title={
+              trackingMode !== 'hand'
+                ? 'Switch to hand tracking'
+                : !handTracking?.handDetected
+                  ? 'No hand detected'
+                  : handTracking?.isCalibrated
+                    ? 'Hand calibrated - click to reset'
+                    : 'Hand detected - click to calibrate'
+            }
+          >
+            <Hand size={18} />
+          </button>
+
+          {/* Face Tracking Button */}
+          <button
+            type="button"
+            className={`${s.trackingButton} ${
+              trackingMode === 'face' ? s.active : ''
+            } ${
+              trackingMode === 'face' && !faceTracking?.faceDetected
+                ? s.notDetected
+                : trackingMode === 'face' && faceTracking?.isCalibrated
+                  ? s.detected
+                  : trackingMode === 'face'
+                    ? s.uncalibrated
+                    : ''
+            }`}
+            onClick={() => {
+              if (trackingMode === 'face') {
+                // If already in face mode, handle calibration
+                if (faceTracking?.faceDetected && !faceTracking?.isCalibrated) {
+                  onCalibrateFaceDepth()
+                } else if (faceTracking?.isCalibrated) {
+                  onResetCalibration()
+                }
+              } else {
+                // Switch to face tracking mode
+                onTrackingModeChange('face')
+              }
+            }}
+            title={
+              trackingMode !== 'face'
+                ? 'Switch to face tracking'
+                : !faceTracking?.faceDetected
+                  ? 'No face detected'
+                  : faceTracking?.isCalibrated
+                    ? 'Face calibrated - click to reset'
+                    : 'Face detected - click to calibrate'
+            }
+          >
+            <ScanFace size={18} />
+          </button>
+        </>
       )}
     </div>
   )

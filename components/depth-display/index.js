@@ -5,38 +5,68 @@ import s from './depth-display.module.scss'
 export const DepthDisplay = () => {
   const {
     handTracking,
+    faceTracking,
+    trackingMode,
     handTrackingEnabled,
+    faceTrackingEnabled,
     handControlledGranularity,
+    faceControlledGranularity,
     cameraActive,
   } = useContext(AsciiContext)
 
-  // Only show when camera is active and hand tracking is enabled
-  if (!cameraActive || !handTrackingEnabled || !handTracking) {
+  // Determine which tracking mode is active and enabled
+  const isHandMode =
+    trackingMode === 'hand' && handTrackingEnabled && handTracking
+  const isFaceMode =
+    trackingMode === 'face' && faceTrackingEnabled && faceTracking
+
+  // Only show when camera is active and tracking is enabled
+  if (!cameraActive || (!isHandMode && !isFaceMode)) {
     return null
   }
 
-  const { handDetected, isCalibrated, relativeDepth, granularity } =
-    handTracking
+  // Get the appropriate tracking data based on mode
+  const trackingData = isHandMode
+    ? {
+        detected: handTracking.handDetected,
+        isCalibrated: handTracking.isCalibrated,
+        relativeDepth: handTracking.relativeDepth,
+        granularity: handTracking.granularity,
+        trackingType: 'hand',
+      }
+    : {
+        detected: faceTracking.faceDetected,
+        isCalibrated: faceTracking.isCalibrated,
+        relativeDepth: faceTracking.relativeDepth,
+        granularity: faceTracking.granularity,
+        trackingType: 'face',
+      }
 
-  // Show instructions when hand is not detected
-  if (!handDetected) {
+  const { detected, isCalibrated, relativeDepth, granularity, trackingType } =
+    trackingData
+
+  // Show instructions when tracking target is not detected
+  if (!detected) {
     return (
       <div className={s.depthDisplay}>
         <div className={s.instructionMessage}>
-          Show your hand in front of the camera to begin tracking
+          {trackingType === 'hand'
+            ? 'Show your hand in front of the camera to begin tracking'
+            : 'Show your face in front of the camera to begin tracking'}
         </div>
       </div>
     )
   }
 
-  // Show calibration instructions when hand is detected but not calibrated
+  // Show calibration instructions when tracking target is detected but not calibrated
   if (!isCalibrated) {
     return (
       <div className={s.depthDisplay}>
         <div className={s.instructionContainer}>
           <div className={s.instructionMessage}>
-            Place hand at your preferred distance and tap hand icon to lock the
-            current detail.
+            {trackingType === 'hand'
+              ? 'Place hand at your preferred distance and tap hand icon to lock the current detail.'
+              : 'Position your face at your preferred distance and tap face icon to lock the current detail.'}
           </div>
           <div className={s.instructionSubtitle}>
             Move closer for max detail, further for min detail.

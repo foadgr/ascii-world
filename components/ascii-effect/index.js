@@ -20,6 +20,10 @@ class ASCIIEffectImpl extends Effect {
     invert = false,
     matrix = false,
     background = '#000000',
+    // Face depth mode parameters
+    faceDepthMode = false,
+    depthMap = null,
+    granularityRange = { min: 1, max: 50 },
   } = {}) {
     super('ASCIIEffect', fragmentShader, {
       blendFunction: BlendFunction.NORMAL,
@@ -35,6 +39,14 @@ class ASCIIEffectImpl extends Effect {
         ['uMatrix', new Uniform(matrix)],
         ['uTime', new Uniform(0)],
         ['uBackground', new Uniform(new Color('#ff0000'))],
+        // Face depth mode uniforms
+        ['uFaceDepthMode', new Uniform(faceDepthMode)],
+        ['uNoseDepth', new Uniform(0.0)],
+        ['uForeheadDepth', new Uniform(0.0)],
+        ['uCheeksDepth', new Uniform(0.0)],
+        ['uChinDepth', new Uniform(0.0)],
+        ['uGranularityMin', new Uniform(granularityRange.min)],
+        ['uGranularityMax', new Uniform(granularityRange.max)],
       ]),
     })
   }
@@ -47,10 +59,10 @@ class ASCIIEffectImpl extends Effect {
 }
 
 // Effect component
-export const ASCIIEffect = forwardRef((props = {}, ref) => {
+export const ASCIIEffect = forwardRef((props, ref) => {
   const { viewport } = useThree()
 
-  const effect = useMemo(() => new ASCIIEffectImpl(props), [])
+  const effect = useMemo(() => new ASCIIEffectImpl(props), [props])
 
   useEffect(() => {
     const {
@@ -65,6 +77,9 @@ export const ASCIIEffect = forwardRef((props = {}, ref) => {
       matrix,
       time,
       background,
+      faceDepthMode,
+      depthMap,
+      granularityRange,
     } = props
 
     effect.uniforms.get('uCharactersTexture').value = charactersTexture
@@ -78,6 +93,26 @@ export const ASCIIEffect = forwardRef((props = {}, ref) => {
     effect.uniforms.get('uMatrix').value = matrix
     effect.uniforms.get('uBackground').value.set(background)
 
+    // Update face depth mode uniforms
+    effect.uniforms.get('uFaceDepthMode').value = faceDepthMode || false
+
+    if (faceDepthMode && depthMap) {
+      effect.uniforms.get('uNoseDepth').value = depthMap.nose || 0.0
+      effect.uniforms.get('uForeheadDepth').value = depthMap.forehead || 0.0
+      effect.uniforms.get('uCheeksDepth').value = depthMap.cheeks || 0.0
+      effect.uniforms.get('uChinDepth').value = depthMap.chin || 0.0
+    } else {
+      effect.uniforms.get('uNoseDepth').value = 0.0
+      effect.uniforms.get('uForeheadDepth').value = 0.0
+      effect.uniforms.get('uCheeksDepth').value = 0.0
+      effect.uniforms.get('uChinDepth').value = 0.0
+    }
+
+    if (granularityRange) {
+      effect.uniforms.get('uGranularityMin').value = granularityRange.min
+      effect.uniforms.get('uGranularityMax').value = granularityRange.max
+    }
+
     effect.overwriteTime = time !== undefined
 
     if (effect.overwriteTime) {
@@ -85,7 +120,7 @@ export const ASCIIEffect = forwardRef((props = {}, ref) => {
     } else {
       effect.uniforms.get('uTime').value = 0
     }
-  }, [props])
+  }, [props, effect])
 
   return <primitive ref={ref} object={effect} />
 })

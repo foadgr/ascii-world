@@ -4,9 +4,10 @@ import { EffectComposer } from '@react-three/postprocessing'
 import { ASCIIEffect } from 'components/ascii-effect/index'
 import { DepthDisplay } from 'components/depth-display'
 import { FontEditor } from 'components/font-editor'
+import { useFaceTracking } from 'hooks/use-face-tracking'
 import { useHandTracking } from 'hooks/use-hand-tracking'
 import { supportsCameraSwitch } from 'lib/device'
-import { useContext, useEffect, useRef, useState } from 'react'
+import { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import {
   AnimationMixer,
@@ -130,6 +131,8 @@ const Scene = () => {
     cameraFacingMode,
     handTrackingEnabled,
     handControlledGranularity,
+    faceTrackingEnabled,
+    faceControlledGranularity,
     granularity,
     set,
   } = useContext(AsciiContext)
@@ -163,47 +166,63 @@ const Scene = () => {
     },
   })
 
+  // Face tracking integration
+  const faceTrackingHook = useFaceTracking({
+    videoElement: cameraVideo,
+    enabled: faceTrackingEnabled && cameraActive,
+    granularityRange: { min: 1, max: 50 },
+    currentGranularity: granularity,
+    onDepthChange: (data) => {
+      if (faceControlledGranularity && data.faceDetected) {
+        set({ granularity: data.granularity })
+      }
+    },
+  })
+
   useFrame((state, delta) => {
     mixer?.update(delta)
   })
 
   // Camera stream management
-  const startCamera = async (facingMode = cameraFacingMode) => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          facingMode: facingMode,
-        },
-      })
+  const startCamera = useCallback(
+    async (facingMode = cameraFacingMode) => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            facingMode: facingMode,
+          },
+        })
 
-      const video = document.createElement('video')
-      video.srcObject = stream
-      video.muted = true
-      video.playsInline = true
-      video.autoplay = true
+        const video = document.createElement('video')
+        video.srcObject = stream
+        video.muted = true
+        video.playsInline = true
+        video.autoplay = true
 
-      video.onloadedmetadata = () => {
-        video.play()
-        setCameraVideo(video)
-        setTexture(new VideoTexture(video))
-        // Clear other content when camera starts
-        setModel(null)
+        video.onloadedmetadata = () => {
+          video.play()
+          setCameraVideo(video)
+          setTexture(new VideoTexture(video))
+          // Clear other content when camera starts
+          setModel(null)
+        }
+
+        setCameraStream(stream)
+      } catch (error) {
+        console.error('Error accessing camera:', error)
+        // If the preferred camera fails, try the other one
+        if (facingMode !== 'user') {
+          console.log('Falling back to front camera')
+          startCamera('user')
+        }
       }
+    },
+    [cameraFacingMode]
+  )
 
-      setCameraStream(stream)
-    } catch (error) {
-      console.error('Error accessing camera:', error)
-      // If the preferred camera fails, try the other one
-      if (facingMode !== 'user') {
-        console.log('Falling back to front camera')
-        startCamera('user')
-      }
-    }
-  }
-
-  const stopCamera = () => {
+  const stopCamera = useCallback(() => {
     if (cameraStream) {
       for (const track of cameraStream.getTracks()) {
         track.stop()
@@ -215,7 +234,7 @@ const Scene = () => {
       setCameraVideo(null)
     }
     setTexture(null)
-  }
+  }, [cameraStream, cameraVideo])
 
   // React to camera active state changes
   useEffect(() => {
@@ -224,7 +243,7 @@ const Scene = () => {
     } else {
       stopCamera()
     }
-  }, [cameraActive])
+  }, [cameraActive, startCamera, stopCamera])
 
   // React to camera facing mode changes
   useEffect(() => {
@@ -235,7 +254,7 @@ const Scene = () => {
         startCamera(cameraFacingMode)
       }, 100)
     }
-  }, [cameraFacingMode])
+  }, [cameraFacingMode, cameraActive, startCamera, stopCamera])
 
   // Share hand tracking state with context
   useEffect(() => {
@@ -246,6 +265,16 @@ const Scene = () => {
       },
     })
   }, [handTracking, handTrackingEnabled, set])
+
+  // Share face tracking state with context
+  useEffect(() => {
+    set({
+      faceTracking: {
+        ...faceTrackingHook,
+        isEnabled: faceTrackingEnabled,
+      },
+    })
+  }, [faceTrackingHook, faceTrackingEnabled, set])
 
   useEffect(() => {
     if (!asset) return
@@ -293,7 +322,7 @@ const Scene = () => {
         }
       )
     }
-  }, [asset])
+  }, [asset, stopCamera])
 
   const [texture, setTexture] = useState()
 
@@ -345,7 +374,7 @@ const Scene = () => {
         setTexture(texture)
       })
     }
-  }, [asset])
+  }, [asset, stopCamera])
 
   const { viewport, camera } = useThree()
 
@@ -411,7 +440,7 @@ const Scene = () => {
     return () => {
       stopCamera()
     }
-  }, [])
+  }, [stopCamera])
 
   return (
     <>
@@ -507,7 +536,7 @@ function Postprocessing() {
 
   useEffect(() => {
     set({ canvas: gl.domElement })
-  }, [gl])
+  }, [gl, set])
 
   const {
     charactersTexture,
@@ -521,7 +550,15 @@ function Postprocessing() {
     time,
     background,
     fit,
+    trackingMode,
+    faceTracking,
   } = useContext(AsciiContext)
+
+  // Determine if we should use face depth mode
+  const faceDepthMode =
+    trackingMode === 'face' &&
+    faceTracking?.faceDetected &&
+    faceTracking?.depthMap
 
   return (
     <EffectComposer>
@@ -537,6 +574,9 @@ function Postprocessing() {
         matrix={matrix}
         time={time}
         background={background}
+        faceDepthMode={faceDepthMode}
+        depthMap={faceTracking?.depthMap}
+        granularityRange={{ min: 1, max: 50 }}
       />
     </EffectComposer>
   )
@@ -597,6 +637,9 @@ const DEFAULT = {
   cameraActive: false,
   handTrackingEnabled: false,
   handControlledGranularity: false,
+  faceTrackingEnabled: false,
+  faceControlledGranularity: false,
+  trackingMode: 'hand', // 'hand' or 'face'
   cameraFacingMode: 'user', // Add default facing mode
 }
 
@@ -621,7 +664,15 @@ export function ASCII({ children }) {
   const [handControlledGranularity, setHandControlledGranularity] = useState(
     DEFAULT.handControlledGranularity
   )
+  const [faceTrackingEnabled, setFaceTrackingEnabled] = useState(
+    DEFAULT.faceTrackingEnabled
+  )
+  const [faceControlledGranularity, setFaceControlledGranularity] = useState(
+    DEFAULT.faceControlledGranularity
+  )
+  const [trackingMode, setTrackingMode] = useState(DEFAULT.trackingMode)
   const [handTracking, setHandTracking] = useState(null)
+  const [faceTracking, setFaceTracking] = useState(null)
 
   // Control states
   const [characters, setCharacters] = useState(DEFAULT.characters)
@@ -660,21 +711,41 @@ export function ASCII({ children }) {
     }
   }
 
+  const handleCalibrateFaceDepth = () => {
+    if (faceTracking?.calibrateDepth()) {
+      console.log('Face depth calibrated!')
+    }
+  }
+
   const handleResetCalibration = () => {
+    if (trackingMode === 'hand') {
+      handTracking?.resetCalibration()
+      console.log('Hand calibration reset')
+    } else if (trackingMode === 'face') {
+      faceTracking?.resetCalibration()
+      console.log('Face calibration reset')
+    }
+  }
+
+  const handleTrackingModeChange = (mode) => {
+    setTrackingMode(mode)
+    // Reset any existing calibrations when switching modes
     handTracking?.resetCalibration()
-    console.log('Hand calibration reset')
+    faceTracking?.resetCalibration()
   }
 
   function set({
     charactersTexture,
     canvas,
     handTracking,
+    faceTracking,
     granularity: newGranularity,
     ...props
   }) {
     if (charactersTexture) setCharactersTexture(charactersTexture)
     if (canvas) setCanvas(canvas)
     if (handTracking) setHandTracking(handTracking)
+    if (faceTracking) setFaceTracking(faceTracking)
     if (newGranularity !== undefined) setGranularity(newGranularity)
     // Handle other props if needed
   }
@@ -709,7 +780,11 @@ export function ASCII({ children }) {
           cameraFacingMode,
           handTrackingEnabled,
           handControlledGranularity,
+          faceTrackingEnabled,
+          faceControlledGranularity,
+          trackingMode,
           handTracking,
+          faceTracking,
           set,
         }}
       >
@@ -754,14 +829,20 @@ export function ASCII({ children }) {
           // Camera & Hand Tracking
           cameraActive={cameraActive}
           handTracking={handTracking}
+          faceTracking={faceTracking}
+          trackingMode={trackingMode}
           cameraFacingMode={cameraFacingMode}
           supportsCameraSwitch={supportsCameraSwitch()}
           // Camera Handlers
           onCameraToggle={handleCameraToggle}
           onCameraSwitch={handleCameraSwitch}
           onHandTrackingChange={setHandTrackingEnabled}
+          onFaceTrackingChange={setFaceTrackingEnabled}
+          onTrackingModeChange={handleTrackingModeChange}
           onHandControlledGranularityChange={setHandControlledGranularity}
+          onFaceControlledGranularityChange={setFaceControlledGranularity}
           onCalibrateHandDepth={handleCalibrateHandDepth}
+          onCalibrateFaceDepth={handleCalibrateFaceDepth}
           onResetCalibration={handleResetCalibration}
         />
       </AsciiContext.Provider>

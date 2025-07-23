@@ -22,15 +22,16 @@ const Cursor = () => {
       api.start({
         config: {
           duration: 0,
-          easing: (t) => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t)),
         },
-        x: clientX,
-        y: clientY,
-        immediate: !hasMoved,
+        x: clientX - 16,
+        y: clientY - 16,
       })
-      setHasMoved(true)
+
+      if (!hasMoved) {
+        setHasMoved(true)
+      }
     },
-    [hasMoved]
+    [api, hasMoved]
   )
 
   useEffect(() => {
@@ -39,71 +40,78 @@ const Cursor = () => {
     return () => {
       window.removeEventListener('mousemove', onMouseMove, false)
     }
-  }, [hasMoved])
+  }, [onMouseMove])
+
+  const onMouseEnter = useCallback(() => {
+    setIsPointer(true)
+  }, [])
+
+  const onMouseLeave = useCallback(() => {
+    setIsPointer(false)
+  }, [])
+
+  const onMouseEnterGrab = useCallback(() => {
+    setIsGrab(true)
+  }, [])
+
+  const onMouseLeaveGrab = useCallback(() => {
+    setIsGrab(false)
+  }, [])
+
+  useEffect(() => {
+    const elements = [
+      '[data-cursor="link"]',
+      '[data-cursor="pointer"]',
+      'button',
+      'a',
+    ]
+
+    for (const selector of elements) {
+      const element = document.querySelector(selector)
+      if (element) {
+        element.addEventListener('mouseenter', onMouseEnter, false)
+        element.addEventListener('mouseleave', onMouseLeave, false)
+      }
+    }
+
+    return () => {
+      for (const selector of elements) {
+        const element = document.querySelector(selector)
+        if (element) {
+          element.removeEventListener('mouseenter', onMouseEnter, false)
+          element.removeEventListener('mouseleave', onMouseLeave, false)
+        }
+      }
+    }
+  }, [onMouseEnter, onMouseLeave])
+
+  useEffect(() => {
+    const elements = ['[data-cursor="text"]', 'input', 'textarea']
+
+    for (const selector of elements) {
+      const element = document.querySelector(selector)
+      if (element) {
+        element.addEventListener('mouseenter', onMouseEnterGrab, false)
+        element.addEventListener('mouseleave', onMouseLeaveGrab, false)
+      }
+    }
+
+    return () => {
+      for (const selector of elements) {
+        const element = document.querySelector(selector)
+        if (element) {
+          element.removeEventListener('mouseenter', onMouseEnterGrab, false)
+          element.removeEventListener('mouseleave', onMouseLeaveGrab, false)
+        }
+      }
+    }
+  }, [onMouseEnterGrab, onMouseLeaveGrab])
 
   useEffect(() => {
     document.documentElement.classList.add('has-custom-cursor')
 
     return () => {
       document.documentElement.classList.remove('has-custom-cursor')
-    }
-  }, [])
-
-  useEffect(() => {
-    let elements = []
-
-    const onMouseEnter = () => {
-      setIsPointer(true)
-    }
-    const onMouseLeave = () => {
-      setIsPointer(false)
-    }
-
-    elements = [
-      ...document.querySelectorAll(
-        "button,a,input,label,[data-cursor='pointer']"
-      ),
-    ]
-
-    elements.forEach((element) => {
-      element.addEventListener('mouseenter', onMouseEnter, false)
-      element.addEventListener('mouseleave', onMouseLeave, false)
-    })
-
-    return () => {
-      elements.forEach((element) => {
-        element.removeEventListener('mouseenter', onMouseEnter, false)
-        element.removeEventListener('mouseleave', onMouseLeave, false)
-      })
-    }
-  }, [])
-
-  useEffect(() => {
-    let elements = []
-
-    const onMouseEnter = () => {
-      setIsGrab(true)
-    }
-    const onMouseLeave = () => {
-      setIsGrab(false)
-    }
-
-    elements = [
-      ...document.querySelectorAll(
-        "button,a,input,label,[data-cursor='pointer']"
-      ),
-    ]
-
-    elements.forEach((element) => {
-      element.addEventListener('mouseenter', onMouseEnter, false)
-      element.addEventListener('mouseleave', onMouseLeave, false)
-    })
-
-    return () => {
-      elements.forEach((element) => {
-        element.removeEventListener('mouseenter', onMouseEnter, false)
-        element.removeEventListener('mouseleave', onMouseLeave, false)
-      })
     }
   }, [])
 

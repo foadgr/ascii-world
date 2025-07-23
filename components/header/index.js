@@ -5,9 +5,10 @@ import { useStore } from 'lib/store'
 import s from './header.module.scss'
 
 export const Header = () => {
-  const [navIsOpen, setNavIsOpen] = useStore(
-    (state) => [state.navIsOpen, state.setNavIsOpen]
-  )
+  const [navIsOpen, setNavIsOpen] = useStore((state) => [
+    state.navIsOpen,
+    state.setNavIsOpen,
+  ])
 
   return (
     <header className={s.header}>
