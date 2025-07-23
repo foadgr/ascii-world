@@ -233,7 +233,6 @@ export function ControlPanel({
             <div className={s.controls}>
               {/* Visual Controls Section */}
               <div className={s.section}>
-
                 <TextInput
                   label="characters"
                   value={characters}

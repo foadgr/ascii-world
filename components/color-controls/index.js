@@ -22,7 +22,10 @@ const useIsDesktop = () => {
 
 // Draggable modal for desktop
 const DraggableModal = ({ open, onOpenChange, children }) => {
-  const [position, setPosition] = useState({ x: window.innerWidth - 340, y: 100 }) // Initial position on the right, will be updated
+  const [position, setPosition] = useState({
+    x: window.innerWidth - 340,
+    y: 100,
+  }) // Initial position on the right, will be updated
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
 
