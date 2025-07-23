@@ -1,6 +1,6 @@
 {
-  "name": "Aniso",
-  "short_name": "Aniso",
+  "name": "ASCII World",
+  "short_name": "ASCII World",
   "description": "An open-source ASCII tool built by darkroom.engineering to generate and customize character-based imagery.",
   "icons": [
     {

@@ -1,4 +1,4 @@
-## Aniso
+## ASCII World
 
 An open-source ASCII tool built by darkroom.engineering to generate and customize character-based imagery.
 

@@ -3,7 +3,7 @@ import { CustomHead } from 'components/custom-head'
 
 export function Layout({
   seo = {
-    title: 'Aniso - ASCII Tool',
+    title: 'ASCII World - ASCII Tool',
     description:
       'An open-source ASCII tool built by darkroom.engineering to generate and customize character-based imagery.',
     image: '',

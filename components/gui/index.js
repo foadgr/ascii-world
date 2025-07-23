@@ -23,7 +23,7 @@ export function GUI() {
       </button>
       <header className={s.title}>
         <Logo />
-        <h1>ANISO_ASCII_TOOL</h1>
+        <h1>ASCII_WORLD_TOOL</h1>
       </header>
       <div className={s.main}>
         <div className={s.leva}>
@@ -40,7 +40,7 @@ export function GUI() {
         </div>
         <div className={s.description}>
           <p>
-            the Aniso ascii tool is an open-source ASCII tool built by{' '}
+            the ASCII World ascii tool is an open-source ASCII tool built by{' '}
             <a href="https://darkroom.engineering">darkroom.engineering</a> to
             generate and customize character-based imagery.
           </p>
