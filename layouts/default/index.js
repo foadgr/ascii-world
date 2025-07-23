@@ -3,11 +3,11 @@ import { CustomHead } from 'components/custom-head'
 
 export function Layout({
   seo = {
-    title: 'ASCII World - ASCII Tool',
+    title: 'ASCII World - Control your world with ASCII',
     description:
-      'An open-source ASCII tool built by darkroom.engineering to generate and customize character-based imagery.',
+      'An open-source ASCII tool built by @hafezverde to create live ASCII filters on your phone or webcam.',
     image: '',
-    keywords: ['ascii', 'renderer', 'webgl', 'react-three-fiber'],
+    keywords: ['ascii', 'art', 'mediapipe', 'computer vision', 'hand tracking', 'face tracking', 'generator', 'converter', 'text art', 'character art', 'webgl', 'react'],
   },
   children,
   theme = 'light',
