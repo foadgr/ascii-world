@@ -1,3 +1,4 @@
+import { track } from '@vercel/analytics'
 import { Hand, RotateCcw, ScanFace } from 'lucide-react'
 import { useEffect } from 'react'
 import s from './camera-controls.module.scss'
@@ -55,7 +56,12 @@ export function CameraControls({
       <button
         type="button"
         className={`${s.cameraButton} ${cameraActive ? s.active : ''}`}
-        onClick={onCameraToggle}
+        onClick={() => {
+          track('Camera Toggle', { 
+            action: cameraActive ? 'disable' : 'enable' 
+          })
+          onCameraToggle()
+        }}
       >
         <div className={s.cameraIconContainer}>
           <svg
@@ -106,12 +112,15 @@ export function CameraControls({
               if (trackingMode === 'hand') {
                 // If already in hand mode, handle calibration
                 if (handTracking?.handDetected && !handTracking?.isCalibrated) {
+                  track('Hand Calibrate', { action: 'calibrate_depth' })
                   onCalibrateHandDepth()
                 } else if (handTracking?.isCalibrated) {
+                  track('Hand Reset', { action: 'reset_calibration' })
                   onResetCalibration()
                 }
               } else {
                 // Switch to hand tracking mode
+                track('Hand Tracking', { action: 'enable' })
                 onTrackingModeChange('hand')
               }
             }}
@@ -146,12 +155,15 @@ export function CameraControls({
               if (trackingMode === 'face') {
                 // If already in face mode, handle calibration
                 if (faceTracking?.faceDetected && !faceTracking?.isCalibrated) {
+                  track('Face Calibrate', { action: 'calibrate_depth' })
                   onCalibrateFaceDepth()
                 } else if (faceTracking?.isCalibrated) {
+                  track('Face Reset', { action: 'reset_calibration' })
                   onResetCalibration()
                 }
               } else {
                 // Switch to face tracking mode
+                track('Face Tracking', { action: 'enable' })
                 onTrackingModeChange('face')
               }
             }}

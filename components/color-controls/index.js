@@ -1,3 +1,4 @@
+import { track } from '@vercel/analytics'
 import { useCallback, useEffect, useState } from 'react'
 import { Drawer } from 'vaul'
 import s from './color-controls.module.scss'
@@ -195,7 +196,10 @@ export function ColorControls({
         <button
           type="button"
           className={s.trigger}
-          onClick={() => setOpen(true)}
+          onClick={() => {
+            track('Color Panel', { action: 'open' })
+            setOpen(true)
+          }}
           aria-label="Open color controls"
         >
           <ColorButton
