@@ -1,3 +1,4 @@
+import { Settings2 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Drawer } from 'vaul'
 import s from './control-panel.module.scss'
@@ -235,18 +236,7 @@ export function ControlPanel({
             className={s.trigger}
             onClick={() => handleOpenChange(true)}
           >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <title>Settings</title>
-              <circle cx="12" cy="12" r="3" />
-              <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1" />
-            </svg>
+            <Settings2 size={18} />
           </button>
 
           <DraggableModal open={open} onOpenChange={handleOpenChange}>
@@ -342,18 +332,7 @@ export function ControlPanel({
         <Drawer.Root open={open} onOpenChange={handleOpenChange}>
           <Drawer.Trigger asChild>
             <button type="button" className={s.trigger}>
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <title>Settings</title>
-                <circle cx="12" cy="12" r="3" />
-                <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1" />
-              </svg>
+              <Settings2 size={18} />
             </button>
           </Drawer.Trigger>
 

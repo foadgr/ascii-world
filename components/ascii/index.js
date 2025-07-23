@@ -2,8 +2,8 @@ import { OrbitControls, useAspect } from '@react-three/drei'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { EffectComposer } from '@react-three/postprocessing'
 import { ASCIIEffect } from 'components/ascii-effect/index'
+import { DepthDisplay } from 'components/depth-display'
 import { FontEditor } from 'components/font-editor'
-import { HandTrackingStatus } from 'components/hand-tracking-status'
 import { useHandTracking } from 'hooks/use-hand-tracking'
 import { useContext, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
@@ -124,7 +124,7 @@ const Scene = () => {
   const [cameraStream, setCameraStream] = useState(null)
   const [cameraVideo, setCameraVideo] = useState(null)
   const [skiaReady, setSkiaReady] = useState(false)
-  const { cameraActive, handTrackingEnabled, handControlledGranularity, set } =
+  const { cameraActive, handTrackingEnabled, handControlledGranularity, granularity, set } =
     useContext(AsciiContext)
 
   // Initialize CanvasKit when component mounts
@@ -148,6 +148,7 @@ const Scene = () => {
     videoElement: cameraVideo,
     enabled: handTrackingEnabled && cameraActive && skiaReady,
     granularityRange: { min: 1, max: 50 },
+    currentGranularity: granularity, // Pass current granularity for calibration
     onDepthChange: (data) => {
       if (handControlledGranularity && data.handDetected) {
         set({ granularity: data.granularity })
@@ -522,7 +523,7 @@ function Inner() {
   return (
     <>
       <div className={s.ascii}>
-        <HandTrackingStatus />
+        <DepthDisplay />
         <div className={s.canvas}>
           <Canvas
             flat
