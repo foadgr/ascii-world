@@ -22,7 +22,7 @@ const useIsDesktop = () => {
 
 // Draggable modal for desktop
 const DraggableModal = ({ open, onOpenChange, children }) => {
-  const [position, setPosition] = useState({ x: 50, y: 50 })
+  const [position, setPosition] = useState({ x: window.innerWidth - 340, y: 100 }) // Initial position on the right, will be updated
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
 
@@ -67,6 +67,26 @@ const DraggableModal = ({ open, onOpenChange, children }) => {
       }
     }
   }, [isDragging, handleMouseMove, handleMouseUp])
+
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        onOpenChange(false)
+      }
+    }
+
+    if (open) {
+      document.addEventListener('keydown', handleEscape)
+      document.body.style.overflow = 'hidden'
+      // Set initial position above the color button on the right
+      setPosition({ x: window.innerWidth - 340, y: window.innerHeight - 280 })
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape)
+      document.body.style.overflow = ''
+    }
+  }, [open, onOpenChange])
 
   if (!open) return null
 

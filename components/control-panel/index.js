@@ -1,6 +1,6 @@
 import { track } from '@vercel/analytics'
 import { Settings2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Drawer } from 'vaul'
 import s from './control-panel.module.scss'
 
@@ -21,8 +21,54 @@ const useIsDesktop = () => {
   return isDesktop
 }
 
-// Desktop modal component
-const DraggableModal = ({ children, open, onOpenChange }) => {
+// Draggable modal for desktop
+const DraggableModal = ({ open, onOpenChange, children }) => {
+  const [position, setPosition] = useState({ x: 20, y: 80 }) // Initial position, will be updated
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+
+  const handleMouseDown = (e) => {
+    setIsDragging(true)
+    setDragStart({
+      x: e.clientX - position.x,
+      y: e.clientY - position.y,
+    })
+  }
+
+  const handleMouseMove = useCallback(
+    (e) => {
+      if (!isDragging) return
+
+      const newX = e.clientX - dragStart.x
+      const newY = e.clientY - dragStart.y
+
+      // Keep modal within viewport bounds
+      const maxX = window.innerWidth - 420 // modal width
+      const maxY = window.innerHeight - 200 // modal height
+
+      setPosition({
+        x: Math.max(0, Math.min(newX, maxX)),
+        y: Math.max(0, Math.min(newY, maxY)),
+      })
+    },
+    [isDragging, dragStart]
+  )
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false)
+  }, [])
+
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+      }
+    }
+  }, [isDragging, handleMouseMove, handleMouseUp])
+
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape') {
@@ -33,6 +79,8 @@ const DraggableModal = ({ children, open, onOpenChange }) => {
     if (open) {
       document.addEventListener('keydown', handleEscape)
       document.body.style.overflow = 'hidden'
+      // Set initial position below the control panel button on the right
+      setPosition({ x: window.innerWidth - 420, y: 100 })
     }
 
     return () => {
@@ -44,25 +92,29 @@ const DraggableModal = ({ children, open, onOpenChange }) => {
   if (!open) return null
 
   return (
-    <div
-      className={s.modalOverlay}
-      onClick={() => onOpenChange(false)}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') onOpenChange(false)
-      }}
-    >
+    <>
+      <div
+        className={s.modalOverlay}
+        onClick={() => onOpenChange(false)}
+        onKeyDown={(e) => e.key === 'Escape' && onOpenChange(false)}
+        role="button"
+        tabIndex={0}
+        aria-label="Close modal"
+      />
       <div
         className={s.modalContent}
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
         style={{
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
+          left: `${position.x}px`,
+          top: `${position.y}px`,
+          cursor: isDragging ? 'grabbing' : 'auto',
         }}
       >
-        <div className={s.modalHeader}>
-          <h2 className={s.modalTitle}>Visual Settings</h2>
+        <div
+          className={s.modalHeader}
+          onMouseDown={handleMouseDown}
+          style={{ cursor: 'grab' }}
+        >
+          <h2 className={s.modalTitle}>world controls</h2>
           <button
             type="button"
             className={s.closeButton}
@@ -73,7 +125,7 @@ const DraggableModal = ({ children, open, onOpenChange }) => {
         </div>
         {children}
       </div>
-    </div>
+    </>
   )
 }
 
@@ -181,7 +233,6 @@ export function ControlPanel({
             <div className={s.controls}>
               {/* Visual Controls Section */}
               <div className={s.section}>
-                <h3 className={s.sectionTitle}>visual settings</h3>
 
                 <TextInput
                   label="characters"
@@ -284,7 +335,7 @@ export function ControlPanel({
             <Drawer.Content className={s.content}>
               <div className={s.header}>
                 <div className={s.handle} />
-                <Drawer.Title className={s.title}>Visual Settings</Drawer.Title>
+                <Drawer.Title className={s.title}>world controls</Drawer.Title>
               </div>
 
               <div className={s.controls}>

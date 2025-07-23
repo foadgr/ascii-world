@@ -106,7 +106,7 @@
 .controls {
   flex: 1;
   overflow-y: auto;
-  padding: 0 24px 24px;
+  padding: 20px 24px 24px;
 
   &::-webkit-scrollbar {
     width: 6px;
@@ -139,6 +139,24 @@
   color: #ffffff;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding-bottom: 8px;
+}
+
+// Input group (for text inputs and sliders)
+.inputGroup {
+  margin-bottom: 24px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+// Toggle group (for checkboxes)
+.toggleGroup {
+  margin-bottom: 20px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 }
 
 // Control components
@@ -216,16 +234,22 @@
   }
 }
 
-.checkbox {
+.toggleInput {
   width: 18px;
   height: 18px;
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 3px;
   accent-color: #00ff88;
   cursor: pointer;
   appearance: none;
   position: relative;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(255, 255, 255, 0.7);
+  }
 
   &:checked {
     background: #00ff88;
@@ -355,7 +379,7 @@
 .modalContent {
   position: fixed;
   z-index: 51;
-  width: 500px;
+  width: 400px;
   max-height: 80vh;
   background: rgba(26, 26, 26, 0.01);
   backdrop-filter: blur(10px);
