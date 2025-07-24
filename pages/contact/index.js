@@ -157,7 +157,7 @@ export default function Contact() {
                   href="https://github.com/darkroomengineering/aniso"
                   className={s.resourceLink}
                 >
-                  Aniso - ASCII Art Tool
+                  Aniso - ASCII Tool
                 </Link>
               </div>
             </section>
@@ -171,7 +171,13 @@ export default function Contact() {
                 React for the interface.
               </p>
               <p>
-                Created by{' '}
+                This project is forked from{' '}
+                <Link href="https://aniso.darkroom.engineering">Aniso</Link>, 
+                an open-source ASCII tool built by{' '}
+                <Link href="https://darkroom.engineering">darkroom.engineering</Link>.
+              </p>
+              <p>
+                Modified and enhanced by{' '}
                 <Link href="https://x.com/hafezverde">@hafezverde</Link> to
                 explore the intersection of computer vision, creative coding,
                 and web technologies.
