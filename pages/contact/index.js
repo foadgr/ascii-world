@@ -172,9 +172,12 @@ export default function Contact() {
               </p>
               <p>
                 This project is forked from{' '}
-                <Link href="https://aniso.darkroom.engineering">Aniso</Link>, 
-                an open-source ASCII tool built by{' '}
-                <Link href="https://darkroom.engineering">darkroom.engineering</Link>.
+                <Link href="https://aniso.darkroom.engineering">Aniso</Link>, an
+                open-source ASCII tool built by{' '}
+                <Link href="https://darkroom.engineering">
+                  darkroom.engineering
+                </Link>
+                .
               </p>
               <p>
                 Modified and enhanced by{' '}
