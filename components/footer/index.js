@@ -12,7 +12,7 @@ export const Footer = () => {
               Transform your world into ASCII art with hand and face tracking
             </p>
             <div className={s.projectLinks}>
-              <Link href="https://x.com/hafezverde">X</Link>
+              <Link href="/">Home</Link>
               <Link href="/contact">Contact</Link>
             </div>
           </div>
@@ -48,14 +48,6 @@ export const Footer = () => {
                 Face Detection
               </Link>
               <Link href="https://threejs.org/docs/">WebGL Documentation</Link>
-            </div>
-          </div>
-
-          <div className={s.section}>
-            <h3>Community</h3>
-            <div className={s.socialLinks}>
-              <Link href="https://x.com/hafezverde">@hafezverde</Link>
-              <Link href="https://x.com/hafezverde">X</Link>
             </div>
           </div>
         </div>
