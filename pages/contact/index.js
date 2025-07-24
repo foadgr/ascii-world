@@ -153,16 +153,22 @@ export default function Contact() {
                 >
                   React-Three-Drei
                 </Link>
+                <Link
+                  href="https://github.com/darkroomengineering/aniso"
+                  className={s.resourceLink}
+                >
+                  Aniso - ASCII Art Tool
+                </Link>
               </div>
             </section>
 
             <section className={s.about}>
               <h2>About ASCII World</h2>
               <p>
-                ASCII World is a free, open-source tool that transforms your
-                camera feed into ASCII art in real-time. Built with modern web
-                technologies including MediaPipe for hand/face tracking,
-                Three.js for rendering, and React for the interface.
+                ASCII World transforms your camera feed into ASCII art in
+                real-time. Built with modern web technologies including
+                MediaPipe for hand/face tracking, Three.js for rendering, and
+                React for the interface.
               </p>
               <p>
                 Created by{' '}
