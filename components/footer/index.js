@@ -50,8 +50,6 @@ export const Footer = () => {
               <Link href="https://threejs.org/docs/">WebGL Documentation</Link>
             </div>
           </div>
-
-
         </div>
 
         <div className={s.bottom}>
