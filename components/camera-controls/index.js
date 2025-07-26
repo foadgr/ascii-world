@@ -1,4 +1,8 @@
-import { IconCameraRotate, IconCameraSelfie, IconMusic } from '@tabler/icons-react'
+import {
+  IconCameraRotate,
+  IconCameraSelfie,
+  IconMusic,
+} from '@tabler/icons-react'
 import { track } from '@vercel/analytics'
 import { Hand, ScanFace } from 'lucide-react'
 import { useEffect } from 'react'
@@ -26,7 +30,7 @@ export function CameraControls({
   onCalibrateAudio,
   onResetCalibration,
 }) {
-  // Auto-enable tracking when camera is active based on mode
+  // Auto-enable tracking based on mode and camera state
   useEffect(() => {
     if (cameraActive) {
       if (trackingMode === 'hand') {
@@ -52,12 +56,20 @@ export function CameraControls({
         onFaceControlledGranularityChange(false)
       }
     } else {
+      // Camera is off - only disable camera-dependent tracking
       onHandTrackingChange(false)
       onHandControlledGranularityChange(false)
       onFaceTrackingChange(false)
       onFaceControlledGranularityChange(false)
-      onAudioTrackingChange(false)
-      onAudioControlledGranularityChange(false)
+      
+      // Keep audio tracking if it's selected (audio doesn't need camera)
+      if (trackingMode === 'audio') {
+        onAudioTrackingChange(true)
+        onAudioControlledGranularityChange(true)
+      } else {
+        onAudioTrackingChange(false)
+        onAudioControlledGranularityChange(false)
+      }
     }
   }, [
     cameraActive,
@@ -115,7 +127,7 @@ export function CameraControls({
         </button>
       )}
 
-      {/* Tracking Mode Toggle Buttons */}
+      {/* Camera-dependent tracking buttons (Hand & Face) */}
       {cameraActive && (
         <>
           {/* Hand Tracking Button */}
@@ -203,54 +215,60 @@ export function CameraControls({
           >
             <ScanFace size={23} />
           </button>
-
-          {/* Audio Tracking Button */}
-          <button
-            type="button"
-            className={`${s.trackingButton} ${
-              trackingMode === 'audio' ? s.active : ''
-            } ${
-              trackingMode === 'audio' && !audioTracking?.audioDetected
-                ? s.notDetected
-                : trackingMode === 'audio' && audioTracking?.isCalibrated
-                  ? s.detected
-                  : trackingMode === 'audio'
-                    ? s.uncalibrated
-                    : ''
-            }`}
-            style={{
-              color: trackingMode === 'audio' && audioTracking?.audioDetected ? '#ff8c00' : undefined
-            }}
-            onClick={() => {
-              if (trackingMode === 'audio') {
-                // If already in audio mode, handle calibration
-                if (audioTracking?.currentAudioLevel > 0 && !audioTracking?.isCalibrated) {
-                  track('Audio Calibrate', { action: 'calibrate_audio' })
-                  onCalibrateAudio()
-                } else if (audioTracking?.isCalibrated) {
-                  track('Audio Reset', { action: 'reset_calibration' })
-                  onResetCalibration()
-                }
-              } else {
-                // Switch to audio tracking mode
-                track('Audio Tracking', { action: 'enable' })
-                onTrackingModeChange('audio')
-              }
-            }}
-            title={
-              trackingMode !== 'audio'
-                ? 'Switch to audio tracking'
-                : !audioTracking?.audioDetected
-                  ? 'No audio detected'
-                  : audioTracking?.isCalibrated
-                    ? 'Audio calibrated - click to reset'
-                    : 'Audio detected - click to calibrate'
-            }
-          >
-            <IconMusic size={23} />
-          </button>
         </>
       )}
+
+      {/* Audio Tracking Button - Always available (doesn't need camera) */}
+      <button
+        type="button"
+        className={`${s.trackingButton} ${
+          trackingMode === 'audio' ? s.active : ''
+        } ${
+          trackingMode === 'audio' && !audioTracking?.audioDetected
+            ? s.notDetected
+            : trackingMode === 'audio' && audioTracking?.isCalibrated
+              ? s.detected
+              : trackingMode === 'audio'
+                ? s.uncalibrated
+                : ''
+        }`}
+        style={{
+          color:
+            trackingMode === 'audio' && audioTracking?.audioDetected
+              ? '#ff8c00'
+              : undefined,
+        }}
+        onClick={() => {
+          if (trackingMode === 'audio') {
+            // If already in audio mode, handle calibration
+            if (
+              audioTracking?.currentAudioLevel > 0 &&
+              !audioTracking?.isCalibrated
+            ) {
+              track('Audio Calibrate', { action: 'calibrate_audio' })
+              onCalibrateAudio()
+            } else if (audioTracking?.isCalibrated) {
+              track('Audio Reset', { action: 'reset_calibration' })
+              onResetCalibration()
+            }
+          } else {
+            // Switch to audio tracking mode
+            track('Audio Tracking', { action: 'enable' })
+            onTrackingModeChange('audio')
+          }
+        }}
+        title={
+          trackingMode !== 'audio'
+            ? 'Switch to audio tracking'
+            : !audioTracking?.audioDetected
+              ? 'No audio detected'
+              : audioTracking?.isCalibrated
+                ? 'Audio calibrated - click to reset'
+                : 'Audio detected - click to calibrate'
+        }
+      >
+        <IconMusic size={23} />
+      </button>
     </div>
   )
 }

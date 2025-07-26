@@ -331,29 +331,44 @@ export function ControlPanel({
                       max={2.0}
                       step={0.1}
                     />
-                    
+
                     <Slider
                       label="voice emphasis"
                       value={audioAdjustmentVector?.voice || 1.0}
-                      onChange={(value) => onAudioAdjustmentVectorChange({ ...audioAdjustmentVector, voice: value })}
+                      onChange={(value) =>
+                        onAudioAdjustmentVectorChange({
+                          ...audioAdjustmentVector,
+                          voice: value,
+                        })
+                      }
                       min={0.1}
                       max={3.0}
                       step={0.1}
                     />
-                    
+
                     <Slider
                       label="music emphasis"
                       value={audioAdjustmentVector?.music || 1.0}
-                      onChange={(value) => onAudioAdjustmentVectorChange({ ...audioAdjustmentVector, music: value })}
+                      onChange={(value) =>
+                        onAudioAdjustmentVectorChange({
+                          ...audioAdjustmentVector,
+                          music: value,
+                        })
+                      }
                       min={0.1}
                       max={3.0}
                       step={0.1}
                     />
-                    
+
                     <Slider
                       label="noise reduction"
                       value={audioAdjustmentVector?.noise || 0.3}
-                      onChange={(value) => onAudioAdjustmentVectorChange({ ...audioAdjustmentVector, noise: value })}
+                      onChange={(value) =>
+                        onAudioAdjustmentVectorChange({
+                          ...audioAdjustmentVector,
+                          noise: value,
+                        })
+                      }
                       min={0.0}
                       max={1.0}
                       step={0.1}
@@ -478,29 +493,44 @@ export function ControlPanel({
                         max={2.0}
                         step={0.1}
                       />
-                      
+
                       <Slider
                         label="voice emphasis"
                         value={audioAdjustmentVector?.voice || 1.0}
-                        onChange={(value) => onAudioAdjustmentVectorChange({ ...audioAdjustmentVector, voice: value })}
+                        onChange={(value) =>
+                          onAudioAdjustmentVectorChange({
+                            ...audioAdjustmentVector,
+                            voice: value,
+                          })
+                        }
                         min={0.1}
                         max={3.0}
                         step={0.1}
                       />
-                      
+
                       <Slider
                         label="music emphasis"
                         value={audioAdjustmentVector?.music || 1.0}
-                        onChange={(value) => onAudioAdjustmentVectorChange({ ...audioAdjustmentVector, music: value })}
+                        onChange={(value) =>
+                          onAudioAdjustmentVectorChange({
+                            ...audioAdjustmentVector,
+                            music: value,
+                          })
+                        }
                         min={0.1}
                         max={3.0}
                         step={0.1}
                       />
-                      
+
                       <Slider
                         label="noise reduction"
                         value={audioAdjustmentVector?.noise || 0.3}
-                        onChange={(value) => onAudioAdjustmentVectorChange({ ...audioAdjustmentVector, noise: value })}
+                        onChange={(value) =>
+                          onAudioAdjustmentVectorChange({
+                            ...audioAdjustmentVector,
+                            noise: value,
+                          })
+                        }
                         min={0.0}
                         max={1.0}
                         step={0.1}

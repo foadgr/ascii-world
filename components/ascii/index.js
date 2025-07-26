@@ -195,9 +195,9 @@ const Scene = () => {
       if (audioControlledGranularity) {
         // Use enhanced level that includes spike detection for more elastic response
         const level = data.currentLevel // This is the enhanced level with spikes
-        
+
         let mappedGranularity
-        
+
         if (level <= 0.005) {
           // Background/quiet sounds: stay at minimum granularity
           mappedGranularity = 1
@@ -208,22 +208,22 @@ const Scene = () => {
           // Very conservative mapping - whispers should only reach low granularity
           const normalizedLevel = (level - 0.005) / (0.5 - 0.005)
           let curve = Math.pow(normalizedLevel, 4.0) // Very steep curve - need loud sounds for high granularity
-          
+
           // More conservative spike boost
           if (data.isSpike) {
             curve = Math.min(1, curve * 1.5) // Reduced spike boost
           }
-          
+
           // Minimal content type boost
           if (data.contentType === 'voice') {
             curve = Math.min(1, curve * 1.05) // Very slight voice boost
           } else if (data.contentType === 'music') {
             curve = Math.min(1, curve * 1.1) // Slight music boost
           }
-          
+
           mappedGranularity = Math.round(1 + curve * 49) // 1-50 range
         }
-        
+
         set({ granularity: mappedGranularity })
       }
     },
@@ -737,9 +737,9 @@ export function ASCII({ children }) {
   )
   const [audioSensitivity, setAudioSensitivity] = useState(1.0) // Default sensitivity
   const [audioAdjustmentVector, setAudioAdjustmentVector] = useState({
-    voice: 1.0,  // Emphasize voice frequencies
-    music: 1.0,  // Emphasize music frequencies  
-    noise: 0.3   // Reduce noise frequencies
+    voice: 1.0, // Emphasize voice frequencies
+    music: 1.0, // Emphasize music frequencies
+    noise: 0.3, // Reduce noise frequencies
   })
   const [trackingMode, setTrackingMode] = useState(DEFAULT.trackingMode)
   const [handTracking, setHandTracking] = useState(null)
