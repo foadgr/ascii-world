@@ -8,6 +8,13 @@
   gap: 10px;
 }
 
+// Camera buttons container - vertical layout for camera toggle and flip buttons
+.cameraButtonsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px; // Smaller gap for vertical stacking
+}
+
 // Camera button
 .cameraButton {
   display: flex;
@@ -174,6 +181,10 @@
     top: 16px;
     left: 16px;
     gap: 8px;
+  }
+  
+  .cameraButtonsContainer {
+    gap: 4px; // Even tighter spacing on mobile
   }
   
   .cameraButton {

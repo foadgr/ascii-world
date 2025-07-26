@@ -61,7 +61,7 @@ export function CameraControls({
       onHandControlledGranularityChange(false)
       onFaceTrackingChange(false)
       onFaceControlledGranularityChange(false)
-      
+
       // Keep audio tracking if it's selected (audio doesn't need camera)
       if (trackingMode === 'audio') {
         onAudioTrackingChange(true)
@@ -84,48 +84,51 @@ export function CameraControls({
 
   return (
     <div className={s.buttonGroup}>
-      {/* Camera Toggle Button with Calibration Status Dot */}
-      <button
-        type="button"
-        className={`${s.cameraButton} ${cameraActive ? s.active : ''}`}
-        onClick={() => {
-          track('Camera Toggle', {
-            action: cameraActive ? 'disable' : 'enable',
-          })
-          onCameraToggle()
-        }}
-      >
-        <div className={s.cameraIconContainer}>
-          <svg
-            width="23"
-            height="23"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <title>Camera</title>
-            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-            <circle cx="12" cy="13" r="4" />
-          </svg>
-        </div>
-      </button>
-
-      {/* Camera Flip Button - Only show on mobile/tablet devices when camera is active */}
-      {cameraActive && supportsCameraSwitch && (
+      {/* Camera Buttons Container - Vertical layout */}
+      <div className={s.cameraButtonsContainer}>
+        {/* Camera Toggle Button with Calibration Status Dot */}
         <button
           type="button"
-          className={s.flipButton}
-          onClick={onCameraSwitch}
-          title={`Switch to ${cameraFacingMode === 'user' ? 'back' : 'front'} camera`}
+          className={`${s.cameraButton} ${cameraActive ? s.active : ''}`}
+          onClick={() => {
+            track('Camera Toggle', {
+              action: cameraActive ? 'disable' : 'enable',
+            })
+            onCameraToggle()
+          }}
         >
-          {cameraFacingMode === 'user' ? (
-            <IconCameraRotate size={23} />
-          ) : (
-            <IconCameraSelfie size={23} />
-          )}
+          <div className={s.cameraIconContainer}>
+            <svg
+              width="23"
+              height="23"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <title>Camera</title>
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+              <circle cx="12" cy="13" r="4" />
+            </svg>
+          </div>
         </button>
-      )}
+
+        {/* Camera Flip Button - Below camera toggle for mobile space efficiency */}
+        {cameraActive && supportsCameraSwitch && (
+          <button
+            type="button"
+            className={s.flipButton}
+            onClick={onCameraSwitch}
+            title={`Switch to ${cameraFacingMode === 'user' ? 'back' : 'front'} camera`}
+          >
+            {cameraFacingMode === 'user' ? (
+              <IconCameraRotate size={23} />
+            ) : (
+              <IconCameraSelfie size={23} />
+            )}
+          </button>
+        )}
+      </div>
 
       {/* Camera-dependent tracking buttons (Hand & Face) */}
       {cameraActive && (
