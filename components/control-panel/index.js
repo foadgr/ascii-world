@@ -192,6 +192,11 @@ export function ControlPanel({
   setTime,
   time,
 
+  // Audio tracking
+  trackingMode,
+  audioSensitivity,
+  audioAdjustmentVector,
+
   // Handlers
   onCharactersChange,
   onGranularityChange,
@@ -204,6 +209,8 @@ export function ControlPanel({
   onMatrixChange,
   onSetTimeChange,
   onTimeChange,
+  onAudioSensitivityChange,
+  onAudioAdjustmentVectorChange,
   onOpenChange,
 }) {
   const [open, setOpen] = useState(false)
@@ -312,6 +319,47 @@ export function ControlPanel({
                     step={0.01}
                   />
                 )}
+
+                {/* Audio Controls - Only show when audio tracking is active */}
+                {trackingMode === 'audio' && (
+                  <>
+                    <Slider
+                      label="audio sensitivity"
+                      value={audioSensitivity}
+                      onChange={onAudioSensitivityChange}
+                      min={0.1}
+                      max={2.0}
+                      step={0.1}
+                    />
+                    
+                    <Slider
+                      label="voice emphasis"
+                      value={audioAdjustmentVector?.voice || 1.0}
+                      onChange={(value) => onAudioAdjustmentVectorChange({ ...audioAdjustmentVector, voice: value })}
+                      min={0.1}
+                      max={3.0}
+                      step={0.1}
+                    />
+                    
+                    <Slider
+                      label="music emphasis"
+                      value={audioAdjustmentVector?.music || 1.0}
+                      onChange={(value) => onAudioAdjustmentVectorChange({ ...audioAdjustmentVector, music: value })}
+                      min={0.1}
+                      max={3.0}
+                      step={0.1}
+                    />
+                    
+                    <Slider
+                      label="noise reduction"
+                      value={audioAdjustmentVector?.noise || 0.3}
+                      onChange={(value) => onAudioAdjustmentVectorChange({ ...audioAdjustmentVector, noise: value })}
+                      min={0.0}
+                      max={1.0}
+                      step={0.1}
+                    />
+                  </>
+                )}
               </div>
             </div>
           </DraggableModal>
@@ -417,6 +465,47 @@ export function ControlPanel({
                       max={1}
                       step={0.01}
                     />
+                  )}
+
+                  {/* Audio Controls - Only show when audio tracking is active */}
+                  {trackingMode === 'audio' && (
+                    <>
+                      <Slider
+                        label="audio sensitivity"
+                        value={audioSensitivity}
+                        onChange={onAudioSensitivityChange}
+                        min={0.1}
+                        max={2.0}
+                        step={0.1}
+                      />
+                      
+                      <Slider
+                        label="voice emphasis"
+                        value={audioAdjustmentVector?.voice || 1.0}
+                        onChange={(value) => onAudioAdjustmentVectorChange({ ...audioAdjustmentVector, voice: value })}
+                        min={0.1}
+                        max={3.0}
+                        step={0.1}
+                      />
+                      
+                      <Slider
+                        label="music emphasis"
+                        value={audioAdjustmentVector?.music || 1.0}
+                        onChange={(value) => onAudioAdjustmentVectorChange({ ...audioAdjustmentVector, music: value })}
+                        min={0.1}
+                        max={3.0}
+                        step={0.1}
+                      />
+                      
+                      <Slider
+                        label="noise reduction"
+                        value={audioAdjustmentVector?.noise || 0.3}
+                        onChange={(value) => onAudioAdjustmentVectorChange({ ...audioAdjustmentVector, noise: value })}
+                        min={0.0}
+                        max={1.0}
+                        step={0.1}
+                      />
+                    </>
                   )}
                 </div>
               </div>

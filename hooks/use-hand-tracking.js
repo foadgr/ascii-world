@@ -144,7 +144,7 @@ export const useHandTracking = ({
     if (!isInitialized || !videoElement || !handsRef.current) return
 
     const processFrame = async () => {
-      if (videoElement.readyState >= 2) {
+      if (videoElement.readyState >= 2 && handsRef.current) {
         // HAVE_CURRENT_DATA
         try {
           const results = await handsRef.current.detectForVideo(
@@ -258,7 +258,9 @@ export const useHandTracking = ({
           console.warn('Hand tracking frame processing error:', error)
         }
       }
-      animationFrameRef.current = requestAnimationFrame(processFrame)
+      if (handsRef.current) {
+        animationFrameRef.current = requestAnimationFrame(processFrame)
+      }
     }
 
     processFrame()

@@ -1,4 +1,4 @@
-import { IconCameraRotate, IconCameraSelfie } from '@tabler/icons-react'
+import { IconCameraRotate, IconCameraSelfie, IconMusic } from '@tabler/icons-react'
 import { track } from '@vercel/analytics'
 import { Hand, ScanFace } from 'lucide-react'
 import { useEffect } from 'react'
@@ -10,16 +10,20 @@ export function CameraControls({
   supportsCameraSwitch,
   handTracking,
   faceTracking,
-  trackingMode, // 'hand' or 'face'
+  audioTracking,
+  trackingMode, // 'hand', 'face', or 'audio'
   onCameraToggle,
   onCameraSwitch,
   onHandTrackingChange,
   onFaceTrackingChange,
+  onAudioTrackingChange,
   onTrackingModeChange,
   onHandControlledGranularityChange,
   onFaceControlledGranularityChange,
+  onAudioControlledGranularityChange,
   onCalibrateHandDepth,
   onCalibrateFaceDepth,
+  onCalibrateAudio,
   onResetCalibration,
 }) {
   // Auto-enable tracking when camera is active based on mode
@@ -30,25 +34,40 @@ export function CameraControls({
         onHandControlledGranularityChange(true)
         onFaceTrackingChange(false)
         onFaceControlledGranularityChange(false)
+        onAudioTrackingChange(false)
+        onAudioControlledGranularityChange(false)
       } else if (trackingMode === 'face') {
         onFaceTrackingChange(true)
         onFaceControlledGranularityChange(true)
         onHandTrackingChange(false)
         onHandControlledGranularityChange(false)
+        onAudioTrackingChange(false)
+        onAudioControlledGranularityChange(false)
+      } else if (trackingMode === 'audio') {
+        onAudioTrackingChange(true)
+        onAudioControlledGranularityChange(true)
+        onHandTrackingChange(false)
+        onHandControlledGranularityChange(false)
+        onFaceTrackingChange(false)
+        onFaceControlledGranularityChange(false)
       }
     } else {
       onHandTrackingChange(false)
       onHandControlledGranularityChange(false)
       onFaceTrackingChange(false)
       onFaceControlledGranularityChange(false)
+      onAudioTrackingChange(false)
+      onAudioControlledGranularityChange(false)
     }
   }, [
     cameraActive,
     trackingMode,
     onHandTrackingChange,
     onFaceTrackingChange,
+    onAudioTrackingChange,
     onHandControlledGranularityChange,
     onFaceControlledGranularityChange,
+    onAudioControlledGranularityChange,
   ])
 
   return (
@@ -183,6 +202,52 @@ export function CameraControls({
             }
           >
             <ScanFace size={23} />
+          </button>
+
+          {/* Audio Tracking Button */}
+          <button
+            type="button"
+            className={`${s.trackingButton} ${
+              trackingMode === 'audio' ? s.active : ''
+            } ${
+              trackingMode === 'audio' && !audioTracking?.audioDetected
+                ? s.notDetected
+                : trackingMode === 'audio' && audioTracking?.isCalibrated
+                  ? s.detected
+                  : trackingMode === 'audio'
+                    ? s.uncalibrated
+                    : ''
+            }`}
+            style={{
+              color: trackingMode === 'audio' && audioTracking?.audioDetected ? '#ff8c00' : undefined
+            }}
+            onClick={() => {
+              if (trackingMode === 'audio') {
+                // If already in audio mode, handle calibration
+                if (audioTracking?.currentAudioLevel > 0 && !audioTracking?.isCalibrated) {
+                  track('Audio Calibrate', { action: 'calibrate_audio' })
+                  onCalibrateAudio()
+                } else if (audioTracking?.isCalibrated) {
+                  track('Audio Reset', { action: 'reset_calibration' })
+                  onResetCalibration()
+                }
+              } else {
+                // Switch to audio tracking mode
+                track('Audio Tracking', { action: 'enable' })
+                onTrackingModeChange('audio')
+              }
+            }}
+            title={
+              trackingMode !== 'audio'
+                ? 'Switch to audio tracking'
+                : !audioTracking?.audioDetected
+                  ? 'No audio detected'
+                  : audioTracking?.isCalibrated
+                    ? 'Audio calibrated - click to reset'
+                    : 'Audio detected - click to calibrate'
+            }
+          >
+            <IconMusic size={23} />
           </button>
         </>
       )}
