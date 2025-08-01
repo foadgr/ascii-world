@@ -4,6 +4,7 @@ import { EffectComposer } from '@react-three/postprocessing'
 import { ASCIIEffect } from 'components/ascii-effect/index'
 import { DepthDisplay } from 'components/depth-display'
 import { FontEditor } from 'components/font-editor'
+import { useAudioTracking } from 'hooks/use-audio-tracking'
 import { useFaceTracking } from 'hooks/use-face-tracking'
 import { useHandTracking } from 'hooks/use-hand-tracking'
 import { supportsCameraSwitch } from 'lib/device'
@@ -135,6 +136,10 @@ const Scene = () => {
     handControlledGranularity,
     faceTrackingEnabled,
     faceControlledGranularity,
+    audioTrackingEnabled,
+    audioControlledGranularity,
+    audioSensitivity,
+    audioAdjustmentVector,
     granularity,
     set,
   } = useContext(AsciiContext)
@@ -177,6 +182,49 @@ const Scene = () => {
     onDepthChange: (data) => {
       if (faceControlledGranularity && data.faceDetected) {
         set({ granularity: data.granularity })
+      }
+    },
+  })
+
+  // Audio tracking integration
+  const audioTrackingHook = useAudioTracking({
+    enabled: audioTrackingEnabled,
+    sensitivity: audioSensitivity,
+    adjustmentVector: audioAdjustmentVector,
+    onAudioChange: (data) => {
+      if (audioControlledGranularity) {
+        // Use enhanced level that includes spike detection for more elastic response
+        const level = data.currentLevel // This is the enhanced level with spikes
+
+        let mappedGranularity
+
+        if (level <= 0.005) {
+          // Background/quiet sounds: stay at minimum granularity
+          mappedGranularity = 1
+        } else if (level >= 0.5) {
+          // High threshold for maximum granularity
+          mappedGranularity = 50
+        } else {
+          // Very conservative mapping - whispers should only reach low granularity
+          const normalizedLevel = (level - 0.005) / (0.5 - 0.005)
+          let curve = Math.pow(normalizedLevel, 4.0) // Very steep curve - need loud sounds for high granularity
+
+          // More conservative spike boost
+          if (data.isSpike) {
+            curve = Math.min(1, curve * 1.5) // Reduced spike boost
+          }
+
+          // Minimal content type boost
+          if (data.contentType === 'voice') {
+            curve = Math.min(1, curve * 1.05) // Very slight voice boost
+          } else if (data.contentType === 'music') {
+            curve = Math.min(1, curve * 1.1) // Slight music boost
+          }
+
+          mappedGranularity = Math.round(1 + curve * 49) // 1-50 range
+        }
+
+        set({ granularity: mappedGranularity })
       }
     },
   })
@@ -274,6 +322,16 @@ const Scene = () => {
       },
     })
   }, [faceTrackingHook, faceTrackingEnabled, set])
+
+  // Share audio tracking state with context
+  useEffect(() => {
+    set({
+      audioTracking: {
+        ...audioTrackingHook,
+        isEnabled: audioTrackingEnabled,
+      },
+    })
+  }, [audioTrackingHook, audioTrackingEnabled, set])
 
   useEffect(() => {
     if (!asset) return
@@ -638,7 +696,9 @@ const DEFAULT = {
   handControlledGranularity: false,
   faceTrackingEnabled: false,
   faceControlledGranularity: false,
-  trackingMode: 'hand', // 'hand' or 'face'
+  audioTrackingEnabled: false,
+  audioControlledGranularity: false,
+  trackingMode: 'hand', // 'hand', 'face', or 'audio'
   cameraFacingMode: 'user', // Add default facing mode
 }
 
@@ -669,9 +729,22 @@ export function ASCII({ children }) {
   const [faceControlledGranularity, setFaceControlledGranularity] = useState(
     DEFAULT.faceControlledGranularity
   )
+  const [audioTrackingEnabled, setAudioTrackingEnabled] = useState(
+    DEFAULT.audioTrackingEnabled
+  )
+  const [audioControlledGranularity, setAudioControlledGranularity] = useState(
+    DEFAULT.audioControlledGranularity
+  )
+  const [audioSensitivity, setAudioSensitivity] = useState(1.0) // Default sensitivity
+  const [audioAdjustmentVector, setAudioAdjustmentVector] = useState({
+    voice: 1.0, // Emphasize voice frequencies
+    music: 1.0, // Emphasize music frequencies
+    noise: 0.3, // Reduce noise frequencies
+  })
   const [trackingMode, setTrackingMode] = useState(DEFAULT.trackingMode)
   const [handTracking, setHandTracking] = useState(null)
   const [faceTracking, setFaceTracking] = useState(null)
+  const [audioTracking, setAudioTracking] = useState(null)
 
   // Control states
   const [characters, setCharacters] = useState(DEFAULT.characters)
@@ -716,6 +789,12 @@ export function ASCII({ children }) {
     }
   }
 
+  const handleCalibrateAudio = () => {
+    if (audioTracking?.calibrateAudio()) {
+      console.log('Audio level calibrated!')
+    }
+  }
+
   const handleResetCalibration = () => {
     if (trackingMode === 'hand') {
       handTracking?.resetCalibration()
@@ -723,6 +802,9 @@ export function ASCII({ children }) {
     } else if (trackingMode === 'face') {
       faceTracking?.resetCalibration()
       console.log('Face calibration reset')
+    } else if (trackingMode === 'audio') {
+      audioTracking?.resetCalibration()
+      console.log('Audio calibration reset')
     }
   }
 
@@ -731,6 +813,7 @@ export function ASCII({ children }) {
     // Reset any existing calibrations when switching modes
     handTracking?.resetCalibration()
     faceTracking?.resetCalibration()
+    audioTracking?.resetCalibration()
   }
 
   function set({
@@ -738,6 +821,7 @@ export function ASCII({ children }) {
     canvas,
     handTracking,
     faceTracking,
+    audioTracking,
     granularity: newGranularity,
     ...props
   }) {
@@ -745,6 +829,7 @@ export function ASCII({ children }) {
     if (canvas) setCanvas(canvas)
     if (handTracking) setHandTracking(handTracking)
     if (faceTracking) setFaceTracking(faceTracking)
+    if (audioTracking) setAudioTracking(audioTracking)
     if (newGranularity !== undefined) setGranularity(newGranularity)
     // Handle other props if needed
   }
@@ -781,9 +866,14 @@ export function ASCII({ children }) {
           handControlledGranularity,
           faceTrackingEnabled,
           faceControlledGranularity,
+          audioTrackingEnabled,
+          audioControlledGranularity,
+          audioSensitivity,
+          audioAdjustmentVector,
           trackingMode,
           handTracking,
           faceTracking,
+          audioTracking,
           set,
         }}
       >
@@ -801,6 +891,10 @@ export function ASCII({ children }) {
           matrix={matrix}
           setTime={enableTime}
           time={time}
+          // Audio tracking
+          trackingMode={trackingMode}
+          audioSensitivity={audioSensitivity}
+          audioAdjustmentVector={audioAdjustmentVector}
           // Handlers
           onCharactersChange={setCharacters}
           onGranularityChange={setGranularity}
@@ -813,6 +907,8 @@ export function ASCII({ children }) {
           onMatrixChange={setMatrix}
           onSetTimeChange={setEnableTime}
           onTimeChange={setTime}
+          onAudioSensitivityChange={setAudioSensitivity}
+          onAudioAdjustmentVectorChange={setAudioAdjustmentVector}
           onOpenChange={setControlPanelOpen}
         />
         <ColorControls
@@ -825,10 +921,11 @@ export function ASCII({ children }) {
           hidden={controlPanelOpen}
         />
         <CameraControls
-          // Camera & Hand Tracking
+          // Camera & Tracking
           cameraActive={cameraActive}
           handTracking={handTracking}
           faceTracking={faceTracking}
+          audioTracking={audioTracking}
           trackingMode={trackingMode}
           cameraFacingMode={cameraFacingMode}
           supportsCameraSwitch={supportsCameraSwitch()}
@@ -837,11 +934,14 @@ export function ASCII({ children }) {
           onCameraSwitch={handleCameraSwitch}
           onHandTrackingChange={setHandTrackingEnabled}
           onFaceTrackingChange={setFaceTrackingEnabled}
+          onAudioTrackingChange={setAudioTrackingEnabled}
           onTrackingModeChange={handleTrackingModeChange}
           onHandControlledGranularityChange={setHandControlledGranularity}
           onFaceControlledGranularityChange={setFaceControlledGranularity}
+          onAudioControlledGranularityChange={setAudioControlledGranularity}
           onCalibrateHandDepth={handleCalibrateHandDepth}
           onCalibrateFaceDepth={handleCalibrateFaceDepth}
+          onCalibrateAudio={handleCalibrateAudio}
           onResetCalibration={handleResetCalibration}
         />
         <InfoButton />
