@@ -235,49 +235,52 @@ const Scene = () => {
   })
 
   // Camera stream management
-  const startCamera = useCallback(async (facingMode = cameraFacingMode) => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          facingMode: facingMode,
-        },
-      })
+  const startCamera = useCallback(
+    async (facingMode = cameraFacingMode) => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            facingMode: facingMode,
+          },
+        })
 
-      const video = document.createElement('video')
-      video.srcObject = stream
-      video.muted = true
-      video.playsInline = true
-      video.autoplay = true
+        const video = document.createElement('video')
+        video.srcObject = stream
+        video.muted = true
+        video.playsInline = true
+        video.autoplay = true
 
-      video.onloadedmetadata = () => {
-        video.play()
-        setCameraVideo(video)
-        setTexture(new VideoTexture(video))
-        // Clear other content when camera starts
-        setModel(null)
+        video.onloadedmetadata = () => {
+          video.play()
+          setCameraVideo(video)
+          setTexture(new VideoTexture(video))
+          // Clear other content when camera starts
+          setModel(null)
+        }
+
+        setCameraStream(stream)
+      } catch (error) {
+        console.error('Error accessing camera:', error)
+        // If the preferred camera fails, try the other one
+        if (facingMode !== 'user') {
+          console.log('Falling back to front camera')
+          startCamera('user')
+        }
       }
-
-      setCameraStream(stream)
-    } catch (error) {
-      console.error('Error accessing camera:', error)
-      // If the preferred camera fails, try the other one
-      if (facingMode !== 'user') {
-        console.log('Falling back to front camera')
-        startCamera('user')
-      }
-    }
-  }, [cameraFacingMode])
+    },
+    [cameraFacingMode]
+  )
 
   const cameraStreamRef = useRef(cameraStream)
   const cameraVideoRef = useRef(cameraVideo)
-  
+
   // Update refs when state changes
   useEffect(() => {
     cameraStreamRef.current = cameraStream
   }, [cameraStream])
-  
+
   useEffect(() => {
     cameraVideoRef.current = cameraVideo
   }, [cameraVideo])
@@ -302,6 +305,15 @@ const Scene = () => {
       startCamera()
     } else {
       stopCamera()
+      // Restore default penguin model when camera is turned off
+      setTimeout(() => {
+        console.log('Camera turned off, restoring penguin model')
+        // Clear asset first, then set it to force a reload
+        setAsset(null)
+        setTimeout(() => {
+          setAsset('/cutest-penguin-astronaut.glb')
+        }, 50)
+      }, 100) // Small delay to ensure camera cleanup is complete
     }
   }, [cameraActive, startCamera, stopCamera])
 
@@ -405,6 +417,7 @@ const Scene = () => {
   }, [texture, cameraVideo])
 
   useEffect(() => {
+    if (!asset) return
     const src = asset
 
     if (
