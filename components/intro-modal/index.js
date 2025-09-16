@@ -1,5 +1,6 @@
 import { IconBrandX } from '@tabler/icons-react'
 import { isMobileOrTablet, supportsCameraSwitch } from 'lib/device'
+import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
 import { Drawer } from 'vaul'
 import s from './intro-modal.module.scss'
@@ -186,7 +187,7 @@ export function IntroModal() {
           </a>
         </p>
         <div className={s.quickLinks}>
-          <a href="/contact">Contact & Support</a>
+          <Link href="/contact">Contact & Support</Link>
           <a
             href="https://ai.google.dev/edge/mediapipe/solutions/guide"
             target="_blank"
@@ -215,7 +216,7 @@ export function IntroModal() {
         className={s.startButton}
         onClick={() => handleOpenChange(false)}
       >
-        Let's create some ASCII art!
+        Let&apos;s create some ASCII art!
       </button>
     </div>
   )
