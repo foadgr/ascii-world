@@ -26,6 +26,7 @@ import { ColorControls } from '../color-controls'
 import { ControlPanel } from '../control-panel'
 import { InfoButton } from '../info-button'
 import { IntroModal } from '../intro-modal'
+import { ModelSelector } from '../model-selector'
 import { UploadButton } from '../upload-button'
 import s from './ascii.module.scss'
 import { AsciiContext } from './context'
@@ -557,10 +558,14 @@ const Scene = () => {
     }
   }, [])
 
-  // Register upload function with context on mount
+  // Register upload function and asset setter with context on mount
   useEffect(() => {
-    set({ uploadFunction: handleFileUpload })
-  }, [set, handleFileUpload])
+    set({ 
+      uploadFunction: handleFileUpload,
+      setAssetFunction: setAsset,
+      currentAsset: asset
+    })
+  }, [set, handleFileUpload, asset])
 
   // Cleanup camera stream on unmount
   useEffect(() => {
@@ -710,7 +715,7 @@ function Postprocessing() {
 }
 
 function Inner() {
-  const { uploadFunctionRef } = useContext(AsciiContext)
+  const { uploadFunctionRef, currentAsset, setAssetFunction } = useContext(AsciiContext)
 
   return (
     <>
@@ -743,7 +748,15 @@ function Inner() {
         </div>
       </div>
       <FontEditor />
-      <UploadButton
+      <ModelSelector
+        currentModel={currentAsset}
+        onModelChange={(modelPath) => {
+          if (setAssetFunction?.current) {
+            setAssetFunction.current(modelPath)
+          }
+        }}
+      />
+      <UploadButton 
         onFileSelect={(fileData, filename) => {
           if (uploadFunctionRef?.current) {
             uploadFunctionRef.current(fileData, filename)
@@ -895,8 +908,10 @@ export function ASCII({ children }) {
     audioTracking?.resetCalibration()
   }
 
-  // Create a ref to hold the upload function from Scene component
+  // Create refs to hold functions from Scene component
   const uploadFunctionRef = useRef()
+  const setAssetFunctionRef = useRef()
+  const [currentAsset, setCurrentAsset] = useState('/cutest-penguin-astronaut.glb')
 
   function set({
     charactersTexture,
@@ -906,6 +921,8 @@ export function ASCII({ children }) {
     audioTracking,
     granularity: newGranularity,
     uploadFunction,
+    setAssetFunction,
+    currentAsset: newAsset,
     ...props
   }) {
     if (charactersTexture) setCharactersTexture(charactersTexture)
@@ -915,6 +932,8 @@ export function ASCII({ children }) {
     if (audioTracking) setAudioTracking(audioTracking)
     if (newGranularity !== undefined) setGranularity(newGranularity)
     if (uploadFunction) uploadFunctionRef.current = uploadFunction
+    if (setAssetFunction) setAssetFunctionRef.current = setAssetFunction
+    if (newAsset !== undefined) setCurrentAsset(newAsset)
     // Handle other props if needed
   }
 
@@ -959,6 +978,8 @@ export function ASCII({ children }) {
           faceTracking,
           audioTracking,
           uploadFunctionRef,
+          setAssetFunction: setAssetFunctionRef,
+          currentAsset,
           set,
         }}
       >
