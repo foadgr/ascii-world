@@ -39,6 +39,13 @@ export const useFaceTracking = ({
   const [depthMap, setDepthMap] = useState(null)
   const animationFrameRef = useRef()
 
+  // Auto-calibration state
+  const [autoCalibrationTimer, setAutoCalibrationTimer] = useState(null)
+  const [stabilizationBuffer, setStabilizationBuffer] = useState([])
+  const stabilizationTimeRef = useRef(0)
+  const STABILIZATION_DURATION = 2000 // 2 seconds of stable detection
+  const BUFFER_SIZE = 10 // Track last 10 depth readings
+
   // Calculate average face depth from nose and surrounding landmarks
   const calculateFaceDepth = useCallback((landmarks) => {
     if (!landmarks || landmarks.length < 468) return 0
@@ -138,6 +145,64 @@ export const useFaceTracking = ({
     return regionDepths
   }, [])
 
+  // Auto-calibration logic
+  const handleAutoCalibration = useCallback(
+    (depth) => {
+      if (isCalibrated) return // Already calibrated
+
+      // Add current depth to stabilization buffer
+      const newBuffer = [...stabilizationBuffer, depth].slice(-BUFFER_SIZE)
+      setStabilizationBuffer(newBuffer)
+
+      // Check if we have enough readings and they're stable
+      if (newBuffer.length >= BUFFER_SIZE) {
+        const avgDepth =
+          newBuffer.reduce((sum, d) => sum + d, 0) / newBuffer.length
+        const variance =
+          newBuffer.reduce((sum, d) => sum + (d - avgDepth) ** 2, 0) /
+          newBuffer.length
+        const stabilityThreshold = 0.001 // Very stable readings required
+
+        if (variance < stabilityThreshold) {
+          // Start stabilization timer if not already started
+          if (!autoCalibrationTimer) {
+            const startTime = Date.now()
+            stabilizationTimeRef.current = startTime
+            setAutoCalibrationTimer(startTime)
+          } else {
+            // Check if enough time has passed
+            const elapsed = Date.now() - stabilizationTimeRef.current
+            if (elapsed >= STABILIZATION_DURATION) {
+              // Auto-calibrate!
+              const granularityToUse = currentGranularity || granularity
+              setCalibrationDepth(avgDepth)
+              setCalibrationGranularity(granularityToUse)
+              setIsCalibrated(true)
+              setAutoCalibrationTimer(null)
+              console.log(
+                'Face auto-calibrated at:',
+                avgDepth,
+                'with granularity:',
+                granularityToUse
+              )
+            }
+          }
+        } else {
+          // Reset timer if face movement detected
+          setAutoCalibrationTimer(null)
+          stabilizationTimeRef.current = 0
+        }
+      }
+    },
+    [
+      isCalibrated,
+      stabilizationBuffer,
+      autoCalibrationTimer,
+      currentGranularity,
+      granularity,
+    ]
+  )
+
   // Initialize MediaPipe Face Landmarker
   useEffect(() => {
     if (!enabled) return
@@ -213,6 +278,9 @@ export const useFaceTracking = ({
             const depth = calculateFaceDepth(detectedLandmarks)
             setCurrentDepth(depth)
 
+            // Trigger auto-calibration check
+            handleAutoCalibration(depth)
+
             // Generate depth map for different face regions
             const faceDepthMap = generateDepthMap(detectedLandmarks)
             setDepthMap(faceDepthMap)
@@ -285,6 +353,10 @@ export const useFaceTracking = ({
             setFaceDetected(false)
             setLandmarks([])
             setDepthMap(null)
+            // Reset auto-calibration when face is lost
+            setAutoCalibrationTimer(null)
+            setStabilizationBuffer([])
+            stabilizationTimeRef.current = 0
             if (onDepthChange) {
               onDepthChange({
                 relativeDepth: 0,
@@ -315,6 +387,7 @@ export const useFaceTracking = ({
     videoElement,
     calculateFaceDepth,
     generateDepthMap,
+    handleAutoCalibration,
     isCalibrated,
     calibrationDepth,
     calibrationGranularity,
@@ -348,6 +421,10 @@ export const useFaceTracking = ({
     setRelativeDepth(0)
     setGranularity(granularityRange.min)
     setDepthMap(null)
+    // Reset auto-calibration state
+    setAutoCalibrationTimer(null)
+    setStabilizationBuffer([])
+    stabilizationTimeRef.current = 0
   }, [granularityRange.min])
 
   return {

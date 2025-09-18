@@ -6,11 +6,14 @@ export const DepthDisplay = () => {
   const {
     handTracking,
     faceTracking,
+    audioTracking,
     trackingMode,
     handTrackingEnabled,
     faceTrackingEnabled,
+    audioTrackingEnabled,
     handControlledGranularity,
     faceControlledGranularity,
+    audioControlledGranularity,
     cameraActive,
   } = useContext(AsciiContext)
 
@@ -19,11 +22,18 @@ export const DepthDisplay = () => {
     trackingMode === 'hand' && handTrackingEnabled && handTracking
   const isFaceMode =
     trackingMode === 'face' && faceTrackingEnabled && faceTracking
+  const isAudioMode =
+    trackingMode === 'audio' && audioTrackingEnabled && audioTracking
 
-  // Only show when camera is active and tracking is enabled
-  if (!cameraActive || (!isHandMode && !isFaceMode)) {
+  // Show for camera-based tracking (hand/face) or audio tracking
+  const shouldShow = (cameraActive && (isHandMode || isFaceMode)) || isAudioMode
+
+  if (!shouldShow) {
     return null
   }
+
+  // Determine if we should use bottom positioning
+  const useBottomPosition = cameraActive || isAudioMode
 
   // Get the appropriate tracking data based on mode
   const trackingData = isHandMode
@@ -34,100 +44,57 @@ export const DepthDisplay = () => {
         granularity: handTracking.granularity,
         trackingType: 'hand',
       }
-    : {
-        detected: faceTracking.faceDetected,
-        isCalibrated: faceTracking.isCalibrated,
-        relativeDepth: faceTracking.relativeDepth,
-        granularity: faceTracking.granularity,
-        trackingType: 'face',
-      }
+    : isFaceMode
+      ? {
+          detected: faceTracking.faceDetected,
+          isCalibrated: faceTracking.isCalibrated,
+          relativeDepth: faceTracking.relativeDepth,
+          granularity: faceTracking.granularity,
+          trackingType: 'face',
+        }
+      : {
+          detected:
+            audioTracking?.audioDetected ||
+            audioTracking?.currentAudioLevel > 0,
+          isCalibrated: audioTracking?.isCalibrated,
+          relativeDepth: 0, // Audio doesn't have depth
+          granularity: audioTracking?.granularity || 1,
+          trackingType: 'audio',
+        }
 
   const { detected, isCalibrated, relativeDepth, granularity, trackingType } =
     trackingData
 
   // Show instructions when tracking target is not detected
   if (!detected) {
+    // For hand and face tracking, don't show any text instructions
+    if (trackingType === 'hand' || trackingType === 'face') {
+      return null
+    }
+
+    // Only show instructions for audio tracking
     return (
-      <div className={s.depthDisplay}>
+      <div
+        className={`${s.depthDisplay} ${useBottomPosition ? s.bottomPosition : ''}`}
+      >
         <div className={s.instructionMessage}>
-          <span className={s.desktopText}>
-            {trackingType === 'hand'
-              ? 'Show your hand in front of the camera to begin tracking'
-              : 'Show your face in front of the camera to begin tracking'}
-          </span>
-          <span className={s.mobileText}>
-            {trackingType === 'hand'
-              ? 'Show hand to track'
-              : 'Show face to track'}
-          </span>
+          <span className={s.desktopText}>Make noise</span>
+          <span className={s.mobileText}>Make noise</span>
         </div>
       </div>
     )
   }
 
-  // Show calibration instructions when tracking target is detected but not calibrated
-  if (!isCalibrated) {
-    return (
-      <div className={s.depthDisplay}>
-        <div className={s.instructionContainer}>
-          <div className={s.instructionMessage}>
-            <span className={s.desktopText}>
-              {trackingType === 'hand'
-                ? 'Place hand at your preferred distance and tap hand icon to lock the current detail.'
-                : 'Position your face at your preferred distance and tap face icon to lock the current detail.'}
-            </span>
-            <span className={s.mobileText}>
-              {trackingType === 'hand'
-                ? 'Set hand distance, tap hand icon to lock'
-                : 'Set face distance, tap face icon to lock'}
-            </span>
-          </div>
-          <div className={s.instructionSubtitle}>
-            <span className={s.desktopText}>
-              Move closer for max detail, further for min detail.
-            </span>
-            <span className={s.mobileText}>Closer = max detail</span>
-          </div>
-        </div>
-      </div>
-    )
+  // Show minimal calibration status for hand/face (no visual indicators here - they're on the video)
+  if (!isCalibrated && trackingType !== 'audio') {
+    return null // No UI needed - corner indicators are on the video feed
   }
 
-  // Show depth and granularity metrics when calibrated
-  const depthPercent = (relativeDepth * 100).toFixed(1)
-  const isAtCalibrationPoint = Math.abs(relativeDepth) < 0.01 // Within 1% of calibration point
+  // No additional instructions needed for audio when not calibrated
+  if (!isCalibrated && trackingType === 'audio') {
+    return null // Only "Make noise" is shown when audio is not detected
+  }
 
-  return (
-    <div className={s.depthDisplay}>
-      <div className={s.depthInfo}>
-        <span className={s.depthValue}>
-          {relativeDepth > 0 ? '+' : ''}
-          {depthPercent}%
-          {isAtCalibrationPoint && (
-            <span className={s.calibrationMark}> ●</span>
-          )}
-        </span>
-        <span className={s.depthLabel}>depth</span>
-      </div>
-
-      <div className={s.depthBar}>
-        <div className={s.depthBarTrack}>
-          <div className={s.depthBarCenter} />
-          <div
-            className={s.depthBarFill}
-            style={{
-              width: `${Math.abs(relativeDepth) * 500}%`,
-              left: relativeDepth > 0 ? '50%' : `${50 + relativeDepth * 500}%`,
-              backgroundColor: relativeDepth > 0 ? '#4ecdc4' : '#ff6b6b',
-            }}
-          />
-        </div>
-      </div>
-
-      <div className={s.granularityInfo}>
-        <span className={s.granularityValue}>{granularity}</span>
-        <span className={s.granularityLabel}>granularity</span>
-      </div>
-    </div>
-  )
+  // No additional information needed when calibrated - keep it clean
+  return null
 }

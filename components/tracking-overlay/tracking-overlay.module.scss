@@ -1,0 +1,81 @@
+.trackingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.trackingBox {
+  position: absolute;
+  pointer-events: none;
+  transition: transform 0.1s ease-out; // Smooth rotation
+}
+
+.corner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 3px solid #ff8800; // Orange for calibrating
+  background: transparent;
+  transition: all 0.15s ease-out; // Faster, more responsive transitions
+  pointer-events: none;
+  
+  // Top-left corner
+  &[data-corner="top-left"] {
+    top: 0;
+    left: 0;
+    border-right: none;
+    border-bottom: none;
+  }
+  
+  // Top-right corner
+  &[data-corner="top-right"] {
+    top: 0;
+    right: 0;
+    border-left: none;
+    border-bottom: none;
+  }
+  
+  // Bottom-left corner
+  &[data-corner="bottom-left"] {
+    bottom: 0;
+    left: 0;
+    border-right: none;
+    border-top: none;
+  }
+  
+  // Bottom-right corner
+  &[data-corner="bottom-right"] {
+    bottom: 0;
+    right: 0;
+    border-left: none;
+    border-top: none;
+  }
+}
+
+// Green corners when calibrated
+.trackingBox.calibrated .corner {
+  border-color: #00ff88; // Green for calibrated
+  border-width: 4px; // Thicker borders when calibrated
+}
+
+// Animate calibration state change
+.trackingBox.calibrating .corner {
+  border-color: #ff8800; // Orange for calibrating
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .corner {
+    width: 15px;
+    height: 15px;
+    border-width: 2px;
+  }
+  
+  .trackingBox.calibrated .corner {
+    border-width: 3px; // Thicker borders on mobile when calibrated
+  }
+}

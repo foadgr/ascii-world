@@ -38,7 +38,7 @@ class ASCIIEffectImpl extends Effect {
         ['uInvert', new Uniform(invert)],
         ['uMatrix', new Uniform(matrix)],
         ['uTime', new Uniform(0)],
-        ['uBackground', new Uniform(new Color('#ff0000'))],
+        ['uBackground', new Uniform(new Color(background))],
         // Face depth mode uniforms
         ['uFaceDepthMode', new Uniform(faceDepthMode)],
         ['uNoseDepth', new Uniform(0.0)],

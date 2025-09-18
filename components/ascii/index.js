@@ -8,7 +8,7 @@ import { useAudioTracking } from 'hooks/use-audio-tracking'
 import { useFaceTracking } from 'hooks/use-face-tracking'
 import { useHandTracking } from 'hooks/use-hand-tracking'
 import { supportsCameraSwitch } from 'lib/device'
-import { useContext, useEffect, useRef, useState } from 'react'
+import { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import {
   AnimationMixer,
@@ -26,6 +26,9 @@ import { ColorControls } from '../color-controls'
 import { ControlPanel } from '../control-panel'
 import { InfoButton } from '../info-button'
 import { IntroModal } from '../intro-modal'
+import { ModelSelector } from '../model-selector'
+import { TrackingOverlay } from '../tracking-overlay'
+import { UploadButton } from '../upload-button'
 import s from './ascii.module.scss'
 import { AsciiContext } from './context'
 
@@ -207,7 +210,7 @@ const Scene = () => {
         } else {
           // Very conservative mapping - whispers should only reach low granularity
           const normalizedLevel = (level - 0.005) / (0.5 - 0.005)
-          let curve = Math.pow(normalizedLevel, 4.0) // Very steep curve - need loud sounds for high granularity
+          let curve = normalizedLevel ** 4.0 // Very steep curve - need loud sounds for high granularity
 
           // More conservative spike boost
           if (data.isSpike) {
@@ -234,54 +237,69 @@ const Scene = () => {
   })
 
   // Camera stream management
-  const startCamera = async (facingMode = cameraFacingMode) => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          facingMode: facingMode,
-        },
-      })
+  const startCamera = useCallback(
+    async (facingMode = cameraFacingMode) => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            facingMode: facingMode,
+          },
+        })
 
-      const video = document.createElement('video')
-      video.srcObject = stream
-      video.muted = true
-      video.playsInline = true
-      video.autoplay = true
+        const video = document.createElement('video')
+        video.srcObject = stream
+        video.muted = true
+        video.playsInline = true
+        video.autoplay = true
 
-      video.onloadedmetadata = () => {
-        video.play()
-        setCameraVideo(video)
-        setTexture(new VideoTexture(video))
-        // Clear other content when camera starts
-        setModel(null)
+        video.onloadedmetadata = () => {
+          video.play()
+          setCameraVideo(video)
+          setTexture(new VideoTexture(video))
+          // Clear other content when camera starts
+          setModel(null)
+        }
+
+        setCameraStream(stream)
+      } catch (error) {
+        console.error('Error accessing camera:', error)
+        // If the preferred camera fails, try the other one
+        if (facingMode !== 'user') {
+          console.log('Falling back to front camera')
+          startCamera('user')
+        }
       }
+    },
+    [cameraFacingMode]
+  )
 
-      setCameraStream(stream)
-    } catch (error) {
-      console.error('Error accessing camera:', error)
-      // If the preferred camera fails, try the other one
-      if (facingMode !== 'user') {
-        console.log('Falling back to front camera')
-        startCamera('user')
-      }
-    }
-  }
+  const cameraStreamRef = useRef(cameraStream)
+  const cameraVideoRef = useRef(cameraVideo)
 
-  const stopCamera = () => {
-    if (cameraStream) {
-      for (const track of cameraStream.getTracks()) {
+  // Update refs when state changes
+  useEffect(() => {
+    cameraStreamRef.current = cameraStream
+  }, [cameraStream])
+
+  useEffect(() => {
+    cameraVideoRef.current = cameraVideo
+  }, [cameraVideo])
+
+  const stopCamera = useCallback(() => {
+    if (cameraStreamRef.current) {
+      for (const track of cameraStreamRef.current.getTracks()) {
         track.stop()
       }
       setCameraStream(null)
     }
-    if (cameraVideo) {
-      cameraVideo.srcObject = null
+    if (cameraVideoRef.current) {
+      cameraVideoRef.current.srcObject = null
       setCameraVideo(null)
     }
     setTexture(null)
-  }
+  }, [])
 
   // React to camera active state changes
   useEffect(() => {
@@ -289,8 +307,17 @@ const Scene = () => {
       startCamera()
     } else {
       stopCamera()
+      // Restore default penguin model when camera is turned off
+      setTimeout(() => {
+        console.log('Camera turned off, restoring penguin model')
+        // Clear asset first, then set it to force a reload
+        setAsset(null)
+        setTimeout(() => {
+          setAsset('/cutest-penguin-astronaut.glb')
+        }, 50)
+      }, 100) // Small delay to ensure camera cleanup is complete
     }
-  }, [cameraActive])
+  }, [cameraActive, startCamera, stopCamera])
 
   // React to camera facing mode changes
   useEffect(() => {
@@ -301,7 +328,7 @@ const Scene = () => {
         startCamera(cameraFacingMode)
       }, 100)
     }
-  }, [cameraFacingMode])
+  }, [cameraActive, cameraFacingMode, startCamera, stopCamera])
 
   // Share hand tracking state with context
   useEffect(() => {
@@ -379,7 +406,7 @@ const Scene = () => {
         }
       )
     }
-  }, [asset])
+  }, [asset, stopCamera])
 
   const [texture, setTexture] = useState()
 
@@ -392,6 +419,7 @@ const Scene = () => {
   }, [texture, cameraVideo])
 
   useEffect(() => {
+    if (!asset) return
     const src = asset
 
     if (
@@ -417,7 +445,22 @@ const Scene = () => {
       video.playsInline = true
       video.loop = true
       video.autoplay = true
-      video.play()
+
+      // Ensure video plays on desktop by handling play promise
+      const playPromise = video.play()
+      if (playPromise !== undefined) {
+        playPromise.catch((error) => {
+          console.warn('Video autoplay failed, trying manual play:', error)
+          // Create a user interaction to enable autoplay
+          const enableAutoplay = () => {
+            video.play()
+            document.removeEventListener('click', enableAutoplay)
+            document.removeEventListener('touchstart', enableAutoplay)
+          }
+          document.addEventListener('click', enableAutoplay)
+          document.addEventListener('touchstart', enableAutoplay)
+        })
+      }
     } else if (
       src.startsWith('data:image') ||
       src.includes('.jpg') ||
@@ -431,7 +474,7 @@ const Scene = () => {
         setTexture(texture)
       })
     }
-  }, [asset])
+  }, [asset, stopCamera])
 
   const { viewport, camera } = useThree()
 
@@ -492,12 +535,45 @@ const Scene = () => {
     camera.updateProjectionMatrix()
   }, [camera, texture])
 
+  // Handle file uploads
+  const handleFileUpload = useCallback((fileData, filename) => {
+    const isFont =
+      filename.endsWith('.ttf') ||
+      filename.endsWith('.otf') ||
+      filename.endsWith('.woff') ||
+      filename.endsWith('.woff2')
+
+    if (isFont) {
+      const fontName = 'CustomFont'
+      const fontFace = `
+        @font-face {
+          font-family: '${fontName}';
+          src: url(${fileData});
+        }
+      `
+      const styleElement = document.createElement('style')
+      styleElement.innerHTML = fontFace
+      document.head.appendChild(styleElement)
+    } else {
+      setAsset(fileData)
+    }
+  }, [])
+
+  // Register upload function and asset setter with context on mount
+  useEffect(() => {
+    set({
+      uploadFunction: handleFileUpload,
+      setAssetFunction: setAsset,
+      currentAsset: asset,
+    })
+  }, [set, handleFileUpload, asset])
+
   // Cleanup camera stream on unmount
   useEffect(() => {
     return () => {
       stopCamera()
     }
-  }, [])
+  }, [stopCamera])
 
   return (
     <>
@@ -640,6 +716,9 @@ function Postprocessing() {
 }
 
 function Inner() {
+  const { uploadFunctionRef, currentAsset, setAssetFunction } =
+    useContext(AsciiContext)
+
   return (
     <>
       <div className={s.ascii}>
@@ -668,9 +747,25 @@ function Inner() {
             <Scene />
             <Postprocessing />
           </Canvas>
+          <TrackingOverlay />
         </div>
       </div>
       <FontEditor />
+      <ModelSelector
+        currentModel={currentAsset}
+        onModelChange={(modelPath) => {
+          if (setAssetFunction?.current) {
+            setAssetFunction.current(modelPath)
+          }
+        }}
+      />
+      <UploadButton
+        onFileSelect={(fileData, filename) => {
+          if (uploadFunctionRef?.current) {
+            uploadFunctionRef.current(fileData, filename)
+          }
+        }}
+      />
       <ui.Out />
     </>
   )
@@ -684,7 +779,7 @@ const DEFAULT = {
   fillPixels: false,
   setColor: false,
   color: '#E30613',
-  background: '#6a3a3a',
+  background: '#000000',
   greyscale: false,
   invert: false,
   matrix: false,
@@ -816,6 +911,13 @@ export function ASCII({ children }) {
     audioTracking?.resetCalibration()
   }
 
+  // Create refs to hold functions from Scene component
+  const uploadFunctionRef = useRef()
+  const setAssetFunctionRef = useRef()
+  const [currentAsset, setCurrentAsset] = useState(
+    '/cutest-penguin-astronaut.glb'
+  )
+
   function set({
     charactersTexture,
     canvas,
@@ -823,6 +925,9 @@ export function ASCII({ children }) {
     faceTracking,
     audioTracking,
     granularity: newGranularity,
+    uploadFunction,
+    setAssetFunction,
+    currentAsset: newAsset,
     ...props
   }) {
     if (charactersTexture) setCharactersTexture(charactersTexture)
@@ -831,6 +936,9 @@ export function ASCII({ children }) {
     if (faceTracking) setFaceTracking(faceTracking)
     if (audioTracking) setAudioTracking(audioTracking)
     if (newGranularity !== undefined) setGranularity(newGranularity)
+    if (uploadFunction) uploadFunctionRef.current = uploadFunction
+    if (setAssetFunction) setAssetFunctionRef.current = setAssetFunction
+    if (newAsset !== undefined) setCurrentAsset(newAsset)
     // Handle other props if needed
   }
 
@@ -874,6 +982,9 @@ export function ASCII({ children }) {
           handTracking,
           faceTracking,
           audioTracking,
+          uploadFunctionRef,
+          setAssetFunction: setAssetFunctionRef,
+          currentAsset,
           set,
         }}
       >

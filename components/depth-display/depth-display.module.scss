@@ -25,6 +25,14 @@
     background: rgba(0, 0, 0, 0.9);
     border-color: rgba(255, 255, 255, 0.3);
   }
+
+  // Bottom center positioning when camera or audio tracking is active
+  &.bottomPosition {
+    top: auto;
+    bottom: 20px;
+    transform: translateX(-50%);
+  }
+
 }
 
 .instructionContainer {
@@ -171,6 +179,12 @@
     padding: 8px 12px; // Smaller padding
     gap: 8px; // Reduced gap
     font-size: 10px;
+
+    // Bottom positioning on mobile
+    &.bottomPosition {
+      top: auto;
+      bottom: 16px; // Slightly closer to bottom on mobile
+    }
   }
   
   .depthValue,
