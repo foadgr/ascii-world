@@ -22,7 +22,6 @@
   background: transparent;
   transition: all 0.15s ease-out; // Faster, more responsive transitions
   pointer-events: none;
-  box-shadow: 0 0 8px rgba(255, 136, 0, 0.4); // Glow effect
   
   // Top-left corner
   &[data-corner="top-left"] {
@@ -57,10 +56,9 @@
   }
 }
 
-// Green corners when calibrated with enhanced effects
+// Green corners when calibrated
 .trackingBox.calibrated .corner {
   border-color: #00ff88; // Green for calibrated
-  box-shadow: 0 0 12px rgba(0, 255, 136, 0.6), 0 0 24px rgba(0, 255, 136, 0.3); // Enhanced glow
   border-width: 4px; // Thicker borders when calibrated
 }
 

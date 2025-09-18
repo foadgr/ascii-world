@@ -19,7 +19,7 @@ export function TrackingOverlay() {
 
   if (!trackingData) return null
 
-  const { landmarks, isCalibrated } = trackingData
+  const { landmarks, isCalibrated, calibrationDepth } = trackingData
 
   // Only show when we have landmarks but not yet calibrated, or just calibrated
   if (!landmarks || landmarks.length === 0) return null
@@ -163,7 +163,7 @@ export function TrackingOverlay() {
           top,
           width: boxWidth,
           height: boxHeight,
-          transform: isCalibrated ? `rotate(${rotation * 1.5}deg)` : 'none', // Enhanced rotation multiplier
+          transform: `rotate(${rotation * 0.5}deg)`, // Reduced rotation multiplier for more subtle effect
           transformOrigin: 'center center',
         }}
       >
@@ -172,7 +172,7 @@ export function TrackingOverlay() {
           className={s.corner}
           data-corner="top-left"
           style={{
-            transform: `scale(${getDepthScale(cornerDepths.topLeft)}) rotate(${isCalibrated ? rotation * 0.3 : 0}deg)`,
+            transform: `scale(${getDepthScale(cornerDepths.topLeft)}) rotate(${rotation * 0.1}deg)`,
             transformOrigin: 'bottom right',
           }}
         />
@@ -180,7 +180,7 @@ export function TrackingOverlay() {
           className={s.corner}
           data-corner="top-right"
           style={{
-            transform: `scale(${getDepthScale(cornerDepths.topRight)}) rotate(${isCalibrated ? -rotation * 0.3 : 0}deg)`,
+            transform: `scale(${getDepthScale(cornerDepths.topRight)}) rotate(${-rotation * 0.1}deg)`,
             transformOrigin: 'bottom left',
           }}
         />
@@ -188,7 +188,7 @@ export function TrackingOverlay() {
           className={s.corner}
           data-corner="bottom-left"
           style={{
-            transform: `scale(${getDepthScale(cornerDepths.bottomLeft)}) rotate(${isCalibrated ? -rotation * 0.3 : 0}deg)`,
+            transform: `scale(${getDepthScale(cornerDepths.bottomLeft)}) rotate(${-rotation * 0.1}deg)`,
             transformOrigin: 'top right',
           }}
         />
@@ -196,7 +196,7 @@ export function TrackingOverlay() {
           className={s.corner}
           data-corner="bottom-right"
           style={{
-            transform: `scale(${getDepthScale(cornerDepths.bottomRight)}) rotate(${isCalibrated ? rotation * 0.3 : 0}deg)`,
+            transform: `scale(${getDepthScale(cornerDepths.bottomRight)}) rotate(${rotation * 0.1}deg)`,
             transformOrigin: 'top left',
           }}
         />

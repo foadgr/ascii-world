@@ -67,25 +67,19 @@ export const DepthDisplay = () => {
 
   // Show instructions when tracking target is not detected
   if (!detected) {
+    // For hand and face tracking, don't show any text instructions
+    if (trackingType === 'hand' || trackingType === 'face') {
+      return null
+    }
+    
+    // Only show instructions for audio tracking
     return (
       <div
         className={`${s.depthDisplay} ${useBottomPosition ? s.bottomPosition : ''}`}
       >
         <div className={s.instructionMessage}>
-          <span className={s.desktopText}>
-            {trackingType === 'hand'
-              ? 'Show hand'
-              : trackingType === 'face'
-                ? 'Show face'
-                : 'Make noise'}
-          </span>
-          <span className={s.mobileText}>
-            {trackingType === 'hand'
-              ? 'Show hand'
-              : trackingType === 'face'
-                ? 'Show face'
-                : 'Make noise'}
-          </span>
+          <span className={s.desktopText}>Make noise</span>
+          <span className={s.mobileText}>Make noise</span>
         </div>
       </div>
     )
