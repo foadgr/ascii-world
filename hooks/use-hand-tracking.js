@@ -61,6 +61,13 @@ export const useHandTracking = ({
   const [landmarks, setLandmarks] = useState([])
   const animationFrameRef = useRef()
 
+  // Auto-calibration state
+  const [autoCalibrationTimer, setAutoCalibrationTimer] = useState(null)
+  const [stabilizationBuffer, setStabilizationBuffer] = useState([])
+  const stabilizationTimeRef = useRef(0)
+  const STABILIZATION_DURATION = 2000 // 2 seconds of stable detection
+  const BUFFER_SIZE = 10 // Track last 10 depth readings
+
   // Calculate hand span (thumb tip to pinky tip distance)
   const calculateHandSpan = useCallback((landmarks) => {
     if (!landmarks || landmarks.length < 21) return 0
@@ -87,6 +94,64 @@ export const useHandTracking = ({
     )
     return palmDepth / palmIndices.length
   }, [])
+
+  // Auto-calibration logic
+  const handleAutoCalibration = useCallback(
+    (depth) => {
+      if (isCalibrated) return // Already calibrated
+
+      // Add current depth to stabilization buffer
+      const newBuffer = [...stabilizationBuffer, depth].slice(-BUFFER_SIZE)
+      setStabilizationBuffer(newBuffer)
+
+      // Check if we have enough readings and they're stable
+      if (newBuffer.length >= BUFFER_SIZE) {
+        const avgDepth =
+          newBuffer.reduce((sum, d) => sum + d, 0) / newBuffer.length
+        const variance =
+          newBuffer.reduce((sum, d) => sum + (d - avgDepth) ** 2, 0) /
+          newBuffer.length
+        const stabilityThreshold = 0.001 // Very stable readings required
+
+        if (variance < stabilityThreshold) {
+          // Start stabilization timer if not already started
+          if (!autoCalibrationTimer) {
+            const startTime = Date.now()
+            stabilizationTimeRef.current = startTime
+            setAutoCalibrationTimer(startTime)
+          } else {
+            // Check if enough time has passed
+            const elapsed = Date.now() - stabilizationTimeRef.current
+            if (elapsed >= STABILIZATION_DURATION) {
+              // Auto-calibrate!
+              const granularityToUse = currentGranularity || granularity
+              setCalibrationDepth(avgDepth)
+              setCalibrationGranularity(granularityToUse)
+              setIsCalibrated(true)
+              setAutoCalibrationTimer(null)
+              console.log(
+                'Hand auto-calibrated at:',
+                avgDepth,
+                'with granularity:',
+                granularityToUse
+              )
+            }
+          }
+        } else {
+          // Reset timer if hand movement detected
+          setAutoCalibrationTimer(null)
+          stabilizationTimeRef.current = 0
+        }
+      }
+    },
+    [
+      isCalibrated,
+      stabilizationBuffer,
+      autoCalibrationTimer,
+      currentGranularity,
+      granularity,
+    ]
+  )
 
   // Initialize MediaPipe Hands
   useEffect(() => {
@@ -160,6 +225,9 @@ export const useHandTracking = ({
             // Calculate depth using palm center depth (more stable than hand span)
             const depth = calculatePalmDepth(detectedLandmarks)
             setCurrentDepth(depth)
+
+            // Trigger auto-calibration check
+            handleAutoCalibration(depth)
 
             // Calculate relative depth if calibrated
             if (
@@ -244,6 +312,10 @@ export const useHandTracking = ({
           } else {
             setHandDetected(false)
             setLandmarks([])
+            // Reset auto-calibration when hand is lost
+            setAutoCalibrationTimer(null)
+            setStabilizationBuffer([])
+            stabilizationTimeRef.current = 0
             if (onDepthChange) {
               onDepthChange({
                 relativeDepth: 0,
@@ -274,10 +346,12 @@ export const useHandTracking = ({
     isInitialized,
     videoElement,
     calculatePalmDepth,
+    handleAutoCalibration,
     isCalibrated,
     calibrationDepth,
     granularityRange,
     onDepthChange,
+    calibrationGranularity,
   ])
 
   // Calibration function
@@ -305,6 +379,10 @@ export const useHandTracking = ({
     setCalibrationGranularity(null)
     setRelativeDepth(0)
     setGranularity(granularityRange.min)
+    // Reset auto-calibration state
+    setAutoCalibrationTimer(null)
+    setStabilizationBuffer([])
+    stabilizationTimeRef.current = 0
   }, [granularityRange.min])
 
   return {

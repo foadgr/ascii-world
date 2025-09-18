@@ -7,33 +7,32 @@ const models = [
   {
     id: 'penguin',
     name: 'Penguin Astronaut',
-    path: '/cutest-penguin-astronaut.glb'
+    path: '/cutest-penguin-astronaut.glb',
   },
   {
     id: 'rivian',
     name: 'Rivian R1S',
-    path: '/rivian-r1s.glb'
+    path: '/rivian-r1s.glb',
   },
   {
     id: 'meta',
     name: 'Meta',
-    path: '/meta.glb'
-  }
+    path: '/meta.glb',
+  },
 ]
 
 export function ModelSelector({ currentModel, onModelChange, hidden = false }) {
   const [isOpen, setIsOpen] = useState(false)
 
   const handleModelSelect = (model) => {
-    track('Model Selection', { 
+    track('Model Selection', {
       action: 'select_model',
       modelId: model.id,
-      modelName: model.name 
+      modelName: model.name,
     })
     onModelChange(model.path)
     setIsOpen(false)
   }
-
 
   if (hidden) return null
 
@@ -56,8 +55,8 @@ export function ModelSelector({ currentModel, onModelChange, hidden = false }) {
       {/* Dropdown Menu */}
       {isOpen && (
         <>
-          <div 
-            className={s.overlay} 
+          <div
+            className={s.overlay}
             onClick={() => setIsOpen(false)}
             onKeyDown={(e) => e.key === 'Escape' && setIsOpen(false)}
             role="button"

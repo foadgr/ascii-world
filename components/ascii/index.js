@@ -27,6 +27,7 @@ import { ControlPanel } from '../control-panel'
 import { InfoButton } from '../info-button'
 import { IntroModal } from '../intro-modal'
 import { ModelSelector } from '../model-selector'
+import { TrackingOverlay } from '../tracking-overlay'
 import { UploadButton } from '../upload-button'
 import s from './ascii.module.scss'
 import { AsciiContext } from './context'
@@ -560,10 +561,10 @@ const Scene = () => {
 
   // Register upload function and asset setter with context on mount
   useEffect(() => {
-    set({ 
+    set({
       uploadFunction: handleFileUpload,
       setAssetFunction: setAsset,
-      currentAsset: asset
+      currentAsset: asset,
     })
   }, [set, handleFileUpload, asset])
 
@@ -715,7 +716,8 @@ function Postprocessing() {
 }
 
 function Inner() {
-  const { uploadFunctionRef, currentAsset, setAssetFunction } = useContext(AsciiContext)
+  const { uploadFunctionRef, currentAsset, setAssetFunction } =
+    useContext(AsciiContext)
 
   return (
     <>
@@ -745,6 +747,7 @@ function Inner() {
             <Scene />
             <Postprocessing />
           </Canvas>
+          <TrackingOverlay />
         </div>
       </div>
       <FontEditor />
@@ -756,7 +759,7 @@ function Inner() {
           }
         }}
       />
-      <UploadButton 
+      <UploadButton
         onFileSelect={(fileData, filename) => {
           if (uploadFunctionRef?.current) {
             uploadFunctionRef.current(fileData, filename)
@@ -911,7 +914,9 @@ export function ASCII({ children }) {
   // Create refs to hold functions from Scene component
   const uploadFunctionRef = useRef()
   const setAssetFunctionRef = useRef()
-  const [currentAsset, setCurrentAsset] = useState('/cutest-penguin-astronaut.glb')
+  const [currentAsset, setCurrentAsset] = useState(
+    '/cutest-penguin-astronaut.glb'
+  )
 
   function set({
     charactersTexture,
