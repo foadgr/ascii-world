@@ -71,7 +71,7 @@ export const DepthDisplay = () => {
     if (trackingType === 'hand' || trackingType === 'face') {
       return null
     }
-    
+
     // Only show instructions for audio tracking
     return (
       <div
@@ -90,47 +90,11 @@ export const DepthDisplay = () => {
     return null // No UI needed - corner indicators are on the video feed
   }
 
-  // Show audio calibration instructions (audio still uses manual calibration)
+  // No additional instructions needed for audio when not calibrated
   if (!isCalibrated && trackingType === 'audio') {
-    return (
-      <div
-        className={`${s.depthDisplay} ${useBottomPosition ? s.bottomPosition : ''}`}
-      >
-        <div className={s.instructionContainer}>
-          <div className={s.instructionMessage}>
-            <span className={s.desktopText}>
-              Set volume, tap music icon to lock
-            </span>
-            <span className={s.mobileText}>Set volume, tap music</span>
-          </div>
-          <div className={s.instructionSubtitle}>
-            <span className={s.desktopText}>Louder = max detail</span>
-            <span className={s.mobileText}>Louder = max</span>
-          </div>
-        </div>
-      </div>
-    )
+    return null // Only "Make noise" is shown when audio is not detected
   }
 
-  // Show depth and granularity metrics when calibrated
-  const depthPercent = (relativeDepth * 100).toFixed(1)
-  const isAtCalibrationPoint = Math.abs(relativeDepth) < 0.01 // Within 1% of calibration point
-
-  // For hand/face tracking, depth and granularity info is now shown via the gyroscope
-  // Only show basic info for audio tracking
-  if (trackingType === 'audio') {
-    return (
-      <div
-        className={`${s.depthDisplay} ${useBottomPosition ? s.bottomPosition : ''}`}
-      >
-        <div className={s.granularityInfo}>
-          <span className={s.granularityValue}>{granularity}</span>
-          <span className={s.granularityLabel}>volume level</span>
-        </div>
-      </div>
-    )
-  }
-
-  // For hand/face tracking, show minimal status or nothing when calibrated
+  // No additional information needed when calibrated - keep it clean
   return null
 }
