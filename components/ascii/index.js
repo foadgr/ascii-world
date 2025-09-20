@@ -348,7 +348,7 @@ const Scene = () => {
     handTracking.palmX,
     handTracking.palmY,
     handTrackingEnabled,
-    set
+    set,
   ])
 
   // Share face tracking state with context
@@ -372,7 +372,7 @@ const Scene = () => {
     faceTrackingHook.depthMap?.rightEyeDepth,
     faceTrackingHook.depthMap?.mouthDepth,
     faceTrackingEnabled,
-    set
+    set,
   ])
 
   // Share audio tracking state with context
@@ -393,7 +393,7 @@ const Scene = () => {
     audioTrackingHook.spike,
     audioTrackingHook.smoothed,
     audioTrackingEnabled,
-    set
+    set,
   ])
 
   useEffect(() => {
@@ -1022,15 +1022,20 @@ export function ASCII({ children }) {
   }
 
   // Get AI color palette from current shader
-  const currentShaderData = currentShader ? shaderRegistry.get(currentShader) : null
+  const currentShaderData = currentShader
+    ? shaderRegistry.get(currentShader)
+    : null
   const aiColorPalette = currentShaderData?.metadata?.colorPalette || null
 
   // Handle AI color selection
-  const handleAiColorSelect = useCallback((color, index) => {
-    // When user clicks an AI palette color, apply it as foreground
-    setColor(color)
-    setEnableColor(true) // Switch to custom mode
-  }, [setColor, setEnableColor])
+  const handleAiColorSelect = useCallback(
+    (color, index) => {
+      // When user clicks an AI palette color, apply it as foreground
+      setColor(color)
+      setEnableColor(true) // Switch to custom mode
+    },
+    [setColor, setEnableColor]
+  )
 
   // Only render on client side to avoid SSR issues
   if (!isClient) {

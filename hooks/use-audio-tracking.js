@@ -26,20 +26,35 @@ export const useAudioTracking = ({
   const [lastAudioLevel, setLastAudioLevel] = useState(0) // For spike detection
 
   // Batch state updates to reduce re-renders
-  const updateState = useCallback((updates) => {
-    if (updates.currentAudioLevel !== undefined && Math.abs(currentAudioLevel - updates.currentAudioLevel) > 0.005) {
-      setCurrentAudioLevel(updates.currentAudioLevel)
-    }
-    if (updates.smoothedAudioLevel !== undefined && Math.abs(smoothedAudioLevel - updates.smoothedAudioLevel) > 0.005) {
-      setSmoothedAudioLevel(updates.smoothedAudioLevel)
-    }
-    if (updates.lastAudioLevel !== undefined && Math.abs(lastAudioLevel - updates.lastAudioLevel) > 0.005) {
-      setLastAudioLevel(updates.lastAudioLevel)
-    }
-    if (updates.audioDetected !== undefined && audioDetected !== updates.audioDetected) {
-      setAudioDetected(updates.audioDetected)
-    }
-  }, [currentAudioLevel, smoothedAudioLevel, lastAudioLevel, audioDetected])
+  const updateState = useCallback(
+    (updates) => {
+      if (
+        updates.currentAudioLevel !== undefined &&
+        Math.abs(currentAudioLevel - updates.currentAudioLevel) > 0.005
+      ) {
+        setCurrentAudioLevel(updates.currentAudioLevel)
+      }
+      if (
+        updates.smoothedAudioLevel !== undefined &&
+        Math.abs(smoothedAudioLevel - updates.smoothedAudioLevel) > 0.005
+      ) {
+        setSmoothedAudioLevel(updates.smoothedAudioLevel)
+      }
+      if (
+        updates.lastAudioLevel !== undefined &&
+        Math.abs(lastAudioLevel - updates.lastAudioLevel) > 0.005
+      ) {
+        setLastAudioLevel(updates.lastAudioLevel)
+      }
+      if (
+        updates.audioDetected !== undefined &&
+        audioDetected !== updates.audioDetected
+      ) {
+        setAudioDetected(updates.audioDetected)
+      }
+    },
+    [currentAudioLevel, smoothedAudioLevel, lastAudioLevel, audioDetected]
+  )
 
   // Smart audio analysis with frequency band detection
   const analyzeAudioContent = useCallback(
@@ -230,7 +245,8 @@ export const useAudioTracking = ({
       }
 
       // Throttle updates to prevent excessive processing
-      if (timestamp - lastUpdateRef.current < 16) { // Max 60fps
+      if (timestamp - lastUpdateRef.current < 16) {
+        // Max 60fps
         animationFrameRef.current = requestAnimationFrame(processAudioFrame)
         return
       }

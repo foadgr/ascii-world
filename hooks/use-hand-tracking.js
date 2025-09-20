@@ -222,7 +222,8 @@ export const useHandTracking = ({
       }
 
       // Throttle updates to prevent excessive processing
-      if (timestamp - lastUpdateRef.current < 16) { // Max 60fps
+      if (timestamp - lastUpdateRef.current < 16) {
+        // Max 60fps
         animationFrameRef.current = requestAnimationFrame(processFrame)
         return
       }

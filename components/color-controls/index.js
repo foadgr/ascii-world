@@ -179,7 +179,7 @@ const ColorInput = ({ label, value, onChange }) => {
 
 const AIPalettePreview = ({ palette, onColorSelect }) => {
   if (!palette || palette.length === 0) return null
-  
+
   return (
     <div className={s.aiPalettePreview}>
       <div className={s.paletteLabel}>AI Generated Palette:</div>
@@ -201,17 +201,19 @@ const AIPalettePreview = ({ palette, onColorSelect }) => {
 const ColorButton = ({ setColor, color, background, aiPalette }) => {
   if (aiPalette && aiPalette.length > 0) {
     // AI mode - show the AI-generated color palette
-    const gradientStops = aiPalette.map((color, index) => {
-      const percentage = (index / (aiPalette.length - 1)) * 100
-      return `${color} ${percentage}%`
-    }).join(', ')
-    
+    const gradientStops = aiPalette
+      .map((color, index) => {
+        const percentage = (index / (aiPalette.length - 1)) * 100
+        return `${color} ${percentage}%`
+      })
+      .join(', ')
+
     return (
       <div className={s.colorButton}>
         <div
           className={s.aiPalette}
           style={{
-            background: `linear-gradient(135deg, ${gradientStops})`
+            background: `linear-gradient(135deg, ${gradientStops})`,
           }}
         />
       </div>

@@ -7,18 +7,54 @@ const openai = new OpenAI({
 
 // Define the structured output schema
 const ShaderGenerationResponse = z.object({
-  shaderCode: z.string().describe('Complete GLSL fragment shader code that creatively uses tracking uniforms'),
-  suggestedName: z.string().describe('Short, descriptive name for the effect (e.g., "Audio Reactive Waves", "Face Distortion Field")'),
-  suggestedDescription: z.string().describe('Brief description of what the shader does and how it responds to tracking data'),
-  primaryTrackingMode: z.enum(['audio', 'face', 'hand', 'mixed']).describe('The primary tracking mode this shader is designed for'),
-  colorPalette: z.array(z.string()).min(2).max(5).describe('Array of hex color codes that represent the main colors used in the effect'),
-  intensity: z.number().min(0).max(1).describe('Recommended default intensity level for the effect (0.0 to 1.0)'),
-  customUniforms: z.array(z.object({
-    name: z.string().describe('Uniform name (without u prefix)'),
-    type: z.enum(['float', 'vec2', 'vec3', 'vec4', 'bool', 'int']).describe('GLSL type'),
-    defaultValue: z.string().describe('Default value as a string (e.g., "1.0", "[0.5, 0.5]", "true")'),
-    description: z.string().describe('What this uniform controls')
-  })).describe('Custom uniforms specific to this shader (can be empty array)')
+  shaderCode: z
+    .string()
+    .describe(
+      'Complete GLSL fragment shader code that creatively uses tracking uniforms'
+    ),
+  suggestedName: z
+    .string()
+    .describe(
+      'Short, descriptive name for the effect (e.g., "Audio Reactive Waves", "Face Distortion Field")'
+    ),
+  suggestedDescription: z
+    .string()
+    .describe(
+      'Brief description of what the shader does and how it responds to tracking data'
+    ),
+  primaryTrackingMode: z
+    .enum(['audio', 'face', 'hand', 'mixed'])
+    .describe('The primary tracking mode this shader is designed for'),
+  colorPalette: z
+    .array(z.string())
+    .min(2)
+    .max(5)
+    .describe(
+      'Array of hex color codes that represent the main colors used in the effect'
+    ),
+  intensity: z
+    .number()
+    .min(0)
+    .max(1)
+    .describe(
+      'Recommended default intensity level for the effect (0.0 to 1.0)'
+    ),
+  customUniforms: z
+    .array(
+      z.object({
+        name: z.string().describe('Uniform name (without u prefix)'),
+        type: z
+          .enum(['float', 'vec2', 'vec3', 'vec4', 'bool', 'int'])
+          .describe('GLSL type'),
+        defaultValue: z
+          .string()
+          .describe(
+            'Default value as a string (e.g., "1.0", "[0.5, 0.5]", "true")'
+          ),
+        description: z.string().describe('What this uniform controls'),
+      })
+    )
+    .describe('Custom uniforms specific to this shader (can be empty array)'),
 })
 
 export default async function handler(req, res) {
@@ -33,10 +69,10 @@ export default async function handler(req, res) {
   }
 
   try {
-        // Use GPT-5 Responses API for better performance
-        const response = await openai.responses.create({
-          model: 'gpt-5',
-          input: `You are an expert GLSL shader programmer specializing in creative video effects with real-time tracking integration. You create sophisticated, performant shaders that leverage audio, face, and hand tracking data in creative ways.
+    // Use GPT-5 Responses API for better performance
+    const response = await openai.responses.create({
+      model: 'gpt-5',
+      input: `You are an expert GLSL shader programmer specializing in creative video effects with real-time tracking integration. You create sophisticated, performant shaders that leverage audio, face, and hand tracking data in creative ways.
 
 Focus on creating visually stunning effects that creatively use the available tracking uniforms. Don't just modulate granularity - think about colors, patterns, distortions, and interactive elements.
 
@@ -51,74 +87,86 @@ Create effects that are visually compelling and make creative use of multiple tr
 User request: ${prompt}
 
 Return a JSON object with the exact structure expected by our Zod schema.`,
-          reasoning: { effort: 'low' }, // High reasoning for complex shader generation
-          text: { 
-            verbosity: 'low', // Medium verbosity for detailed but not excessive output
-            format: {
-              type: 'json_schema',
-              name: 'shader_generation',
-              strict: true,
-              schema: {
-                type: 'object',
-                properties: {
-                  shaderCode: {
-                    type: 'string',
-                    description: 'Complete GLSL fragment shader code that creatively uses tracking uniforms'
-                  },
-                  suggestedName: {
-                    type: 'string',
-                    description: 'Short, descriptive name for the effect'
-                  },
-                  suggestedDescription: {
-                    type: 'string',
-                    description: 'Brief description of what the shader does'
-                  },
-                  primaryTrackingMode: {
-                    type: 'string',
-                    enum: ['audio', 'face', 'hand', 'mixed'],
-                    description: 'The primary tracking mode this shader is designed for'
-                  },
-                  colorPalette: {
-                    type: 'array',
-                    items: { type: 'string' },
-                    minItems: 2,
-                    maxItems: 5,
-                    description: 'Array of hex color codes representing main colors'
-                  },
-                  intensity: {
-                    type: 'number',
-                    minimum: 0,
-                    maximum: 1,
-                    description: 'Recommended default intensity level (0.0 to 1.0)'
-                  },
-                  customUniforms: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        name: { type: 'string' },
-                        type: {
-                          type: 'string',
-                          enum: ['float', 'vec2', 'vec3', 'vec4', 'bool', 'int']
-                        },
-                        defaultValue: {
-                          type: 'string',
-                          description: 'Default value as a string (e.g., "1.0", "[0.5, 0.5]", "true")'
-                        },
-                        description: { type: 'string' }
-                      },
-                      required: ['name', 'type', 'defaultValue', 'description'],
-                      additionalProperties: false
+      reasoning: { effort: 'low' }, // High reasoning for complex shader generation
+      text: {
+        verbosity: 'low', // Medium verbosity for detailed but not excessive output
+        format: {
+          type: 'json_schema',
+          name: 'shader_generation',
+          strict: true,
+          schema: {
+            type: 'object',
+            properties: {
+              shaderCode: {
+                type: 'string',
+                description:
+                  'Complete GLSL fragment shader code that creatively uses tracking uniforms',
+              },
+              suggestedName: {
+                type: 'string',
+                description: 'Short, descriptive name for the effect',
+              },
+              suggestedDescription: {
+                type: 'string',
+                description: 'Brief description of what the shader does',
+              },
+              primaryTrackingMode: {
+                type: 'string',
+                enum: ['audio', 'face', 'hand', 'mixed'],
+                description:
+                  'The primary tracking mode this shader is designed for',
+              },
+              colorPalette: {
+                type: 'array',
+                items: { type: 'string' },
+                minItems: 2,
+                maxItems: 5,
+                description:
+                  'Array of hex color codes representing main colors',
+              },
+              intensity: {
+                type: 'number',
+                minimum: 0,
+                maximum: 1,
+                description: 'Recommended default intensity level (0.0 to 1.0)',
+              },
+              customUniforms: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    name: { type: 'string' },
+                    type: {
+                      type: 'string',
+                      enum: ['float', 'vec2', 'vec3', 'vec4', 'bool', 'int'],
                     },
-                    description: 'Optional custom uniforms specific to this shader'
-                  }
+                    defaultValue: {
+                      type: 'string',
+                      description:
+                        'Default value as a string (e.g., "1.0", "[0.5, 0.5]", "true")',
+                    },
+                    description: { type: 'string' },
+                  },
+                  required: ['name', 'type', 'defaultValue', 'description'],
+                  additionalProperties: false,
                 },
-                required: ['shaderCode', 'suggestedName', 'suggestedDescription', 'primaryTrackingMode', 'colorPalette', 'intensity', 'customUniforms'],
-                additionalProperties: false
-              }
-            }
+                description: 'Optional custom uniforms specific to this shader',
+              },
+            },
+            required: [
+              'shaderCode',
+              'suggestedName',
+              'suggestedDescription',
+              'primaryTrackingMode',
+              'colorPalette',
+              'intensity',
+              'customUniforms',
+            ],
+            additionalProperties: false,
           },
-        })
+        },
+      },
+    })
 
     // Handle potential refusal
     if (response.refusal) {
@@ -140,22 +188,24 @@ Return a JSON object with the exact structure expected by our Zod schema.`,
     try {
       // GPT-5 Responses API returns output_text which should contain our structured JSON
       parsedResponse = JSON.parse(response.output_text)
-      
+
       // Validate with our Zod schema
       const validatedResponse = ShaderGenerationResponse.parse(parsedResponse)
-      
+
       return res.status(200).json(validatedResponse)
     } catch (parseError) {
       console.error('Failed to parse GPT-5 response:', parseError)
       return res.status(500).json({
         error: 'Failed to parse AI response as valid JSON',
-        details: process.env.NODE_ENV === 'development' ? parseError.message : undefined,
+        details:
+          process.env.NODE_ENV === 'development'
+            ? parseError.message
+            : undefined,
       })
     }
-
   } catch (error) {
     console.error('OpenAI API error:', error)
-    
+
     // Handle different types of errors
     if (error.code === 'invalid_request_error') {
       return res.status(400).json({
@@ -163,10 +213,11 @@ Return a JSON object with the exact structure expected by our Zod schema.`,
         details: error.message,
       })
     }
-    
+
     return res.status(500).json({
       error: 'Failed to generate shader. Please try again.',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      details:
+        process.env.NODE_ENV === 'development' ? error.message : undefined,
     })
   }
 }

@@ -7,14 +7,14 @@ import { shaderRegistry } from './ShaderRegistry'
 
 // Component that can render any registered shader effect
 export const FlexibleShaderEffect = forwardRef((props, ref) => {
-  const { 
-    shaderId = 'ascii', 
-    shaderConfig = {}, 
+  const {
+    shaderId = 'ascii',
+    shaderConfig = {},
     trackingMode,
     faceTracking,
     handTracking,
     audioTracking,
-    ...baseProps 
+    ...baseProps
   } = props
 
   const { viewport } = useThree()
@@ -38,8 +38,14 @@ export const FlexibleShaderEffect = forwardRef((props, ref) => {
       uniforms.set('uAudioVoice', new Uniform(audioTracking.voiceLevel || 0))
       uniforms.set('uAudioMusic', new Uniform(audioTracking.musicLevel || 0))
       uniforms.set('uAudioNoise', new Uniform(audioTracking.noiseLevel || 0))
-      uniforms.set('uAudioSpike', new Uniform(audioTracking.isSpike ? 1.0 : 0.0))
-      uniforms.set('uAudioSmoothed', new Uniform(audioTracking.smoothedLevel || 0))
+      uniforms.set(
+        'uAudioSpike',
+        new Uniform(audioTracking.isSpike ? 1.0 : 0.0)
+      )
+      uniforms.set(
+        'uAudioSmoothed',
+        new Uniform(audioTracking.smoothedLevel || 0)
+      )
     } else {
       // Default values when no audio tracking
       uniforms.set('uAudioLevel', new Uniform(0))
@@ -53,15 +59,42 @@ export const FlexibleShaderEffect = forwardRef((props, ref) => {
     // Face tracking uniforms
     if (faceTracking?.faceDetected && faceTracking.depthMap) {
       uniforms.set('uFaceDetected', new Uniform(true))
-      uniforms.set('uFaceNoseDepth', new Uniform(faceTracking.depthMap.noseTip || 0))
-      uniforms.set('uFaceForeheadDepth', new Uniform(faceTracking.depthMap.forehead || 0))
-      uniforms.set('uFaceLeftCheekDepth', new Uniform(faceTracking.depthMap.leftCheek || 0))
-      uniforms.set('uFaceRightCheekDepth', new Uniform(faceTracking.depthMap.rightCheek || 0))
-      uniforms.set('uFaceChinDepth', new Uniform(faceTracking.depthMap.chin || 0))
-      uniforms.set('uFaceLeftEyeDepth', new Uniform(faceTracking.depthMap.leftEye || 0))
-      uniforms.set('uFaceRightEyeDepth', new Uniform(faceTracking.depthMap.rightEye || 0))
-      uniforms.set('uFaceMouthDepth', new Uniform(faceTracking.depthMap.mouth || 0))
-      uniforms.set('uFaceNormalizedDepth', new Uniform(faceTracking.normalizedDepth || 0))
+      uniforms.set(
+        'uFaceNoseDepth',
+        new Uniform(faceTracking.depthMap.noseTip || 0)
+      )
+      uniforms.set(
+        'uFaceForeheadDepth',
+        new Uniform(faceTracking.depthMap.forehead || 0)
+      )
+      uniforms.set(
+        'uFaceLeftCheekDepth',
+        new Uniform(faceTracking.depthMap.leftCheek || 0)
+      )
+      uniforms.set(
+        'uFaceRightCheekDepth',
+        new Uniform(faceTracking.depthMap.rightCheek || 0)
+      )
+      uniforms.set(
+        'uFaceChinDepth',
+        new Uniform(faceTracking.depthMap.chin || 0)
+      )
+      uniforms.set(
+        'uFaceLeftEyeDepth',
+        new Uniform(faceTracking.depthMap.leftEye || 0)
+      )
+      uniforms.set(
+        'uFaceRightEyeDepth',
+        new Uniform(faceTracking.depthMap.rightEye || 0)
+      )
+      uniforms.set(
+        'uFaceMouthDepth',
+        new Uniform(faceTracking.depthMap.mouth || 0)
+      )
+      uniforms.set(
+        'uFaceNormalizedDepth',
+        new Uniform(faceTracking.normalizedDepth || 0)
+      )
     } else {
       uniforms.set('uFaceDetected', new Uniform(false))
       uniforms.set('uFaceNoseDepth', new Uniform(0))
@@ -80,7 +113,10 @@ export const FlexibleShaderEffect = forwardRef((props, ref) => {
       // Calculate palm center from landmarks (wrist is landmark 0)
       const wrist = handTracking.landmarks[0]
       uniforms.set('uHandDetected', new Uniform(true))
-      uniforms.set('uHandNormalizedDepth', new Uniform(handTracking.normalizedDepth || 0))
+      uniforms.set(
+        'uHandNormalizedDepth',
+        new Uniform(handTracking.normalizedDepth || 0)
+      )
       uniforms.set('uHandPalmX', new Uniform(wrist?.x || 0.5))
       uniforms.set('uHandPalmY', new Uniform(wrist?.y || 0.5))
     } else {
@@ -144,12 +180,12 @@ export const FlexibleShaderEffect = forwardRef((props, ref) => {
 
   // Create custom props for uniform updates
   const customProps = {}
-  
+
   // Add tracking props
   trackingUniforms.forEach((uniform, name) => {
     customProps[name] = uniform.value
   })
-  
+
   // Add shader-specific props
   if (shader?.uniforms) {
     for (const [name, config] of Object.entries(shader.uniforms)) {

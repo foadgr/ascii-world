@@ -11,12 +11,14 @@ const ShaderGenerationResponseSchema = z.object({
   primaryTrackingMode: z.enum(['audio', 'face', 'hand', 'mixed']),
   colorPalette: z.array(z.string()).min(2).max(5),
   intensity: z.number().min(0).max(1),
-  customUniforms: z.array(z.object({
-    name: z.string(),
-    type: z.enum(['float', 'vec2', 'vec3', 'vec4', 'bool', 'int']),
-    defaultValue: z.string(),
-    description: z.string()
-  }))
+  customUniforms: z.array(
+    z.object({
+      name: z.string(),
+      type: z.enum(['float', 'vec2', 'vec3', 'vec4', 'bool', 'int']),
+      defaultValue: z.string(),
+      description: z.string(),
+    })
+  ),
 })
 
 const SHADER_TEMPLATES = {
@@ -281,7 +283,6 @@ export const ShaderCreator = ({ isOpen, onClose, onShaderCreated }) => {
   const [error, setError] = useState('')
   const [generatedShader, setGeneratedShader] = useState(null)
 
-
   const generateWithLLM = async () => {
     if (!generationPrompt.trim()) {
       setError('Please enter a description for the shader effect')
@@ -316,7 +317,7 @@ export const ShaderCreator = ({ isOpen, onClose, onShaderCreated }) => {
       }
 
       let data = await response.json()
-      
+
       if (data.error) {
         throw new Error(data.error)
       }
@@ -325,7 +326,10 @@ export const ShaderCreator = ({ isOpen, onClose, onShaderCreated }) => {
       try {
         data = ShaderGenerationResponseSchema.parse(data)
       } catch (validationError) {
-        console.warn('Response validation failed, using data as-is:', validationError)
+        console.warn(
+          'Response validation failed, using data as-is:',
+          validationError
+        )
         // Continue with unvalidated data for backwards compatibility
       }
 
@@ -346,16 +350,19 @@ export const ShaderCreator = ({ isOpen, onClose, onShaderCreated }) => {
 
       // Add the resolution uniform if the shader uses it and it's not already declared
       const needsResolution = cleanedShaderCode.includes('resolution.')
-      const hasResolutionUniform = /^\s*uniform\s+vec2\s+resolution\s*;/gm.test(cleanedShaderCode)
-      
-      const finalShaderCode = needsResolution && !hasResolutionUniform 
-        ? `uniform vec2 resolution;\n\n${cleanedShaderCode}`
-        : cleanedShaderCode
+      const hasResolutionUniform = /^\s*uniform\s+vec2\s+resolution\s*;/gm.test(
+        cleanedShaderCode
+      )
+
+      const finalShaderCode =
+        needsResolution && !hasResolutionUniform
+          ? `uniform vec2 resolution;\n\n${cleanedShaderCode}`
+          : cleanedShaderCode
 
       // Store the cleaned shader data
       const cleanedData = {
         ...data,
-        shaderCode: finalShaderCode
+        shaderCode: finalShaderCode,
       }
 
       setGeneratedShader(cleanedData)
@@ -371,7 +378,6 @@ export const ShaderCreator = ({ isOpen, onClose, onShaderCreated }) => {
     }
   }
 
-
   const handleCreateShader = () => {
     if (!generatedShader) {
       setError('Please generate a shader first')
@@ -381,10 +387,13 @@ export const ShaderCreator = ({ isOpen, onClose, onShaderCreated }) => {
     try {
       // Convert customUniforms array to the format expected by the registry
       const uniforms = {}
-      if (generatedShader.customUniforms && generatedShader.customUniforms.length > 0) {
-        generatedShader.customUniforms.forEach(uniform => {
+      if (
+        generatedShader.customUniforms &&
+        generatedShader.customUniforms.length > 0
+      ) {
+        generatedShader.customUniforms.forEach((uniform) => {
           const uniformName = `u${uniform.name.charAt(0).toUpperCase()}${uniform.name.slice(1)}`
-          
+
           // Parse the string defaultValue back to the appropriate type
           let parsedDefault
           try {
@@ -394,7 +403,7 @@ export const ShaderCreator = ({ isOpen, onClose, onShaderCreated }) => {
             // If JSON parsing fails, treat as string
             parsedDefault = uniform.defaultValue
           }
-          
+
           uniforms[uniformName] = {
             type: uniform.type,
             default: parsedDefault,
@@ -451,10 +460,11 @@ export const ShaderCreator = ({ isOpen, onClose, onShaderCreated }) => {
             <div className={s.section}>
               <h3>AI Shader Generator</h3>
               <p className={s.description}>
-                Describe the visual effect you want and our AI will generate a custom shader 
-                that uses audio, face, and hand tracking data creatively.
+                Describe the visual effect you want and our AI will generate a
+                custom shader that uses audio, face, and hand tracking data
+                creatively.
               </p>
-              
+
               <div className={s.inputGroup}>
                 <label>Effect Description</label>
                 <textarea
@@ -464,7 +474,7 @@ export const ShaderCreator = ({ isOpen, onClose, onShaderCreated }) => {
                   rows={4}
                 />
               </div>
-              
+
               <div className={s.inputGroup}>
                 <label>Additional Requirements (optional)</label>
                 <input
@@ -474,7 +484,7 @@ export const ShaderCreator = ({ isOpen, onClose, onShaderCreated }) => {
                   placeholder="e.g., 'should be subtle and elegant', 'needs bright vibrant colors', 'focus on face tracking'"
                 />
               </div>
-              
+
               <button
                 className={s.generateButton}
                 onClick={generateWithLLM}
@@ -494,43 +504,48 @@ export const ShaderCreator = ({ isOpen, onClose, onShaderCreated }) => {
             // Generated Shader Preview Section
             <div className={s.section}>
               <h3>✨ Generated Shader</h3>
-              
+
               <div className={s.shaderPreview}>
                 <div className={s.shaderInfo}>
                   <h4>{generatedShader.suggestedName}</h4>
                   <p>{generatedShader.suggestedDescription}</p>
-                  
+
                   <div className={s.shaderMeta}>
                     <div className={s.metaItem}>
                       <span className={s.metaLabel}>Primary Tracking:</span>
-                      <span className={s.metaBadge} data-mode={generatedShader.primaryTrackingMode}>
+                      <span
+                        className={s.metaBadge}
+                        data-mode={generatedShader.primaryTrackingMode}
+                      >
                         {generatedShader.primaryTrackingMode}
                       </span>
                     </div>
-                    
+
                     <div className={s.metaItem}>
                       <span className={s.metaLabel}>Color Palette:</span>
                       <div className={s.colorPalette}>
                         {generatedShader.colorPalette?.map((color, index) => (
-                          <div 
-                            key={index} 
-                            className={s.colorSwatch} 
+                          <div
+                            key={index}
+                            className={s.colorSwatch}
                             style={{ backgroundColor: color }}
                             title={color}
                           />
                         ))}
                       </div>
                     </div>
-                    
+
                     <div className={s.metaItem}>
                       <span className={s.metaLabel}>Intensity:</span>
-                      <span className={s.metaValue}>{Math.round(generatedShader.intensity * 100)}%</span>
+                      <span className={s.metaValue}>
+                        {Math.round(generatedShader.intensity * 100)}%
+                      </span>
                     </div>
                   </div>
                 </div>
-                
+
                 <div className={s.shaderActions}>
-                  <button 
+                  <button
                     className={s.regenerateButton}
                     onClick={() => setGeneratedShader(null)}
                   >
