@@ -78,7 +78,7 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   
   // Your effect code here using currentGranularity
   outputColor = inputColor;
-}`
+}`,
 }
 
 const LLM_PROMPT_TEMPLATE = `Create a GLSL fragment shader for a video effect. The shader should:
@@ -108,7 +108,7 @@ export const ShaderCreator = ({ isOpen, onClose, onShaderCreated }) => {
   const [additionalRequirements, setAdditionalRequirements] = useState('')
   const [selectedTemplate, setSelectedTemplate] = useState('basic')
   const [error, setError] = useState('')
-  
+
   const textareaRef = useRef()
 
   const handleTemplateChange = (template) => {
@@ -127,15 +127,16 @@ export const ShaderCreator = ({ isOpen, onClose, onShaderCreated }) => {
 
     try {
       // Create the full prompt
-      const prompt = LLM_PROMPT_TEMPLATE
-        .replace('{description}', generationPrompt)
-        .replace('{requirements}', additionalRequirements || 'None')
+      const prompt = LLM_PROMPT_TEMPLATE.replace(
+        '{description}',
+        generationPrompt
+      ).replace('{requirements}', additionalRequirements || 'None')
 
       // Note: In a real implementation, you'd call your LLM API here
       // For now, we'll simulate it with a timeout and show a placeholder
-      
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
+
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+
       // Simulated LLM response - in reality this would come from your LLM
       const simulatedResponse = `uniform float uGranularity;
 uniform vec3 uColor;
@@ -164,7 +165,6 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
       if (!description) {
         setDescription(`LLM-generated effect: ${generationPrompt}`)
       }
-
     } catch (err) {
       setError('Failed to generate shader. Please try again or write manually.')
       console.error('LLM generation error:', err)
@@ -175,25 +175,29 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
 
   const parseCustomUniforms = () => {
     if (!customUniforms.trim()) return {}
-    
+
     try {
       // Simple parsing for uniform declarations like:
       // uniform float myFloat; // default: 1.0
       // uniform vec3 myColor; // default: vec3(1.0, 0.0, 0.0)
       const uniforms = {}
       const lines = customUniforms.split('\n')
-      
+
       for (const line of lines) {
-        const match = line.match(/uniform\s+(\w+)\s+(\w+);?\s*(?:\/\/\s*default:\s*(.+))?/)
+        const match = line.match(
+          /uniform\s+(\w+)\s+(\w+);?\s*(?:\/\/\s*default:\s*(.+))?/
+        )
         if (match) {
           const [, type, name, defaultValue] = match
           uniforms[name] = {
             type,
-            default: defaultValue ? defaultValue.trim() : getDefaultForType(type)
+            default: defaultValue
+              ? defaultValue.trim()
+              : getDefaultForType(type),
           }
         }
       }
-      
+
       return uniforms
     } catch (err) {
       console.warn('Failed to parse custom uniforms:', err)
@@ -203,13 +207,20 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
 
   const getDefaultForType = (type) => {
     switch (type) {
-      case 'float': return 1.0
-      case 'int': return 1
-      case 'bool': return false
-      case 'vec2': return [0, 0]
-      case 'vec3': return [0, 0, 0]
-      case 'vec4': return [0, 0, 0, 1]
-      default: return null
+      case 'float':
+        return 1.0
+      case 'int':
+        return 1
+      case 'bool':
+        return false
+      case 'vec2':
+        return [0, 0]
+      case 'vec3':
+        return [0, 0, 0]
+      case 'vec4':
+        return [0, 0, 0, 1]
+      default:
+        return null
     }
   }
 
@@ -218,7 +229,7 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
       setError('Please enter a name for the shader')
       return
     }
-    
+
     if (!shaderCode.trim()) {
       setError('Please enter shader code')
       return
@@ -226,7 +237,7 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
 
     try {
       const uniforms = parseCustomUniforms()
-      
+
       const shaderId = shaderRegistry.importFromLLM(
         name,
         description || 'Custom shader effect',
@@ -238,7 +249,7 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
       onShaderCreated(shaderId)
       handleClose()
     } catch (err) {
-      setError('Failed to create shader: ' + err.message)
+      setError(`Failed to create shader: ${err.message}`)
     }
   }
 
@@ -261,7 +272,9 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
       <div className={s.modal}>
         <div className={s.header}>
           <h2>Create Custom Shader</h2>
-          <button className={s.closeButton} onClick={handleClose}>×</button>
+          <button className={s.closeButton} onClick={handleClose}>
+            ×
+          </button>
         </div>
 
         <div className={s.content}>
@@ -286,8 +299,8 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
                 placeholder="e.g., 'should respond to face tracking', 'needs to be subtle'"
               />
             </div>
-            <button 
-              className={s.generateButton} 
+            <button
+              className={s.generateButton}
               onClick={generateWithLLM}
               disabled={isGenerating}
             >
@@ -300,11 +313,11 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
           {/* Manual Creation Section */}
           <div className={s.section}>
             <h3>✏️ Write Manually</h3>
-            
+
             <div className={s.inputGroup}>
               <label>Template</label>
-              <select 
-                value={selectedTemplate} 
+              <select
+                value={selectedTemplate}
                 onChange={(e) => handleTemplateChange(e.target.value)}
               >
                 <option value="basic">Basic Effect</option>
@@ -361,9 +374,7 @@ uniform bool myBool; // default: false`}
             </div>
           </div>
 
-          {error && (
-            <div className={s.error}>{error}</div>
-          )}
+          {error && <div className={s.error}>{error}</div>}
         </div>
 
         <div className={s.footer}>

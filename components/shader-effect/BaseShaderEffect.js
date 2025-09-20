@@ -17,7 +17,7 @@ class BaseShaderEffectImpl extends Effect {
       ['uTime', new Uniform(0)],
       ['uResolution', new Uniform([1, 1])],
       ['resolution', new Uniform([1, 1])], // Also provide 'resolution' for compatibility
-      
+
       // Face tracking uniforms
       ['uFaceDepthMode', new Uniform(false)],
       ['uNoseDepth', new Uniform(0.0)],
@@ -26,7 +26,7 @@ class BaseShaderEffectImpl extends Effect {
       ['uChinDepth', new Uniform(0.0)],
       ['uGranularityMin', new Uniform(1.0)],
       ['uGranularityMax', new Uniform(50.0)],
-      
+
       // Enhanced face region depth uniforms
       ['uNoseTipDepth', new Uniform(0.0)],
       ['uLeftCheekDepth', new Uniform(0.0)],
@@ -36,18 +36,18 @@ class BaseShaderEffectImpl extends Effect {
       ['uMouthDepth', new Uniform(0.0)],
       ['uLeftTempleDepth', new Uniform(0.0)],
       ['uRightTempleDepth', new Uniform(0.0)],
-      
+
       // Hand tracking uniforms
       ['uHandDepthMode', new Uniform(false)],
       ['uHandDepth', new Uniform(0.0)],
       ['uHandGranularity', new Uniform(1.0)],
-      
+
       // Audio tracking uniforms
       ['uAudioMode', new Uniform(false)],
       ['uAudioLevel', new Uniform(0.0)],
       ['uAudioSpike', new Uniform(false)],
       ['uAudioContentType', new Uniform(0)], // 0=none, 1=voice, 2=music, 3=noise
-      
+
       // General effect uniforms
       ['uGranularity', new Uniform(16.0)],
       ['uColor', new Uniform(new Color('#ffffff'))],
@@ -62,7 +62,7 @@ class BaseShaderEffectImpl extends Effect {
     super(name, fragmentShader, {
       blendFunction,
       uniforms: mergedUniforms,
-      ...options
+      ...options,
     })
 
     this.customUniforms = uniforms
@@ -98,9 +98,18 @@ class BaseShaderEffectImpl extends Effect {
       this.updateUniform('uChinDepth', depthMap.chin || 0.0)
 
       // Enhanced detailed face regions
-      this.updateUniform('uNoseTipDepth', depthMap.noseTip || depthMap.nose || 0.0)
-      this.updateUniform('uLeftCheekDepth', depthMap.leftCheek || depthMap.cheeks || 0.0)
-      this.updateUniform('uRightCheekDepth', depthMap.rightCheek || depthMap.cheeks || 0.0)
+      this.updateUniform(
+        'uNoseTipDepth',
+        depthMap.noseTip || depthMap.nose || 0.0
+      )
+      this.updateUniform(
+        'uLeftCheekDepth',
+        depthMap.leftCheek || depthMap.cheeks || 0.0
+      )
+      this.updateUniform(
+        'uRightCheekDepth',
+        depthMap.rightCheek || depthMap.cheeks || 0.0
+      )
       this.updateUniform('uLeftEyeDepth', depthMap.leftEye || 0.0)
       this.updateUniform('uRightEyeDepth', depthMap.rightEye || 0.0)
       this.updateUniform('uMouthDepth', depthMap.mouth || 0.0)
@@ -131,7 +140,7 @@ class BaseShaderEffectImpl extends Effect {
   // Update hand tracking uniforms
   updateHandTracking(handDepthMode, handTracking) {
     this.updateUniform('uHandDepthMode', handDepthMode || false)
-    
+
     if (handDepthMode && handTracking) {
       this.updateUniform('uHandDepth', handTracking.relativeDepth || 0.0)
       this.updateUniform('uHandGranularity', handTracking.granularity || 1.0)
@@ -144,14 +153,17 @@ class BaseShaderEffectImpl extends Effect {
   // Update audio tracking uniforms
   updateAudioTracking(audioMode, audioTracking) {
     this.updateUniform('uAudioMode', audioMode || false)
-    
+
     if (audioMode && audioTracking) {
       this.updateUniform('uAudioLevel', audioTracking.currentLevel || 0.0)
       this.updateUniform('uAudioSpike', audioTracking.isSpike || false)
-      
+
       // Map content type to number
       const contentTypeMap = { none: 0, voice: 1, music: 2, noise: 3 }
-      this.updateUniform('uAudioContentType', contentTypeMap[audioTracking.contentType] || 0)
+      this.updateUniform(
+        'uAudioContentType',
+        contentTypeMap[audioTracking.contentType] || 0
+      )
     } else {
       this.updateUniform('uAudioLevel', 0.0)
       this.updateUniform('uAudioSpike', false)
@@ -184,34 +196,45 @@ export const BaseShaderEffect = forwardRef((props, ref) => {
     return new BaseShaderEffectImpl({
       fragmentShader,
       uniforms,
-      ...customProps
+      ...customProps,
     })
   }, [fragmentShader, uniforms, customProps])
 
   useEffect(() => {
     // Update basic uniforms
     effect.updateUniform('uGranularity', granularity)
-    
+
     // Ensure color and background are Color objects
-    const colorObject = color instanceof Color ? color : new Color(color || '#ffffff')
-    const backgroundObject = background instanceof Color ? background : new Color(background || '#000000')
-    
+    const colorObject =
+      color instanceof Color ? color : new Color(color || '#ffffff')
+    const backgroundObject =
+      background instanceof Color
+        ? background
+        : new Color(background || '#000000')
+
     effect.updateUniform('uColor', colorObject)
     effect.updateUniform('uBackground', backgroundObject)
     effect.updateUniform('uIntensity', intensity)
     effect.updateUniform('uOpacity', opacity)
     effect.updateUniform('uTime', time || 0)
-    
+
     // Update resolution uniforms
     effect.updateUniform('uResolution', resolution)
     effect.updateUniform('resolution', resolution)
 
     // Update tracking modes
-    const faceDepthMode = trackingMode === 'face' && faceTracking?.faceDetected && faceTracking?.depthMap
+    const faceDepthMode =
+      trackingMode === 'face' &&
+      faceTracking?.faceDetected &&
+      faceTracking?.depthMap
     const handDepthMode = trackingMode === 'hand' && handTracking?.handDetected
     const audioMode = trackingMode === 'audio' && audioTracking?.audioDetected
 
-    effect.updateFaceTracking(faceDepthMode, faceTracking?.depthMap, granularityRange)
+    effect.updateFaceTracking(
+      faceDepthMode,
+      faceTracking?.depthMap,
+      granularityRange
+    )
     effect.updateHandTracking(handDepthMode, handTracking)
     effect.updateAudioTracking(audioMode, audioTracking)
 
@@ -241,7 +264,7 @@ export const BaseShaderEffect = forwardRef((props, ref) => {
     intensity,
     opacity,
     time,
-    customProps
+    customProps,
   ])
 
   return <primitive ref={ref} object={effect} />

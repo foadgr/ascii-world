@@ -7,14 +7,10 @@ import { shaderRegistry } from './ShaderRegistry'
 
 // Component that can render any registered shader effect
 export const FlexibleShaderEffect = forwardRef((props, ref) => {
-  const {
-    shaderId = 'ascii',
-    shaderConfig = {},
-    ...baseProps
-  } = props
-  
+  const { shaderId = 'ascii', shaderConfig = {}, ...baseProps } = props
+
   const { viewport } = useThree()
-  
+
   // Calculate resolution for shaders
   const resolution = useMemo(() => {
     return [viewport.width * viewport.dpr, viewport.height * viewport.dpr]
@@ -28,10 +24,11 @@ export const FlexibleShaderEffect = forwardRef((props, ref) => {
     if (!shader || !shader.uniforms) return new Map()
 
     const uniforms = new Map()
-    
+
     for (const [name, config] of Object.entries(shader.uniforms)) {
-      const value = shaderConfig[name] !== undefined ? shaderConfig[name] : config.default
-      
+      const value =
+        shaderConfig[name] !== undefined ? shaderConfig[name] : config.default
+
       // Convert values to appropriate Three.js types
       let uniformValue = value
       if (config.type === 'color' && typeof value === 'string') {
@@ -41,10 +38,10 @@ export const FlexibleShaderEffect = forwardRef((props, ref) => {
       } else if (config.type === 'vec2' && Array.isArray(value)) {
         uniformValue = value
       }
-      
+
       uniforms.set(name, new Uniform(uniformValue))
     }
-    
+
     return uniforms
   }, [shader, shaderConfig])
 
@@ -70,8 +67,11 @@ export const FlexibleShaderEffect = forwardRef((props, ref) => {
   const customProps = {}
   if (shader.uniforms) {
     for (const [name, config] of Object.entries(shader.uniforms)) {
-      const propName = name.startsWith('u') ? name : `u${name.charAt(0).toUpperCase()}${name.slice(1)}`
-      const value = shaderConfig[name] !== undefined ? shaderConfig[name] : config.default
+      const propName = name.startsWith('u')
+        ? name
+        : `u${name.charAt(0).toUpperCase()}${name.slice(1)}`
+      const value =
+        shaderConfig[name] !== undefined ? shaderConfig[name] : config.default
       customProps[propName] = value
     }
   }

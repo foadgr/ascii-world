@@ -11,7 +11,7 @@ export class ShaderRegistry {
       ...shader,
       id,
       createdAt: new Date(),
-      isCustom: !shader.builtIn
+      isCustom: !shader.builtIn,
     })
   }
 
@@ -27,12 +27,12 @@ export class ShaderRegistry {
 
   // List only custom (user-created) shaders
   listCustom() {
-    return this.list().filter(shader => shader.isCustom)
+    return this.list().filter((shader) => shader.isCustom)
   }
 
   // List only built-in shaders
   listBuiltIn() {
-    return this.list().filter(shader => shader.builtIn)
+    return this.list().filter((shader) => shader.builtIn)
   }
 
   // Remove a shader
@@ -61,15 +61,37 @@ export class ShaderRegistry {
         uOverwriteColor: { type: 'bool', default: false },
         uGreyscale: { type: 'bool', default: false },
         uInvert: { type: 'bool', default: false },
-        uMatrix: { type: 'bool', default: false }
+        uMatrix: { type: 'bool', default: false },
       },
       controls: [
-        { name: 'charactersLimit', type: 'range', min: 1, max: 64, default: 32, label: 'Character Count' },
-        { name: 'fillPixels', type: 'boolean', default: false, label: 'Fill Pixels' },
-        { name: 'greyscale', type: 'boolean', default: false, label: 'Greyscale' },
+        {
+          name: 'charactersLimit',
+          type: 'range',
+          min: 1,
+          max: 64,
+          default: 32,
+          label: 'Character Count',
+        },
+        {
+          name: 'fillPixels',
+          type: 'boolean',
+          default: false,
+          label: 'Fill Pixels',
+        },
+        {
+          name: 'greyscale',
+          type: 'boolean',
+          default: false,
+          label: 'Greyscale',
+        },
         { name: 'invert', type: 'boolean', default: false, label: 'Invert' },
-        { name: 'matrix', type: 'boolean', default: false, label: 'Matrix Effect' }
-      ]
+        {
+          name: 'matrix',
+          type: 'boolean',
+          default: false,
+          label: 'Matrix Effect',
+        },
+      ],
     })
 
     // Pixelation effect
@@ -143,7 +165,7 @@ export class ShaderRegistry {
         }
       `,
       uniforms: {},
-      controls: []
+      controls: [],
     })
 
     // Halftone effect
@@ -183,12 +205,26 @@ export class ShaderRegistry {
       `,
       uniforms: {
         uDotSize: { type: 'float', default: 1.0 },
-        uContrast: { type: 'float', default: 1.5 }
+        uContrast: { type: 'float', default: 1.5 },
       },
       controls: [
-        { name: 'dotSize', type: 'range', min: 0.1, max: 2.0, default: 1.0, label: 'Dot Size' },
-        { name: 'contrast', type: 'range', min: 0.5, max: 3.0, default: 1.5, label: 'Contrast' }
-      ]
+        {
+          name: 'dotSize',
+          type: 'range',
+          min: 0.1,
+          max: 2.0,
+          default: 1.0,
+          label: 'Dot Size',
+        },
+        {
+          name: 'contrast',
+          type: 'range',
+          min: 0.5,
+          max: 3.0,
+          default: 1.5,
+          label: 'Contrast',
+        },
+      ],
     })
 
     // Edge detection
@@ -238,18 +274,31 @@ export class ShaderRegistry {
         }
       `,
       uniforms: {
-        uThreshold: { type: 'float', default: 0.3 }
+        uThreshold: { type: 'float', default: 0.3 },
       },
       controls: [
-        { name: 'threshold', type: 'range', min: 0.0, max: 1.0, default: 0.3, label: 'Edge Threshold' }
-      ]
+        {
+          name: 'threshold',
+          type: 'range',
+          min: 0.0,
+          max: 1.0,
+          default: 0.3,
+          label: 'Edge Threshold',
+        },
+      ],
     })
   }
 
   // Import shader from LLM-generated content
-  importFromLLM(name, description, fragmentShader, uniforms = {}, controls = []) {
+  importFromLLM(
+    name,
+    description,
+    fragmentShader,
+    uniforms = {},
+    controls = []
+  ) {
     const id = `custom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    
+
     this.register(id, {
       name,
       description,
@@ -258,7 +307,7 @@ export class ShaderRegistry {
       uniforms,
       controls,
       builtIn: false,
-      source: 'llm'
+      source: 'llm',
     })
 
     return id
@@ -275,7 +324,7 @@ export class ShaderRegistry {
       fragmentShader: shader.fragmentShader,
       uniforms: shader.uniforms,
       controls: shader.controls,
-      version: '1.0'
+      version: '1.0',
     }
   }
 

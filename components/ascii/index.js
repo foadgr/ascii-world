@@ -701,7 +701,7 @@ function Postprocessing() {
     greyscale,
     invert,
     matrix,
-    ...shaderConfig
+    ...shaderConfig,
   }
 
   return (
@@ -724,16 +724,16 @@ function Postprocessing() {
 }
 
 function Inner() {
-  const { 
-    uploadFunctionRef, 
-    currentAsset, 
+  const {
+    uploadFunctionRef,
+    currentAsset,
     setAssetFunction,
     currentShader,
     setCurrentShader,
     shaderConfig,
-    setShaderConfig
+    setShaderConfig,
   } = useContext(AsciiContext)
-  
+
   const [isShaderCreatorOpen, setIsShaderCreatorOpen] = useState(false)
 
   const handleShaderChange = (shaderId) => {
@@ -881,7 +881,7 @@ export function ASCII({ children }) {
   const [handTracking, setHandTracking] = useState(null)
   const [faceTracking, setFaceTracking] = useState(null)
   const [audioTracking, setAudioTracking] = useState(null)
-  
+
   // Shader system state
   const [currentShader, setCurrentShader] = useState('ascii')
   const [shaderConfig, setShaderConfig] = useState({})
@@ -998,7 +998,7 @@ export function ASCII({ children }) {
       Drag and drop any file (.glb, .mp4, .mov, .webm, .png, .jpg, .webp,
       .avif)
     </p> */}
-        <AsciiContext.Provider
+      <AsciiContext.Provider
         value={{
           characters: characters.toUpperCase(),
           granularity,
