@@ -60,6 +60,8 @@ export const useHandTracking = ({
   const [granularity, setGranularity] = useState(granularityRange.min)
   const [landmarks, setLandmarks] = useState([])
   const animationFrameRef = useRef()
+  const frameCountRef = useRef(0) // Process every other frame
+  const lastUpdateRef = useRef(0) // Throttle updates
 
   // Auto-calibration state
   const [autoCalibrationTimer, setAutoCalibrationTimer] = useState(null)
@@ -159,6 +161,8 @@ export const useHandTracking = ({
 
     const setupHandLandmarker = async () => {
       try {
+        console.log('Initializing MediaPipe for hand tracking...')
+
         const mp = await initializeMediaPipe()
         if (!mp) {
           console.error('Failed to initialize MediaPipe')
@@ -167,6 +171,7 @@ export const useHandTracking = ({
 
         const { HandLandmarker, FilesetResolver } = mp
 
+        console.log('Loading MediaPipe vision tasks...')
         // Initialize the task
         const vision = await FilesetResolver.forVisionTasks(
           'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm'
@@ -180,9 +185,9 @@ export const useHandTracking = ({
           },
           runningMode: 'VIDEO',
           numHands: 1,
-          minHandDetectionConfidence: 0.7,
-          minHandPresenceConfidence: 0.5,
-          minTrackingConfidence: 0.5,
+          minHandDetectionConfidence: 0.5, // Reduced from 0.7 for faster processing
+          minHandPresenceConfidence: 0.3, // Reduced from 0.5 for faster processing
+          minTrackingConfidence: 0.3, // Reduced from 0.5 for faster processing
         })
 
         handsRef.current = handLandmarker
@@ -208,7 +213,21 @@ export const useHandTracking = ({
   useEffect(() => {
     if (!isInitialized || !videoElement || !handsRef.current) return
 
-    const processFrame = async () => {
+    const processFrame = async (timestamp) => {
+      // Frame rate limiting - process every other frame (30fps instead of 60fps)
+      frameCountRef.current++
+      if (frameCountRef.current % 2 !== 0) {
+        animationFrameRef.current = requestAnimationFrame(processFrame)
+        return
+      }
+
+      // Throttle updates to prevent excessive processing
+      if (timestamp - lastUpdateRef.current < 16) { // Max 60fps
+        animationFrameRef.current = requestAnimationFrame(processFrame)
+        return
+      }
+      lastUpdateRef.current = timestamp
+
       if (videoElement.readyState >= 2 && handsRef.current) {
         // HAVE_CURRENT_DATA
         try {
@@ -224,7 +243,10 @@ export const useHandTracking = ({
 
             // Calculate depth using palm center depth (more stable than hand span)
             const depth = calculatePalmDepth(detectedLandmarks)
-            setCurrentDepth(depth)
+            // Only update depth if it changed significantly to prevent excessive re-renders
+            if (Math.abs(currentDepth - depth) > 0.005) {
+              setCurrentDepth(depth)
+            }
 
             // Trigger auto-calibration check
             handleAutoCalibration(depth)
@@ -239,7 +261,10 @@ export const useHandTracking = ({
               // Hand further away (behind plane) = negative depth
               // Hand closer (in front of plane) = positive depth
               const relative = calibrationDepth - depth
-              setRelativeDepth(relative)
+              // Only update relative depth if it changed significantly
+              if (Math.abs(relativeDepth - relative) > 0.01) {
+                setRelativeDepth(relative)
+              }
 
               // Map relative depth to granularity
               // At +8% depth (closer): granularity = MAXIMUM
@@ -291,7 +316,10 @@ export const useHandTracking = ({
                   Math.min(granularityRange.max, mappedGranularity)
                 )
               )
-              setGranularity(newGranularity)
+              // Only update granularity if it changed to prevent excessive re-renders
+              if (granularity !== newGranularity) {
+                setGranularity(newGranularity)
+              }
 
               // Calculate normalized depth for display (-1 to +1 for the status bar)
               const normalizedDepth = Math.max(

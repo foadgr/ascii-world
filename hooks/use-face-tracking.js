@@ -38,6 +38,8 @@ export const useFaceTracking = ({
   const [landmarks, setLandmarks] = useState([])
   const [depthMap, setDepthMap] = useState(null)
   const animationFrameRef = useRef()
+  const frameCountRef = useRef(0) // Process every other frame
+  const lastUpdateRef = useRef(0) // Throttle updates
 
   // Auto-calibration state
   const [autoCalibrationTimer, setAutoCalibrationTimer] = useState(null)
@@ -209,6 +211,8 @@ export const useFaceTracking = ({
 
     const setupFaceLandmarker = async () => {
       try {
+        console.log('Initializing MediaPipe for face tracking...')
+
         const mp = await initializeMediaPipe()
         if (!mp) {
           console.error('Failed to initialize MediaPipe')
@@ -217,6 +221,7 @@ export const useFaceTracking = ({
 
         const { FaceLandmarker, FilesetResolver } = mp
 
+        console.log('Loading MediaPipe vision tasks...')
         // Initialize the task
         const vision = await FilesetResolver.forVisionTasks(
           'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm'
@@ -230,9 +235,9 @@ export const useFaceTracking = ({
           },
           runningMode: 'VIDEO',
           numFaces: 1,
-          minFaceDetectionConfidence: 0.7,
-          minFacePresenceConfidence: 0.5,
-          minTrackingConfidence: 0.5,
+          minFaceDetectionConfidence: 0.5, // Reduced from 0.7 for faster processing
+          minFacePresenceConfidence: 0.3, // Reduced from 0.5 for faster processing
+          minTrackingConfidence: 0.3, // Reduced from 0.5 for faster processing
           outputFaceBlendshapes: false, // We only need landmarks for depth
           outputFacialTransformationMatrixes: false,
         })
@@ -260,7 +265,21 @@ export const useFaceTracking = ({
   useEffect(() => {
     if (!isInitialized || !videoElement || !faceLandmarkerRef.current) return
 
-    const processFrame = async () => {
+    const processFrame = async (timestamp) => {
+      // Frame rate limiting - process every other frame (30fps instead of 60fps)
+      frameCountRef.current++
+      if (frameCountRef.current % 2 !== 0) {
+        animationFrameRef.current = requestAnimationFrame(processFrame)
+        return
+      }
+
+      // Throttle updates to prevent excessive processing
+      if (timestamp - lastUpdateRef.current < 16) { // Max 60fps
+        animationFrameRef.current = requestAnimationFrame(processFrame)
+        return
+      }
+      lastUpdateRef.current = timestamp
+
       if (videoElement.readyState >= 2) {
         // HAVE_CURRENT_DATA
         try {
@@ -276,7 +295,10 @@ export const useFaceTracking = ({
 
             // Calculate depth using face center depth
             const depth = calculateFaceDepth(detectedLandmarks)
-            setCurrentDepth(depth)
+            // Only update depth if it changed significantly to prevent excessive re-renders
+            if (Math.abs(currentDepth - depth) > 0.005) {
+              setCurrentDepth(depth)
+            }
 
             // Trigger auto-calibration check
             handleAutoCalibration(depth)
@@ -293,7 +315,10 @@ export const useFaceTracking = ({
             ) {
               // Similar logic to hand tracking but for face
               const relative = calibrationDepth - depth
-              setRelativeDepth(relative)
+              // Only update relative depth if it changed significantly
+              if (Math.abs(relativeDepth - relative) > 0.01) {
+                setRelativeDepth(relative)
+              }
 
               // Map depth to granularity (closer face = smaller characters = higher granularity)
               const maxDepthForMaxGranularity = 0.05 // +5% closer = max granularity
@@ -334,7 +359,10 @@ export const useFaceTracking = ({
                   Math.min(granularityRange.max, mappedGranularity)
                 )
               )
-              setGranularity(newGranularity)
+              // Only update granularity if it changed to prevent excessive re-renders
+              if (granularity !== newGranularity) {
+                setGranularity(newGranularity)
+              }
 
               const normalizedDepth = Math.max(-1, Math.min(1, relative / 0.04))
 

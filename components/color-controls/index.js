@@ -131,7 +131,7 @@ const DraggableModal = ({ open, onOpenChange, children }) => {
   )
 }
 
-const ColorModeSelector = ({ setColor, onSetColorChange }) => (
+const ColorModeSelector = ({ setColor, onSetColorChange, hasAiPalette }) => (
   <div className={s.colorModeSelector}>
     <span className={s.colorModeLabel}>color mode:</span>
     <div className={s.colorModeOptions}>
@@ -143,7 +143,7 @@ const ColorModeSelector = ({ setColor, onSetColorChange }) => (
           onChange={() => onSetColorChange(false)}
           className={s.colorModeRadio}
         />
-        <span>default</span>
+        <span>{hasAiPalette ? 'ai palette' : 'default'}</span>
       </label>
       <label className={s.colorModeOption}>
         <input
@@ -177,7 +177,47 @@ const ColorInput = ({ label, value, onChange }) => {
   )
 }
 
-const ColorButton = ({ setColor, color, background }) => {
+const AIPalettePreview = ({ palette, onColorSelect }) => {
+  if (!palette || palette.length === 0) return null
+  
+  return (
+    <div className={s.aiPalettePreview}>
+      <div className={s.paletteLabel}>AI Generated Palette:</div>
+      <div className={s.paletteColors}>
+        {palette.map((color, index) => (
+          <button
+            key={index}
+            className={s.paletteColor}
+            style={{ backgroundColor: color }}
+            onClick={() => onColorSelect && onColorSelect(color, index)}
+            title={`Color ${index + 1}: ${color}`}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+const ColorButton = ({ setColor, color, background, aiPalette }) => {
+  if (aiPalette && aiPalette.length > 0) {
+    // AI mode - show the AI-generated color palette
+    const gradientStops = aiPalette.map((color, index) => {
+      const percentage = (index / (aiPalette.length - 1)) * 100
+      return `${color} ${percentage}%`
+    }).join(', ')
+    
+    return (
+      <div className={s.colorButton}>
+        <div
+          className={s.aiPalette}
+          style={{
+            background: `linear-gradient(135deg, ${gradientStops})`
+          }}
+        />
+      </div>
+    )
+  }
+
   if (!setColor) {
     // Default mode - show gradient representing real life colors
     return (
@@ -207,10 +247,13 @@ export function ColorControls({
   onSetColorChange,
   onColorChange,
   onBackgroundChange,
+  aiPalette,
+  onAiColorSelect,
   hidden = false,
 }) {
   const [open, setOpen] = useState(false)
   const isDesktop = useIsDesktop()
+  const hasAiPalette = aiPalette && aiPalette.length > 0
 
   return (
     <>
@@ -229,6 +272,7 @@ export function ColorControls({
             setColor={setColor}
             color={color}
             background={background}
+            aiPalette={hasAiPalette && !setColor ? aiPalette : null}
           />
         </button>
       )}
@@ -239,7 +283,16 @@ export function ColorControls({
             <ColorModeSelector
               setColor={setColor}
               onSetColorChange={onSetColorChange}
+              hasAiPalette={hasAiPalette}
             />
+
+            {/* Show AI palette when available and not in custom mode */}
+            {hasAiPalette && !setColor && (
+              <AIPalettePreview
+                palette={aiPalette}
+                onColorSelect={onAiColorSelect}
+              />
+            )}
 
             <div className={s.colorControls}>
               {setColor && (
@@ -271,7 +324,16 @@ export function ColorControls({
                 <ColorModeSelector
                   setColor={setColor}
                   onSetColorChange={onSetColorChange}
+                  hasAiPalette={hasAiPalette}
                 />
+
+                {/* Show AI palette when available and not in custom mode */}
+                {hasAiPalette && !setColor && (
+                  <AIPalettePreview
+                    palette={aiPalette}
+                    onColorSelect={onAiColorSelect}
+                  />
+                )}
 
                 <div className={s.colorControls}>
                   {setColor && (

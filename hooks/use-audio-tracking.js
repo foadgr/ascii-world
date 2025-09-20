@@ -12,6 +12,8 @@ export const useAudioTracking = ({
   const microphoneRef = useRef(null)
   const animationFrameRef = useRef()
   const dataArrayRef = useRef(null)
+  const frameCountRef = useRef(0) // Process every other frame
+  const lastUpdateRef = useRef(0) // Throttle updates
 
   const [isInitialized, setIsInitialized] = useState(false)
   const [audioDetected, setAudioDetected] = useState(false)
@@ -22,6 +24,22 @@ export const useAudioTracking = ({
   const [audioIntensity, setAudioIntensity] = useState(0) // 0-100 for UI display
   const [smoothedAudioLevel, setSmoothedAudioLevel] = useState(0) // For elastic effect
   const [lastAudioLevel, setLastAudioLevel] = useState(0) // For spike detection
+
+  // Batch state updates to reduce re-renders
+  const updateState = useCallback((updates) => {
+    if (updates.currentAudioLevel !== undefined && Math.abs(currentAudioLevel - updates.currentAudioLevel) > 0.005) {
+      setCurrentAudioLevel(updates.currentAudioLevel)
+    }
+    if (updates.smoothedAudioLevel !== undefined && Math.abs(smoothedAudioLevel - updates.smoothedAudioLevel) > 0.005) {
+      setSmoothedAudioLevel(updates.smoothedAudioLevel)
+    }
+    if (updates.lastAudioLevel !== undefined && Math.abs(lastAudioLevel - updates.lastAudioLevel) > 0.005) {
+      setLastAudioLevel(updates.lastAudioLevel)
+    }
+    if (updates.audioDetected !== undefined && audioDetected !== updates.audioDetected) {
+      setAudioDetected(updates.audioDetected)
+    }
+  }, [currentAudioLevel, smoothedAudioLevel, lastAudioLevel, audioDetected])
 
   // Smart audio analysis with frequency band detection
   const analyzeAudioContent = useCallback(
@@ -158,7 +176,7 @@ export const useAudioTracking = ({
 
         // Create analyser node
         const analyser = audioContext.createAnalyser()
-        analyser.fftSize = 1024 // Good balance of frequency resolution and performance
+        analyser.fftSize = 512 // Reduced from 1024 for better performance
         analyser.smoothingTimeConstant = 0.8 // Smooth out rapid changes
 
         // Connect microphone to analyser
@@ -203,7 +221,21 @@ export const useAudioTracking = ({
   useEffect(() => {
     if (!isInitialized || !analyserRef.current || !dataArrayRef.current) return
 
-    const processAudioFrame = () => {
+    const processAudioFrame = (timestamp) => {
+      // Frame rate limiting - process every other frame (30fps instead of 60fps)
+      frameCountRef.current++
+      if (frameCountRef.current % 2 !== 0) {
+        animationFrameRef.current = requestAnimationFrame(processAudioFrame)
+        return
+      }
+
+      // Throttle updates to prevent excessive processing
+      if (timestamp - lastUpdateRef.current < 16) { // Max 60fps
+        animationFrameRef.current = requestAnimationFrame(processAudioFrame)
+        return
+      }
+      lastUpdateRef.current = timestamp
+
       // Get frequency data
       analyserRef.current.getByteFrequencyData(dataArrayRef.current)
 
@@ -232,22 +264,28 @@ export const useAudioTracking = ({
         enhancedLevel = Math.min(1, enhancedLevel) // Cap at 1
       }
 
-      // Update state only when values actually change to prevent infinite loops
-      if (Math.abs(currentAudioLevel - audioLevel) > 0.001) {
-        setCurrentAudioLevel(audioLevel)
+      // Batch state updates to prevent excessive re-renders
+      const stateUpdates = {}
+      if (Math.abs(currentAudioLevel - audioLevel) > 0.005) {
+        stateUpdates.currentAudioLevel = audioLevel
       }
-      if (Math.abs(smoothedAudioLevel - newSmoothedLevel) > 0.001) {
-        setSmoothedAudioLevel(newSmoothedLevel)
+      if (Math.abs(smoothedAudioLevel - newSmoothedLevel) > 0.005) {
+        stateUpdates.smoothedAudioLevel = newSmoothedLevel
       }
-      if (Math.abs(lastAudioLevel - audioLevel) > 0.001) {
-        setLastAudioLevel(audioLevel)
+      if (Math.abs(lastAudioLevel - audioLevel) > 0.005) {
+        stateUpdates.lastAudioLevel = audioLevel
       }
 
       // Detect if audio is above threshold (adjusted by sensitivity)
       const adjustedThreshold = audioThreshold * (2.0 / sensitivity) // At min sensitivity (0.1), threshold is 20x higher!
       const isAudioDetected = enhancedLevel > adjustedThreshold
       if (audioDetected !== isAudioDetected) {
-        setAudioDetected(isAudioDetected)
+        stateUpdates.audioDetected = isAudioDetected
+      }
+
+      // Only update state if there are changes
+      if (Object.keys(stateUpdates).length > 0) {
+        updateState(stateUpdates)
       }
 
       // Calculate relative audio and intensity if calibrated
@@ -260,13 +298,24 @@ export const useAudioTracking = ({
           Math.min(100, (enhancedLevel / (calibrationLevel * 2)) * 100)
         )
 
-        // Only update states and call callback when there are meaningful changes
-        if (Math.abs(relativeAudio - relative) > 0.001) {
-          setRelativeAudio(relative)
+        // Batch intensity updates
+        const intensityUpdates = {}
+        if (Math.abs(relativeAudio - relative) > 0.01) {
+          intensityUpdates.relativeAudio = relative
         }
-        if (Math.abs(audioIntensity - intensity) > 1) {
-          // Use 1% threshold for intensity
-          setAudioIntensity(intensity)
+        if (Math.abs(audioIntensity - intensity) > 2) {
+          // Use 2% threshold for intensity to reduce updates
+          intensityUpdates.audioIntensity = intensity
+        }
+
+        // Only update state if there are changes
+        if (Object.keys(intensityUpdates).length > 0) {
+          if (intensityUpdates.relativeAudio !== undefined) {
+            setRelativeAudio(intensityUpdates.relativeAudio)
+          }
+          if (intensityUpdates.audioIntensity !== undefined) {
+            setAudioIntensity(intensityUpdates.audioIntensity)
+          }
         }
 
         if (onAudioChange) {
@@ -288,8 +337,9 @@ export const useAudioTracking = ({
         // Not calibrated - use enhanced level for more reactive response
         const intensity = enhancedLevel * 100
 
-        if (Math.abs(audioIntensity - intensity) > 1) {
-          // Use 1% threshold for intensity
+        // Batch intensity updates for uncalibrated case
+        if (Math.abs(audioIntensity - intensity) > 2) {
+          // Use 2% threshold for intensity to reduce updates
           setAudioIntensity(intensity)
         }
 

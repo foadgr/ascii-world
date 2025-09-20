@@ -5,6 +5,7 @@ import { DepthDisplay } from 'components/depth-display'
 import { FontEditor } from 'components/font-editor'
 import { ShaderCreator } from 'components/shader-creator/index'
 import { FlexibleShaderEffect } from 'components/shader-effect/FlexibleShaderEffect'
+import { shaderRegistry } from 'components/shader-effect/ShaderRegistry'
 import { ShaderSelector } from 'components/shader-selector/index'
 import { useAudioTracking } from 'hooks/use-audio-tracking'
 import { useFaceTracking } from 'hooks/use-face-tracking'
@@ -340,7 +341,15 @@ const Scene = () => {
         isEnabled: handTrackingEnabled,
       },
     })
-  }, [handTracking, handTrackingEnabled, set])
+  }, [
+    // Only track specific values, not the entire object
+    handTracking.handDetected,
+    handTracking.normalizedDepth,
+    handTracking.palmX,
+    handTracking.palmY,
+    handTrackingEnabled,
+    set
+  ])
 
   // Share face tracking state with context
   useEffect(() => {
@@ -350,7 +359,21 @@ const Scene = () => {
         isEnabled: faceTrackingEnabled,
       },
     })
-  }, [faceTrackingHook, faceTrackingEnabled, set])
+  }, [
+    // Only track specific values, not the entire object
+    faceTrackingHook.faceDetected,
+    faceTrackingHook.normalizedDepth,
+    faceTrackingHook.depthMap?.noseDepth,
+    faceTrackingHook.depthMap?.foreheadDepth,
+    faceTrackingHook.depthMap?.leftCheekDepth,
+    faceTrackingHook.depthMap?.rightCheekDepth,
+    faceTrackingHook.depthMap?.chinDepth,
+    faceTrackingHook.depthMap?.leftEyeDepth,
+    faceTrackingHook.depthMap?.rightEyeDepth,
+    faceTrackingHook.depthMap?.mouthDepth,
+    faceTrackingEnabled,
+    set
+  ])
 
   // Share audio tracking state with context
   useEffect(() => {
@@ -360,7 +383,18 @@ const Scene = () => {
         isEnabled: audioTrackingEnabled,
       },
     })
-  }, [audioTrackingHook, audioTrackingEnabled, set])
+  }, [
+    // Only track specific values, not the entire object
+    audioTrackingHook.audioDetected,
+    audioTrackingHook.level,
+    audioTrackingHook.voice,
+    audioTrackingHook.music,
+    audioTrackingHook.noise,
+    audioTrackingHook.spike,
+    audioTrackingHook.smoothed,
+    audioTrackingEnabled,
+    set
+  ])
 
   useEffect(() => {
     if (!asset) return
@@ -987,6 +1021,17 @@ export function ASCII({ children }) {
     // Handle other props if needed
   }
 
+  // Get AI color palette from current shader
+  const currentShaderData = currentShader ? shaderRegistry.get(currentShader) : null
+  const aiColorPalette = currentShaderData?.metadata?.colorPalette || null
+
+  // Handle AI color selection
+  const handleAiColorSelect = useCallback((color, index) => {
+    // When user clicks an AI palette color, apply it as foreground
+    setColor(color)
+    setEnableColor(true) // Switch to custom mode
+  }, [setColor, setEnableColor])
+
   // Only render on client side to avoid SSR issues
   if (!isClient) {
     return <div>Loading...</div>
@@ -1078,6 +1123,8 @@ export function ASCII({ children }) {
           onSetColorChange={setEnableColor}
           onColorChange={setColor}
           onBackgroundChange={setBackground}
+          aiPalette={aiColorPalette}
+          onAiColorSelect={handleAiColorSelect}
           hidden={controlPanelOpen}
         />
         <CameraControls

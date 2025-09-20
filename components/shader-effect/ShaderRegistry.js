@@ -289,13 +289,14 @@ export class ShaderRegistry {
     })
   }
 
-  // Import shader from LLM-generated content
+  // Import shader from LLM-generated content with structured metadata
   importFromLLM(
     name,
     description,
     fragmentShader,
     uniforms = {},
-    controls = []
+    controls = [],
+    metadata = {}
   ) {
     const id = `custom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
@@ -308,6 +309,14 @@ export class ShaderRegistry {
       controls,
       builtIn: false,
       source: 'llm',
+      metadata: {
+        primaryTrackingMode: metadata.primaryTrackingMode || 'mixed',
+        colorPalette: metadata.colorPalette || ['#ffffff', '#000000'],
+        intensity: metadata.intensity || 0.5,
+        customUniforms: metadata.customUniforms || [],
+        generatedAt: new Date(),
+        ...metadata,
+      },
     })
 
     return id

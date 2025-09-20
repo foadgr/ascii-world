@@ -242,6 +242,148 @@
   margin-top: 16px;
 }
 
+.description {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(0, 0, 0, 0.3);
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.shaderPreview {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.shaderInfo {
+  h4 {
+    margin: 0 0 8px 0;
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 0 0 16px 0;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 14px;
+    line-height: 1.4;
+  }
+}
+
+.shaderMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.metaLabel {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+  font-weight: 500;
+  min-width: 100px;
+}
+
+.metaBadge {
+  background: rgba(0, 255, 136, 0.2);
+  color: #00ff88;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+
+  &[data-mode="audio"] {
+    background: rgba(255, 106, 0, 0.2);
+    color: #ff6a00;
+  }
+
+  &[data-mode="face"] {
+    background: rgba(0, 123, 255, 0.2);
+    color: #007bff;
+  }
+
+  &[data-mode="hand"] {
+    background: rgba(255, 0, 123, 0.2);
+    color: #ff007b;
+  }
+
+  &[data-mode="mixed"] {
+    background: rgba(138, 43, 226, 0.2);
+    color: #8a2be2;
+  }
+}
+
+.colorPalette {
+  display: flex;
+  gap: 4px;
+}
+
+.colorSwatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.2);
+  }
+}
+
+.metaValue {
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.shaderActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.regenerateButton {
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+  }
+}
+
 // Mobile optimizations
 @media (max-width: 768px) {
   .overlay {
@@ -268,5 +410,19 @@
     button {
       width: 100%;
     }
+  }
+
+  .shaderMeta {
+    gap: 8px;
+  }
+
+  .metaItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .metaLabel {
+    min-width: auto;
   }
 }
