@@ -1,9 +1,11 @@
 import { OrbitControls, useAspect } from '@react-three/drei'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { EffectComposer } from '@react-three/postprocessing'
-import { ASCIIEffect } from 'components/ascii-effect/index'
 import { DepthDisplay } from 'components/depth-display'
 import { FontEditor } from 'components/font-editor'
+import { ShaderCreator } from 'components/shader-creator/index'
+import { FlexibleShaderEffect } from 'components/shader-effect/FlexibleShaderEffect'
+import { ShaderSelector } from 'components/shader-selector/index'
 import { useAudioTracking } from 'hooks/use-audio-tracking'
 import { useFaceTracking } from 'hooks/use-face-tracking'
 import { useHandTracking } from 'hooks/use-hand-tracking'
@@ -685,30 +687,36 @@ function Postprocessing() {
     fit,
     trackingMode,
     faceTracking,
+    handTracking,
+    audioTracking,
+    currentShader = 'ascii',
+    shaderConfig = {},
   } = useContext(AsciiContext)
 
-  // Determine if we should use face depth mode
-  const faceDepthMode =
-    trackingMode === 'face' &&
-    faceTracking?.faceDetected &&
-    faceTracking?.depthMap
+  // Create shader configuration for ASCII effect
+  const asciiConfig = {
+    charactersTexture,
+    charactersLimit,
+    fillPixels,
+    greyscale,
+    invert,
+    matrix,
+    ...shaderConfig
+  }
 
   return (
     <EffectComposer>
-      <ASCIIEffect
-        charactersTexture={charactersTexture}
+      <FlexibleShaderEffect
+        shaderId={currentShader}
+        shaderConfig={asciiConfig}
         granularity={granularity * viewport.dpr}
-        charactersLimit={charactersLimit}
-        fillPixels={fillPixels}
         color={color}
-        fit={fit}
-        greyscale={greyscale}
-        invert={invert}
-        matrix={matrix}
-        time={time}
         background={background}
-        faceDepthMode={faceDepthMode}
-        depthMap={faceTracking?.depthMap}
+        time={time}
+        trackingMode={trackingMode}
+        faceTracking={faceTracking}
+        handTracking={handTracking}
+        audioTracking={audioTracking}
         granularityRange={{ min: 1, max: 50 }}
       />
     </EffectComposer>
@@ -716,8 +724,29 @@ function Postprocessing() {
 }
 
 function Inner() {
-  const { uploadFunctionRef, currentAsset, setAssetFunction } =
-    useContext(AsciiContext)
+  const { 
+    uploadFunctionRef, 
+    currentAsset, 
+    setAssetFunction,
+    currentShader,
+    setCurrentShader,
+    shaderConfig,
+    setShaderConfig
+  } = useContext(AsciiContext)
+  
+  const [isShaderCreatorOpen, setIsShaderCreatorOpen] = useState(false)
+
+  const handleShaderChange = (shaderId) => {
+    setCurrentShader(shaderId)
+  }
+
+  const handleCreateShader = () => {
+    setIsShaderCreatorOpen(true)
+  }
+
+  const handleShaderCreated = (shaderId) => {
+    setCurrentShader(shaderId)
+  }
 
   return (
     <>
@@ -758,6 +787,18 @@ function Inner() {
             setAssetFunction.current(modelPath)
           }
         }}
+      />
+      <div className={s.shaderSelectorContainer}>
+        <ShaderSelector
+          currentShader={currentShader}
+          onShaderChange={handleShaderChange}
+          onCreateShader={handleCreateShader}
+        />
+      </div>
+      <ShaderCreator
+        isOpen={isShaderCreatorOpen}
+        onClose={() => setIsShaderCreatorOpen(false)}
+        onShaderCreated={handleShaderCreated}
       />
       <UploadButton
         onFileSelect={(fileData, filename) => {
@@ -840,6 +881,10 @@ export function ASCII({ children }) {
   const [handTracking, setHandTracking] = useState(null)
   const [faceTracking, setFaceTracking] = useState(null)
   const [audioTracking, setAudioTracking] = useState(null)
+  
+  // Shader system state
+  const [currentShader, setCurrentShader] = useState('ascii')
+  const [shaderConfig, setShaderConfig] = useState({})
 
   // Control states
   const [characters, setCharacters] = useState(DEFAULT.characters)
@@ -953,7 +998,7 @@ export function ASCII({ children }) {
       Drag and drop any file (.glb, .mp4, .mov, .webm, .png, .jpg, .webp,
       .avif)
     </p> */}
-      <AsciiContext.Provider
+        <AsciiContext.Provider
         value={{
           characters: characters.toUpperCase(),
           granularity,
@@ -985,6 +1030,10 @@ export function ASCII({ children }) {
           uploadFunctionRef,
           setAssetFunction: setAssetFunctionRef,
           currentAsset,
+          currentShader,
+          setCurrentShader,
+          shaderConfig,
+          setShaderConfig,
           set,
         }}
       >

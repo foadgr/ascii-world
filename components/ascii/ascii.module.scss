@@ -30,3 +30,17 @@
   /* Ensure canvas works well on mobile */
   touch-action: manipulation;
 }
+
+.shaderSelectorContainer {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  
+  @media (max-width: 768px) {
+    top: 10px;
+    left: 10px;
+    transform: none;
+  }
+}
