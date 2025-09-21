@@ -341,15 +341,7 @@ const Scene = () => {
         isEnabled: handTrackingEnabled,
       },
     })
-  }, [
-    // Only track specific values, not the entire object
-    handTracking.handDetected,
-    handTracking.normalizedDepth,
-    handTracking.palmX,
-    handTracking.palmY,
-    handTrackingEnabled,
-    set,
-  ])
+  }, [handTracking, handTrackingEnabled, set])
 
   // Share face tracking state with context
   useEffect(() => {
@@ -359,21 +351,7 @@ const Scene = () => {
         isEnabled: faceTrackingEnabled,
       },
     })
-  }, [
-    // Only track specific values, not the entire object
-    faceTrackingHook.faceDetected,
-    faceTrackingHook.normalizedDepth,
-    faceTrackingHook.depthMap?.noseDepth,
-    faceTrackingHook.depthMap?.foreheadDepth,
-    faceTrackingHook.depthMap?.leftCheekDepth,
-    faceTrackingHook.depthMap?.rightCheekDepth,
-    faceTrackingHook.depthMap?.chinDepth,
-    faceTrackingHook.depthMap?.leftEyeDepth,
-    faceTrackingHook.depthMap?.rightEyeDepth,
-    faceTrackingHook.depthMap?.mouthDepth,
-    faceTrackingEnabled,
-    set,
-  ])
+  }, [faceTrackingHook, faceTrackingEnabled, set])
 
   // Share audio tracking state with context
   useEffect(() => {
@@ -383,18 +361,7 @@ const Scene = () => {
         isEnabled: audioTrackingEnabled,
       },
     })
-  }, [
-    // Only track specific values, not the entire object
-    audioTrackingHook.audioDetected,
-    audioTrackingHook.level,
-    audioTrackingHook.voice,
-    audioTrackingHook.music,
-    audioTrackingHook.noise,
-    audioTrackingHook.spike,
-    audioTrackingHook.smoothed,
-    audioTrackingEnabled,
-    set,
-  ])
+  }, [audioTrackingHook, audioTrackingEnabled, set])
 
   useEffect(() => {
     if (!asset) return
@@ -1034,7 +1001,7 @@ export function ASCII({ children }) {
       setColor(color)
       setEnableColor(true) // Switch to custom mode
     },
-    [setColor, setEnableColor]
+    []
   )
 
   // Only render on client side to avoid SSR issues

@@ -166,7 +166,7 @@ export const useAudioTracking = ({
         rawLevel: overallLevel,
       }
     },
-    [adjustmentVector]
+    [adjustmentVector, sensitivity]
   )
 
   // Initialize Web Audio API
@@ -219,7 +219,9 @@ export const useAudioTracking = ({
     return () => {
       // Cleanup
       if (microphoneRef.current) {
-        microphoneRef.current.getTracks().forEach((track) => track.stop())
+        for (const track of microphoneRef.current.getTracks()) {
+          track.stop()
+        }
         microphoneRef.current = null
       }
       if (audioContextRef.current) {
@@ -237,16 +239,16 @@ export const useAudioTracking = ({
     if (!isInitialized || !analyserRef.current || !dataArrayRef.current) return
 
     const processAudioFrame = (timestamp) => {
-      // Frame rate limiting - process every other frame (30fps instead of 60fps)
+      // Balanced frame rate limiting for audio processing
       frameCountRef.current++
       if (frameCountRef.current % 2 !== 0) {
         animationFrameRef.current = requestAnimationFrame(processAudioFrame)
         return
       }
 
-      // Throttle updates to prevent excessive processing
-      if (timestamp - lastUpdateRef.current < 16) {
-        // Max 60fps
+      // Balanced throttling for audio responsiveness
+      if (timestamp - lastUpdateRef.current < 14) {
+        // Max ~71fps for audio responsiveness
         animationFrameRef.current = requestAnimationFrame(processAudioFrame)
         return
       }
@@ -280,15 +282,15 @@ export const useAudioTracking = ({
         enhancedLevel = Math.min(1, enhancedLevel) // Cap at 1
       }
 
-      // Batch state updates to prevent excessive re-renders
+      // Balanced state updates for audio responsiveness
       const stateUpdates = {}
-      if (Math.abs(currentAudioLevel - audioLevel) > 0.005) {
+      if (Math.abs(currentAudioLevel - audioLevel) > 0.003) {
         stateUpdates.currentAudioLevel = audioLevel
       }
-      if (Math.abs(smoothedAudioLevel - newSmoothedLevel) > 0.005) {
+      if (Math.abs(smoothedAudioLevel - newSmoothedLevel) > 0.003) {
         stateUpdates.smoothedAudioLevel = newSmoothedLevel
       }
-      if (Math.abs(lastAudioLevel - audioLevel) > 0.005) {
+      if (Math.abs(lastAudioLevel - audioLevel) > 0.003) {
         stateUpdates.lastAudioLevel = audioLevel
       }
 
@@ -394,7 +396,13 @@ export const useAudioTracking = ({
     calibrationLevel,
     onAudioChange,
     sensitivity,
-    adjustmentVector,
+    updateState,
+    audioDetected,
+    currentAudioLevel,
+    smoothedAudioLevel,
+    lastAudioLevel,
+    relativeAudio,
+    audioIntensity,
   ])
 
   // Calibration function - captures current audio level as baseline

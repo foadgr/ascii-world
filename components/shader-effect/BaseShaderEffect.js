@@ -200,6 +200,9 @@ export const BaseShaderEffect = forwardRef((props, ref) => {
     })
   }, [fragmentShader, uniforms, customProps])
 
+  // Check if this is an AI shader that uses mixed tracking
+  const isAIShader = useMemo(() => fragmentShader.includes('uHandDetected'), [fragmentShader])
+
   useEffect(() => {
     // Update basic uniforms
     effect.updateUniform('uGranularity', granularity)
@@ -222,7 +225,7 @@ export const BaseShaderEffect = forwardRef((props, ref) => {
     effect.updateUniform('uResolution', resolution)
     effect.updateUniform('resolution', resolution)
 
-    // Update tracking modes
+    // Update tracking modes - for AI shaders, always provide tracking data regardless of mode
     const faceDepthMode =
       trackingMode === 'face' &&
       faceTracking?.faceDetected &&
@@ -230,13 +233,19 @@ export const BaseShaderEffect = forwardRef((props, ref) => {
     const handDepthMode = trackingMode === 'hand' && handTracking?.handDetected
     const audioMode = trackingMode === 'audio' && audioTracking?.audioDetected
 
+    // For mixed/AI shaders, always provide data when available
+    const mixedMode = trackingMode === 'mixed' || isAIShader
+    const alwaysProvideHand = mixedMode && handTracking?.handDetected
+    const alwaysProvideFace = mixedMode && faceTracking?.faceDetected
+    const alwaysProvideAudio = mixedMode && audioTracking?.audioDetected
+
     effect.updateFaceTracking(
-      faceDepthMode,
+      faceDepthMode || alwaysProvideFace,
       faceTracking?.depthMap,
       granularityRange
     )
-    effect.updateHandTracking(handDepthMode, handTracking)
-    effect.updateAudioTracking(audioMode, audioTracking)
+    effect.updateHandTracking(handDepthMode || alwaysProvideHand, handTracking)
+    effect.updateAudioTracking(audioMode || alwaysProvideAudio, audioTracking)
 
     // Handle time override
     effect.overwriteTime = time !== undefined
@@ -264,6 +273,7 @@ export const BaseShaderEffect = forwardRef((props, ref) => {
     intensity,
     opacity,
     time,
+    isAIShader,
     customProps,
   ])
 

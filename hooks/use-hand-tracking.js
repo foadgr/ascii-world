@@ -185,9 +185,9 @@ export const useHandTracking = ({
           },
           runningMode: 'VIDEO',
           numHands: 1,
-          minHandDetectionConfidence: 0.5, // Reduced from 0.7 for faster processing
-          minHandPresenceConfidence: 0.3, // Reduced from 0.5 for faster processing
-          minTrackingConfidence: 0.3, // Reduced from 0.5 for faster processing
+          minHandDetectionConfidence: 0.6, // Restored for camera stability
+          minHandPresenceConfidence: 0.4, // Restored for camera stability
+          minTrackingConfidence: 0.4, // Restored for camera stability
         })
 
         handsRef.current = handLandmarker
@@ -214,16 +214,16 @@ export const useHandTracking = ({
     if (!isInitialized || !videoElement || !handsRef.current) return
 
     const processFrame = async (timestamp) => {
-      // Frame rate limiting - process every other frame (30fps instead of 60fps)
+      // Lighter frame rate limiting - process every 3rd frame for better stability
       frameCountRef.current++
-      if (frameCountRef.current % 2 !== 0) {
+      if (frameCountRef.current % 3 !== 0) {
         animationFrameRef.current = requestAnimationFrame(processFrame)
         return
       }
 
-      // Throttle updates to prevent excessive processing
-      if (timestamp - lastUpdateRef.current < 16) {
-        // Max 60fps
+      // More permissive throttling for camera stability
+      if (timestamp - lastUpdateRef.current < 12) {
+        // Max ~83fps
         animationFrameRef.current = requestAnimationFrame(processFrame)
         return
       }
@@ -244,8 +244,8 @@ export const useHandTracking = ({
 
             // Calculate depth using palm center depth (more stable than hand span)
             const depth = calculatePalmDepth(detectedLandmarks)
-            // Only update depth if it changed significantly to prevent excessive re-renders
-            if (Math.abs(currentDepth - depth) > 0.005) {
+            // Update depth with more responsive threshold for better tracking
+            if (Math.abs(currentDepth - depth) > 0.003) {
               setCurrentDepth(depth)
             }
 
@@ -262,8 +262,8 @@ export const useHandTracking = ({
               // Hand further away (behind plane) = negative depth
               // Hand closer (in front of plane) = positive depth
               const relative = calibrationDepth - depth
-              // Only update relative depth if it changed significantly
-              if (Math.abs(relativeDepth - relative) > 0.01) {
+              // Update relative depth with balanced threshold
+              if (Math.abs(relativeDepth - relative) > 0.007) {
                 setRelativeDepth(relative)
               }
 
@@ -381,6 +381,9 @@ export const useHandTracking = ({
     granularityRange,
     onDepthChange,
     calibrationGranularity,
+    currentDepth,
+    granularity,
+    relativeDepth,
   ])
 
   // Calibration function

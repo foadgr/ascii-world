@@ -74,20 +74,26 @@ export default async function handler(req, res) {
       model: 'gpt-5',
       input: `You are an expert GLSL shader programmer specializing in creative video effects with real-time tracking integration. You create sophisticated, performant shaders that leverage audio, face, and hand tracking data in creative ways.
 
-Focus on creating visually stunning effects that creatively use the available tracking uniforms. Don't just modulate granularity - think about colors, patterns, distortions, and interactive elements.
+Focus on creating visually stunning effects that creatively use the available tracking uniforms. Make interactions OBVIOUS and RESPONSIVE - users should clearly see their hand/face movements affecting the visual elements. Don't just modulate granularity - think about colors, patterns, distortions, particle movements, force fields, and interactive elements.
+
+Key interaction design principles:
+- Hand position (uHandPalmX, uHandPalmY) should create visible attraction/repulsion forces
+- Face depth (uFaceNormalizedDepth) should trigger clear visual responses
+- Make effects strong enough to be clearly visible - subtle effects are hard to notice
+- Use smooth interpolation but make changes immediately noticeable
 
 Available tracking uniforms you can use:
 - Audio: uAudioLevel, uAudioVoice, uAudioMusic, uAudioNoise, uAudioSpike, uAudioSmoothed
-- Face: uFaceDetected, uFaceNoseDepth, uFaceForeheadDepth, uFaceLeftCheekDepth, uFaceRightCheekDepth, uFaceChinDepth, uFaceLeftEyeDepth, uFaceRightEyeDepth, uFaceMouthDepth, uFaceNormalizedDepth
-- Hand: uHandDetected, uHandNormalizedDepth, uHandPalmX, uHandPalmY
+- Face: uFaceDetected, uFaceNoseDepth, uFaceForeheadDepth, uFaceLeftCheekDepth, uFaceRightCheekDepth, uFaceChinDepth, uFaceLeftEyeDepth, uFaceRightEyeDepth, uFaceMouthDepth, uFaceNormalizedDepth (-1 to 1, where -1 is close, 1 is far)
+- Hand: uHandDetected, uHandNormalizedDepth (-1 to 1, where -1 is close, 1 is far), uHandPalmX (0 to 1, left to right), uHandPalmY (0 to 1, top to bottom)
 - Standard: uGranularity, uColor, uBackground, uIntensity, uTime, resolution (vec2)
 
-Create effects that are visually compelling and make creative use of multiple tracking inputs.
+Create effects that are visually compelling and make creative use of multiple tracking inputs. Prioritize clear, responsive interactions over subtle effects.
 
 User request: ${prompt}
 
 Return a JSON object with the exact structure expected by our Zod schema.`,
-      reasoning: { effort: 'low' }, // High reasoning for complex shader generation
+      reasoning: { effort: 'medium' }, // High reasoning for complex shader generation
       text: {
         verbosity: 'low', // Medium verbosity for detailed but not excessive output
         format: {

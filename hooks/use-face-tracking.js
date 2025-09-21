@@ -235,9 +235,9 @@ export const useFaceTracking = ({
           },
           runningMode: 'VIDEO',
           numFaces: 1,
-          minFaceDetectionConfidence: 0.5, // Reduced from 0.7 for faster processing
-          minFacePresenceConfidence: 0.3, // Reduced from 0.5 for faster processing
-          minTrackingConfidence: 0.3, // Reduced from 0.5 for faster processing
+          minFaceDetectionConfidence: 0.6, // Restored for camera stability
+          minFacePresenceConfidence: 0.4, // Restored for camera stability
+          minTrackingConfidence: 0.4, // Restored for camera stability
           outputFaceBlendshapes: false, // We only need landmarks for depth
           outputFacialTransformationMatrixes: false,
         })
@@ -266,16 +266,16 @@ export const useFaceTracking = ({
     if (!isInitialized || !videoElement || !faceLandmarkerRef.current) return
 
     const processFrame = async (timestamp) => {
-      // Frame rate limiting - process every other frame (30fps instead of 60fps)
+      // Lighter frame rate limiting - process every 3rd frame for better stability
       frameCountRef.current++
-      if (frameCountRef.current % 2 !== 0) {
+      if (frameCountRef.current % 3 !== 0) {
         animationFrameRef.current = requestAnimationFrame(processFrame)
         return
       }
 
-      // Throttle updates to prevent excessive processing
-      if (timestamp - lastUpdateRef.current < 16) {
-        // Max 60fps
+      // More permissive throttling for camera stability
+      if (timestamp - lastUpdateRef.current < 12) {
+        // Max ~83fps
         animationFrameRef.current = requestAnimationFrame(processFrame)
         return
       }
@@ -296,8 +296,8 @@ export const useFaceTracking = ({
 
             // Calculate depth using face center depth
             const depth = calculateFaceDepth(detectedLandmarks)
-            // Only update depth if it changed significantly to prevent excessive re-renders
-            if (Math.abs(currentDepth - depth) > 0.005) {
+            // Update depth with more responsive threshold for better tracking
+            if (Math.abs(currentDepth - depth) > 0.003) {
               setCurrentDepth(depth)
             }
 
@@ -316,8 +316,8 @@ export const useFaceTracking = ({
             ) {
               // Similar logic to hand tracking but for face
               const relative = calibrationDepth - depth
-              // Only update relative depth if it changed significantly
-              if (Math.abs(relativeDepth - relative) > 0.01) {
+              // Update relative depth with balanced threshold
+              if (Math.abs(relativeDepth - relative) > 0.007) {
                 setRelativeDepth(relative)
               }
 
@@ -422,6 +422,9 @@ export const useFaceTracking = ({
     calibrationGranularity,
     granularityRange,
     onDepthChange,
+    currentDepth,
+    granularity,
+    relativeDepth,
   ])
 
   // Calibration function

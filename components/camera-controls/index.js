@@ -54,6 +54,14 @@ export function CameraControls({
         onHandControlledGranularityChange(false)
         onFaceTrackingChange(false)
         onFaceControlledGranularityChange(false)
+      } else if (trackingMode === 'mixed') {
+        // Mixed mode - enable all tracking (no granularity control)
+        onHandTrackingChange(true)
+        onFaceTrackingChange(true)
+        onAudioTrackingChange(true)
+        onHandControlledGranularityChange(false)
+        onFaceControlledGranularityChange(false)
+        onAudioControlledGranularityChange(false)
       }
     } else {
       // Camera is off - only disable camera-dependent tracking
@@ -217,6 +225,25 @@ export function CameraControls({
             }
           >
             <ScanFace size={23} />
+          </button>
+
+          {/* Mixed Mode Button - Enable all tracking */}
+          <button
+            type="button"
+            className={`${s.trackingButton} ${
+              trackingMode === 'mixed' ? s.active : ''
+            } ${trackingMode === 'mixed' ? s.detected : ''}`}
+            onClick={() => {
+              track('Mixed Tracking', { action: 'enable' })
+              onTrackingModeChange('mixed')
+            }}
+            title={
+              trackingMode !== 'mixed'
+                ? 'Switch to mixed tracking (hand + face + audio)'
+                : 'Mixed tracking active'
+            }
+          >
+            <div style={{ fontSize: '16px', fontWeight: 'bold' }}>∞</div>
           </button>
         </>
       )}
