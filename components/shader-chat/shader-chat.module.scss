@@ -253,27 +253,53 @@
 }
 
 .toolCall {
-  display: inline-block;
+  display: block;
   background: rgba(0, 255, 136, 0.1);
   border: 1px solid rgba(0, 255, 136, 0.3);
   border-radius: 6px;
-  padding: 6px 10px;
-  margin: 4px 0;
+  padding: 8px 12px;
+  margin: 8px 0;
   font-size: 12px;
+  font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Courier New', monospace;
+}
+
+.toolName {
   color: #00ff88;
-  font-weight: 500;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.toolArgs {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  white-space: pre-wrap;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 4px 6px;
+  border-radius: 3px;
+  margin-top: 4px;
 }
 
 .toolResult {
-  display: inline-block;
+  display: block;
   background: rgba(0, 255, 136, 0.15);
   border: 1px solid rgba(0, 255, 136, 0.4);
   border-radius: 6px;
-  padding: 6px 10px;
-  margin: 4px 0;
+  padding: 8px 12px;
+  margin: 8px 0;
   font-size: 12px;
+  font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Courier New', monospace;
+}
+
+.resultIndicator {
   color: #00ff88;
-  font-weight: 500;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.resultContent {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 11px;
+  white-space: pre-wrap;
 }
 
 .typing {

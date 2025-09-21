@@ -14,61 +14,35 @@ export function ShaderChat({ onShaderCreated, hidden = false }) {
     onError: (error) => {
       console.error('Chat error:', error)
     },
+    onToolCall: async ({ toolCall }) => {
+      console.log('Tool call received:', toolCall)
+      
+      // Handle registerAndApplyShader tool calls by registering and applying the shader
+      if (toolCall.toolName === 'registerAndApplyShader' && toolCall.result?.success) {
+        const { shaderData } = toolCall.result
+        try {
+          console.log('Registering and applying shader:', shaderData)
+          
+          // Register the shader using the shader registry
+          const shaderId = shaderRegistry.importFromLLM(
+            shaderData.name,
+            shaderData.description,
+            shaderData.fragmentShader,
+            shaderData.uniforms || {},
+            shaderData.controls || []
+          )
+          
+          // Apply the shader to the canvas
+          onShaderCreated?.(shaderId)
+          track('Shader Chat', { action: 'shader_registered_and_applied', shaderId })
+          console.log('Shader registered and applied successfully:', shaderId)
+        } catch (error) {
+          console.error('Failed to register shader:', error)
+        }
+      }
+    },
   })
 
-  const registerStructuredShader = (shaderData) => {
-    try {
-      // Register the shader with structured data
-      const shaderId = shaderRegistry.importFromLLM(
-        shaderData.name,
-        shaderData.description,
-        shaderData.fragmentShader,
-        shaderData.uniforms || {},
-        shaderData.controls || []
-      )
-
-      onShaderCreated?.(shaderId)
-      track('Shader Chat', { action: 'structured_shader_generated', shaderId })
-      console.log('Structured shader registered:', shaderId, shaderData)
-    } catch (error) {
-      console.error('Failed to register structured shader:', error)
-    }
-  }
-
-  const extractAndRegisterShader = (content) => {
-    // Look for GLSL code blocks in the response
-    const glslMatch = content.match(/```glsl\n([\s\S]*?)\n```/)
-    if (glslMatch) {
-      const fragmentShader = glslMatch[1]
-
-      // Extract shader name and description from the content
-      const nameMatch = content.match(/name[:\s]*([^\n]+)/i)
-      const descMatch = content.match(/description[:\s]*([^\n]+)/i)
-
-      const name = nameMatch
-        ? nameMatch[1].trim().replace(/['"]/g, '')
-        : 'Generated Shader'
-      const description = descMatch
-        ? descMatch[1].trim().replace(/['"]/g, '')
-        : 'AI-generated visual effect'
-
-      try {
-        // Register the shader
-        const shaderId = shaderRegistry.importFromLLM(
-          name,
-          description,
-          fragmentShader,
-          {}, // uniforms will be parsed from the shader
-          [] // controls can be added later
-        )
-
-        onShaderCreated?.(shaderId)
-        track('Shader Chat', { action: 'shader_generated', shaderId })
-      } catch (error) {
-        console.error('Failed to register shader:', error)
-      }
-    }
-  }
 
   const handleFormSubmit = (e) => {
     e.preventDefault()
@@ -146,43 +120,43 @@ export function ShaderChat({ onShaderCreated, hidden = false }) {
                       <button
                         type="button"
                         className={s.exampleItem}
-                        onClick={() => setInput('Create a water ripple effect')}
+                        onClick={() => setInput('Create and apply a water ripple effect shader')}
                       >
-                        {'>'} water_ripple_effect
+                        {'>'} create_water_ripple_shader
                       </button>
                       <button
                         type="button"
                         className={s.exampleItem}
                         onClick={() =>
-                          setInput('Make a glitch distortion with scanlines')
+                          setInput('Generate and apply a glitch distortion shader with scanlines')
                         }
                       >
-                        {'>'} glitch_distortion_scanlines
+                        {'>'} create_glitch_shader
                       </button>
                       <button
                         type="button"
                         className={s.exampleItem}
                         onClick={() =>
-                          setInput('Plasma energy field that pulses')
+                          setInput('Build and apply a plasma energy field shader that pulses')
                         }
                       >
-                        {'>'} plasma_energy_pulse
+                        {'>'} create_plasma_shader
                       </button>
                       <button
                         type="button"
                         className={s.exampleItem}
                         onClick={() =>
-                          setInput('Vintage film grain with scratches')
+                          setInput('Generate and apply a vintage film grain shader with scratches')
                         }
                       >
-                        {'>'} vintage_film_grain
+                        {'>'} create_vintage_shader
                       </button>
                       <button
                         type="button"
                         className={s.exampleItem}
-                        onClick={() => setInput('Matrix digital rain effect')}
+                        onClick={() => setInput('Create and apply a matrix digital rain shader effect')}
                       >
-                        {'>'} matrix_digital_rain
+                        {'>'} create_matrix_shader
                       </button>
                     </div>
                   </div>
@@ -200,6 +174,28 @@ export function ShaderChat({ onShaderCreated, hidden = false }) {
                             <span key={`${message.id}-part-${index}`}>
                               {part.text}
                             </span>
+                          )
+                        }
+                        if (part.type === 'tool-call') {
+                          return (
+                            <div key={`${message.id}-tool-${index}`} className={s.toolCall}>
+                              <div className={s.toolName}>🔧 {part.toolName}</div>
+                              <div className={s.toolArgs}>
+                                {JSON.stringify(part.args, null, 2)}
+                              </div>
+                            </div>
+                          )
+                        }
+                        if (part.type === 'tool-result') {
+                          return (
+                            <div key={`${message.id}-result-${index}`} className={s.toolResult}>
+                              <div className={s.resultIndicator}>
+                                {part.result?.success ? '✅' : '❌'} Tool Result
+                              </div>
+                              <div className={s.resultContent}>
+                                {part.result?.message || JSON.stringify(part.result, null, 2)}
+                              </div>
+                            </div>
                           )
                         }
                         return null
