@@ -1,4 +1,5 @@
 import { track } from '@vercel/analytics'
+import { shaderRegistry } from 'components/shader-effect/ShaderRegistry'
 import { Settings2 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Drawer } from 'vaul'
@@ -22,7 +23,7 @@ const useIsDesktop = () => {
 }
 
 // Draggable modal for desktop
-const DraggableModal = ({ open, onOpenChange, children }) => {
+const DraggableModal = ({ open, onOpenChange, children, currentShader }) => {
   const [position, setPosition] = useState({ x: 20, y: 80 }) // Initial position, will be updated
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
@@ -114,7 +115,11 @@ const DraggableModal = ({ open, onOpenChange, children }) => {
           onMouseDown={handleMouseDown}
           style={{ cursor: 'grab' }}
         >
-          <h2 className={s.modalTitle}>world controls</h2>
+          <h2 className={s.modalTitle}>
+            {currentShader
+              ? `${shaderRegistry.get(currentShader)?.name || 'Unknown'} world controls`
+              : 'ASCII world controls'}
+          </h2>
           <button
             type="button"
             className={s.closeButton}
@@ -178,6 +183,52 @@ const Toggle = ({ label, value, onChange }) => (
   </div>
 )
 
+// Dynamic control renderer for shader-specific controls
+const DynamicControl = ({ control, value, onChange }) => {
+  const { name, type, label, min, max, step, default: defaultValue } = control
+
+  // Map control name to uniform name (add 'u' prefix and capitalize first letter)
+  const uniformName = name.startsWith('u')
+    ? name
+    : `u${name.charAt(0).toUpperCase()}${name.slice(1)}`
+
+  const handleChange = (newValue) => {
+    onChange(uniformName, newValue)
+  }
+
+  switch (type) {
+    case 'range':
+      return (
+        <Slider
+          label={label || name}
+          value={value ?? defaultValue}
+          onChange={handleChange}
+          min={min ?? 0}
+          max={max ?? 100}
+          step={step ?? 1}
+        />
+      )
+    case 'boolean':
+      return (
+        <Toggle
+          label={label || name}
+          value={value ?? defaultValue}
+          onChange={handleChange}
+        />
+      )
+    case 'text':
+      return (
+        <TextInput
+          label={label || name}
+          value={value ?? defaultValue}
+          onChange={handleChange}
+        />
+      )
+    default:
+      return null
+  }
+}
+
 export function ControlPanel({
   // Visual controls
   characters,
@@ -191,6 +242,11 @@ export function ControlPanel({
   matrix,
   setTime,
   time,
+
+  // Shader controls
+  currentShader,
+  shaderConfig,
+  onShaderConfigChange,
 
   // Audio tracking
   trackingMode,
@@ -236,171 +292,14 @@ export function ControlPanel({
             <Settings2 size={23} />
           </button>
 
-          <DraggableModal open={open} onOpenChange={handleOpenChange}>
+          <DraggableModal
+            open={open}
+            onOpenChange={handleOpenChange}
+            currentShader={currentShader}
+          >
             <div className={s.controls}>
-              {/* Visual Controls Section */}
-              <div className={s.section}>
-                <TextInput
-                  label="characters"
-                  value={characters}
-                  onChange={onCharactersChange}
-                />
-
-                <Slider
-                  label="granularity"
-                  value={granularity}
-                  onChange={onGranularityChange}
-                  min={1}
-                  max={50}
-                  step={1}
-                />
-
-                <Slider
-                  label="char limit"
-                  value={charactersLimit}
-                  onChange={onCharactersLimitChange}
-                  min={1}
-                  max={48}
-                  step={1}
-                />
-
-                <Slider
-                  label="font size"
-                  value={fontSize}
-                  onChange={onFontSizeChange}
-                  min={1}
-                  max={128}
-                  step={1}
-                />
-
-                <div className={s.toggleGrid}>
-                  <Toggle
-                    label="fill pixels"
-                    value={fillPixels}
-                    onChange={onFillPixelsChange}
-                  />
-
-                  <Toggle label="fit" value={fit} onChange={onFitChange} />
-
-                  <Toggle
-                    label="greyscale"
-                    value={greyscale}
-                    onChange={onGreyscaleChange}
-                  />
-
-                  <Toggle
-                    label="invert"
-                    value={invert}
-                    onChange={onInvertChange}
-                  />
-                </div>
-
-                <Toggle
-                  label="matrix mode"
-                  value={matrix}
-                  onChange={onMatrixChange}
-                />
-
-                {matrix && (
-                  <Toggle
-                    label="set time"
-                    value={setTime}
-                    onChange={onSetTimeChange}
-                  />
-                )}
-
-                {setTime && (
-                  <Slider
-                    label="time"
-                    value={time}
-                    onChange={onTimeChange}
-                    min={0}
-                    max={1}
-                    step={0.01}
-                  />
-                )}
-
-                {/* Audio Controls - Only show when audio tracking is active */}
-                {trackingMode === 'audio' && (
-                  <>
-                    <Slider
-                      label="audio sensitivity"
-                      value={audioSensitivity}
-                      onChange={onAudioSensitivityChange}
-                      min={0.1}
-                      max={2.0}
-                      step={0.1}
-                    />
-
-                    <Slider
-                      label="voice emphasis"
-                      value={audioAdjustmentVector?.voice || 1.0}
-                      onChange={(value) =>
-                        onAudioAdjustmentVectorChange({
-                          ...audioAdjustmentVector,
-                          voice: value,
-                        })
-                      }
-                      min={0.1}
-                      max={3.0}
-                      step={0.1}
-                    />
-
-                    <Slider
-                      label="music emphasis"
-                      value={audioAdjustmentVector?.music || 1.0}
-                      onChange={(value) =>
-                        onAudioAdjustmentVectorChange({
-                          ...audioAdjustmentVector,
-                          music: value,
-                        })
-                      }
-                      min={0.1}
-                      max={3.0}
-                      step={0.1}
-                    />
-
-                    <Slider
-                      label="noise reduction"
-                      value={audioAdjustmentVector?.noise || 0.3}
-                      onChange={(value) =>
-                        onAudioAdjustmentVectorChange({
-                          ...audioAdjustmentVector,
-                          noise: value,
-                        })
-                      }
-                      min={0.0}
-                      max={1.0}
-                      step={0.1}
-                    />
-                  </>
-                )}
-              </div>
-            </div>
-          </DraggableModal>
-        </>
-      ) : (
-        <Drawer.Root open={open} onOpenChange={handleOpenChange}>
-          <Drawer.Trigger asChild>
-            <button
-              type="button"
-              className={s.trigger}
-              onClick={() => {
-                track('Control Panel', { action: 'open' })
-              }}
-            >
-              <Settings2 size={23} />
-            </button>
-          </Drawer.Trigger>
-          <Drawer.Portal>
-            <Drawer.Overlay className={s.overlay} />
-            <Drawer.Content className={s.content}>
-              <div className={s.header}>
-                <div className={s.handle} />
-                <Drawer.Title className={s.title}>world controls</Drawer.Title>
-              </div>
-
-              <div className={s.controls}>
+              {/* ASCII Controls - Only show for ASCII */}
+              {(currentShader === 'ascii' || !currentShader) && (
                 <div className={s.section}>
                   <TextInput
                     label="characters"
@@ -481,63 +380,323 @@ export function ControlPanel({
                       step={0.01}
                     />
                   )}
-
-                  {/* Audio Controls - Only show when audio tracking is active */}
-                  {trackingMode === 'audio' && (
-                    <>
-                      <Slider
-                        label="audio sensitivity"
-                        value={audioSensitivity}
-                        onChange={onAudioSensitivityChange}
-                        min={0.1}
-                        max={2.0}
-                        step={0.1}
-                      />
-
-                      <Slider
-                        label="voice emphasis"
-                        value={audioAdjustmentVector?.voice || 1.0}
-                        onChange={(value) =>
-                          onAudioAdjustmentVectorChange({
-                            ...audioAdjustmentVector,
-                            voice: value,
-                          })
-                        }
-                        min={0.1}
-                        max={3.0}
-                        step={0.1}
-                      />
-
-                      <Slider
-                        label="music emphasis"
-                        value={audioAdjustmentVector?.music || 1.0}
-                        onChange={(value) =>
-                          onAudioAdjustmentVectorChange({
-                            ...audioAdjustmentVector,
-                            music: value,
-                          })
-                        }
-                        min={0.1}
-                        max={3.0}
-                        step={0.1}
-                      />
-
-                      <Slider
-                        label="noise reduction"
-                        value={audioAdjustmentVector?.noise || 0.3}
-                        onChange={(value) =>
-                          onAudioAdjustmentVectorChange({
-                            ...audioAdjustmentVector,
-                            noise: value,
-                          })
-                        }
-                        min={0.0}
-                        max={1.0}
-                        step={0.1}
-                      />
-                    </>
-                  )}
                 </div>
+              )}
+
+              {/* Granularity for shaders that use it */}
+              {(currentShader === 'pixelation' ||
+                currentShader === 'halftone') && (
+                <div className={s.section}>
+                  <Slider
+                    label="granularity"
+                    value={granularity}
+                    onChange={onGranularityChange}
+                    min={1}
+                    max={50}
+                    step={1}
+                  />
+                </div>
+              )}
+
+              {/* Audio Controls - Only show when audio tracking is active */}
+              {trackingMode === 'audio' && (
+                <div className={s.section}>
+                  <Slider
+                    label="audio sensitivity"
+                    value={audioSensitivity}
+                    onChange={onAudioSensitivityChange}
+                    min={0.1}
+                    max={2.0}
+                    step={0.1}
+                  />
+
+                  <Slider
+                    label="voice emphasis"
+                    value={audioAdjustmentVector?.voice || 1.0}
+                    onChange={(value) =>
+                      onAudioAdjustmentVectorChange({
+                        ...audioAdjustmentVector,
+                        voice: value,
+                      })
+                    }
+                    min={0.1}
+                    max={3.0}
+                    step={0.1}
+                  />
+
+                  <Slider
+                    label="music emphasis"
+                    value={audioAdjustmentVector?.music || 1.0}
+                    onChange={(value) =>
+                      onAudioAdjustmentVectorChange({
+                        ...audioAdjustmentVector,
+                        music: value,
+                      })
+                    }
+                    min={0.1}
+                    max={3.0}
+                    step={0.1}
+                  />
+
+                  <Slider
+                    label="noise reduction"
+                    value={audioAdjustmentVector?.noise || 0.3}
+                    onChange={(value) =>
+                      onAudioAdjustmentVectorChange({
+                        ...audioAdjustmentVector,
+                        noise: value,
+                      })
+                    }
+                    min={0.0}
+                    max={1.0}
+                    step={0.1}
+                  />
+                </div>
+              )}
+
+              {/* Dynamic Shader Controls */}
+              {(() => {
+                const shader = shaderRegistry.get(currentShader || 'ascii')
+                if (
+                  !shader ||
+                  !shader.controls ||
+                  shader.controls.length === 0
+                ) {
+                  return null
+                }
+
+                return (
+                  <div className={s.shaderControls}>
+                    <h4 className={s.subsectionTitle}>Shader Controls</h4>
+                    {shader.controls.map((control) => (
+                      <DynamicControl
+                        key={control.name}
+                        control={control}
+                        value={
+                          shaderConfig?.[
+                            `u${control.name.charAt(0).toUpperCase()}${control.name.slice(1)}`
+                          ] ?? shaderConfig?.[control.name]
+                        }
+                        onChange={onShaderConfigChange}
+                      />
+                    ))}
+                  </div>
+                )
+              })()}
+            </div>
+          </DraggableModal>
+        </>
+      ) : (
+        <Drawer.Root open={open} onOpenChange={handleOpenChange}>
+          <Drawer.Trigger asChild>
+            <button
+              type="button"
+              className={s.trigger}
+              onClick={() => {
+                track('Control Panel', { action: 'open' })
+              }}
+            >
+              <Settings2 size={23} />
+            </button>
+          </Drawer.Trigger>
+          <Drawer.Portal>
+            <Drawer.Overlay className={s.overlay} />
+            <Drawer.Content className={s.content}>
+              <div className={s.header}>
+                <div className={s.handle} />
+                <Drawer.Title className={s.title}>
+                  {currentShader
+                    ? `${shaderRegistry.get(currentShader)?.name || 'Unknown'} world controls`
+                    : 'ASCII world controls'}
+                </Drawer.Title>
+              </div>
+
+              <div className={s.controls}>
+                {/* ASCII Controls - Only show for ASCII */}
+                {(currentShader === 'ascii' || !currentShader) && (
+                  <div className={s.section}>
+                    <TextInput
+                      label="characters"
+                      value={characters}
+                      onChange={onCharactersChange}
+                    />
+
+                    <Slider
+                      label="granularity"
+                      value={granularity}
+                      onChange={onGranularityChange}
+                      min={1}
+                      max={50}
+                      step={1}
+                    />
+
+                    <Slider
+                      label="char limit"
+                      value={charactersLimit}
+                      onChange={onCharactersLimitChange}
+                      min={1}
+                      max={48}
+                      step={1}
+                    />
+
+                    <Slider
+                      label="font size"
+                      value={fontSize}
+                      onChange={onFontSizeChange}
+                      min={1}
+                      max={128}
+                      step={1}
+                    />
+
+                    <div className={s.toggleGrid}>
+                      <Toggle
+                        label="fill pixels"
+                        value={fillPixels}
+                        onChange={onFillPixelsChange}
+                      />
+
+                      <Toggle label="fit" value={fit} onChange={onFitChange} />
+
+                      <Toggle
+                        label="greyscale"
+                        value={greyscale}
+                        onChange={onGreyscaleChange}
+                      />
+
+                      <Toggle
+                        label="invert"
+                        value={invert}
+                        onChange={onInvertChange}
+                      />
+                    </div>
+
+                    <Toggle
+                      label="matrix mode"
+                      value={matrix}
+                      onChange={onMatrixChange}
+                    />
+
+                    {matrix && (
+                      <Toggle
+                        label="set time"
+                        value={setTime}
+                        onChange={onSetTimeChange}
+                      />
+                    )}
+
+                    {setTime && (
+                      <Slider
+                        label="time"
+                        value={time}
+                        onChange={onTimeChange}
+                        min={0}
+                        max={1}
+                        step={0.01}
+                      />
+                    )}
+                  </div>
+                )}
+
+                {/* Granularity for shaders that use it */}
+                {(currentShader === 'pixelation' ||
+                  currentShader === 'halftone') && (
+                  <div className={s.section}>
+                    <Slider
+                      label="granularity"
+                      value={granularity}
+                      onChange={onGranularityChange}
+                      min={1}
+                      max={50}
+                      step={1}
+                    />
+                  </div>
+                )}
+
+                {/* Audio Controls - Only show when audio tracking is active */}
+                {trackingMode === 'audio' && (
+                  <div className={s.section}>
+                    <Slider
+                      label="audio sensitivity"
+                      value={audioSensitivity}
+                      onChange={onAudioSensitivityChange}
+                      min={0.1}
+                      max={2.0}
+                      step={0.1}
+                    />
+
+                    <Slider
+                      label="voice emphasis"
+                      value={audioAdjustmentVector?.voice || 1.0}
+                      onChange={(value) =>
+                        onAudioAdjustmentVectorChange({
+                          ...audioAdjustmentVector,
+                          voice: value,
+                        })
+                      }
+                      min={0.1}
+                      max={3.0}
+                      step={0.1}
+                    />
+
+                    <Slider
+                      label="music emphasis"
+                      value={audioAdjustmentVector?.music || 1.0}
+                      onChange={(value) =>
+                        onAudioAdjustmentVectorChange({
+                          ...audioAdjustmentVector,
+                          music: value,
+                        })
+                      }
+                      min={0.1}
+                      max={3.0}
+                      step={0.1}
+                    />
+
+                    <Slider
+                      label="noise reduction"
+                      value={audioAdjustmentVector?.noise || 0.3}
+                      onChange={(value) =>
+                        onAudioAdjustmentVectorChange({
+                          ...audioAdjustmentVector,
+                          noise: value,
+                        })
+                      }
+                      min={0.0}
+                      max={1.0}
+                      step={0.1}
+                    />
+                  </div>
+                )}
+
+                {/* Dynamic Shader Controls */}
+                {(() => {
+                  const shader = shaderRegistry.get(currentShader || 'ascii')
+                  if (
+                    !shader ||
+                    !shader.controls ||
+                    shader.controls.length === 0
+                  ) {
+                    return null
+                  }
+
+                  return (
+                    <div className={s.shaderControls}>
+                      <h4 className={s.subsectionTitle}>Shader Controls</h4>
+                      {shader.controls.map((control) => (
+                        <DynamicControl
+                          key={control.name}
+                          control={control}
+                          value={
+                            shaderConfig?.[
+                              `u${control.name.charAt(0).toUpperCase()}${control.name.slice(1)}`
+                            ] ?? shaderConfig?.[control.name]
+                          }
+                          onChange={onShaderConfigChange}
+                        />
+                      ))}
+                    </div>
+                  )
+                })()}
               </div>
             </Drawer.Content>
           </Drawer.Portal>

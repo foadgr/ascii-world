@@ -63,35 +63,7 @@ export class ShaderRegistry {
         uInvert: { type: 'bool', default: false },
         uMatrix: { type: 'bool', default: false },
       },
-      controls: [
-        {
-          name: 'charactersLimit',
-          type: 'range',
-          min: 1,
-          max: 64,
-          default: 32,
-          label: 'Character Count',
-        },
-        {
-          name: 'fillPixels',
-          type: 'boolean',
-          default: false,
-          label: 'Fill Pixels',
-        },
-        {
-          name: 'greyscale',
-          type: 'boolean',
-          default: false,
-          label: 'Greyscale',
-        },
-        { name: 'invert', type: 'boolean', default: false, label: 'Invert' },
-        {
-          name: 'matrix',
-          type: 'boolean',
-          default: false,
-          label: 'Matrix Effect',
-        },
-      ],
+      controls: [],
     })
 
     // Pixelation effect
@@ -104,58 +76,11 @@ export class ShaderRegistry {
         uniform float uGranularity;
         uniform vec3 uColor;
         uniform vec3 uBackground;
-        uniform bool uFaceDepthMode;
-        uniform float uNoseTipDepth;
-        uniform float uLeftCheekDepth;
-        uniform float uRightCheekDepth;
-        uniform float uGranularityMin;
-        uniform float uGranularityMax;
         uniform vec2 resolution;
 
-        // Face granularity calculation (simplified from ASCII version)
-        float calculateFaceGranularity(vec2 uv) {
-          if (!uFaceDepthMode) {
-            return uGranularity;
-          }
-          
-          vec2 center = vec2(0.5, 0.45);
-          vec2 facePos = (uv - center) * 2.2;
-          float x = facePos.x;
-          float y = facePos.y;
-          
-          float noseTipWeight = exp(-((x*x + (y-0.1)*(y-0.1)) * 6.0));
-          float leftCheekWeight = max(0.0, (x + 0.4) * 3.0) * exp(-((y*y + (x+0.6)*(x+0.6)) * 1.5)) * step(-0.8, x);
-          float rightCheekWeight = max(0.0, (-x + 0.4) * 3.0) * exp(-((y*y + (x-0.6)*(x-0.6)) * 1.5)) * step(x, 0.8);
-          
-          float totalWeight = noseTipWeight + leftCheekWeight + rightCheekWeight;
-          if (totalWeight < 0.001) {
-            return uGranularity;
-          }
-          
-          noseTipWeight /= totalWeight;
-          leftCheekWeight /= totalWeight;
-          rightCheekWeight /= totalWeight;
-          
-          float depthScale = 8.0;
-          float depthOffset = 0.15;
-          
-          float noseTipGranularity = mix(uGranularityMin, uGranularityMax, (uNoseTipDepth + depthOffset) * depthScale);
-          float leftCheekGranularity = mix(uGranularityMin, uGranularityMax, (uLeftCheekDepth + depthOffset) * depthScale);
-          float rightCheekGranularity = mix(uGranularityMin, uGranularityMax, (uRightCheekDepth + depthOffset) * depthScale);
-          
-          float finalGranularity = 
-            noseTipGranularity * noseTipWeight +
-            leftCheekGranularity * leftCheekWeight +
-            rightCheekGranularity * rightCheekWeight;
-            
-          return clamp(finalGranularity, uGranularityMin, uGranularityMax);
-        }
-
         void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
-          float currentGranularity = calculateFaceGranularity(uv);
-          
-          // Pixelate the input
-          vec2 division = resolution / currentGranularity;
+          // Simple pixelation using granularity
+          vec2 division = resolution / uGranularity;
           vec2 d = 1. / division;
           vec2 pixelizedUV = d * (floor(uv / d) + 0.5);
           
@@ -183,7 +108,7 @@ export class ShaderRegistry {
         uniform vec2 resolution;
 
         void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
-          // Create halftone pattern
+          // Create halftone pattern using granularity from BaseShaderEffect
           vec2 division = resolution / uGranularity;
           vec2 gridUV = uv * division;
           vec2 gridID = floor(gridUV);
@@ -197,7 +122,7 @@ export class ShaderRegistry {
           // Create circular dot based on brightness
           float dist = length(localUV);
           float dotRadius = mix(0.1, 0.5, brightness * uContrast) * uDotSize;
-          float dot = 1.0 - smoothstep(dotRadius - 0.05, dotRadius + 0.05, dist);
+          float dot = 1.0 - smoothstep(dotRadius - 0.02, dotRadius + 0.02, dist);
           
           vec3 color = mix(uBackground, uColor, dot);
           outputColor = vec4(color, 1.0);
@@ -211,16 +136,18 @@ export class ShaderRegistry {
         {
           name: 'dotSize',
           type: 'range',
-          min: 0.1,
-          max: 2.0,
+          min: 0.2,
+          max: 1.8,
+          step: 0.05,
           default: 1.0,
           label: 'Dot Size',
         },
         {
           name: 'contrast',
           type: 'range',
-          min: 0.5,
-          max: 3.0,
+          min: 0.3,
+          max: 2.5,
+          step: 0.1,
           default: 1.5,
           label: 'Contrast',
         },
@@ -280,8 +207,9 @@ export class ShaderRegistry {
         {
           name: 'threshold',
           type: 'range',
-          min: 0.0,
-          max: 1.0,
+          min: 0.05,
+          max: 0.8,
+          step: 0.01,
           default: 0.3,
           label: 'Edge Threshold',
         },
@@ -297,7 +225,7 @@ export class ShaderRegistry {
     uniforms = {},
     controls = []
   ) {
-    const id = `custom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    const id = `custom_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
 
     this.register(id, {
       name,

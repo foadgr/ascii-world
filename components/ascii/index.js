@@ -1051,6 +1051,12 @@ export function ASCII({ children }) {
           matrix={matrix}
           setTime={enableTime}
           time={time}
+          // Shader controls
+          currentShader={currentShader}
+          shaderConfig={shaderConfig}
+          onShaderConfigChange={(name, value) => {
+            setShaderConfig((prev) => ({ ...prev, [name]: value }))
+          }}
           // Audio tracking
           trackingMode={trackingMode}
           audioSensitivity={audioSensitivity}
