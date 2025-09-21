@@ -49,7 +49,7 @@ export class ShaderRegistry {
   loadBuiltInShaders() {
     // ASCII effect (existing) - handled specially by the adapter
     this.register('ascii', {
-      name: 'ASCII Art',
+      name: 'ASCII',
       description: 'Convert video to ASCII characters with depth tracking',
       category: 'Text Effects',
       builtIn: true,
@@ -212,6 +212,105 @@ export class ShaderRegistry {
           step: 0.01,
           default: 0.3,
           label: 'Edge Threshold',
+        },
+      ],
+    })
+
+    // Dithering effect
+    this.register('dithering', {
+      name: 'Dithering',
+      description: 'Floyd-Steinberg dithering with adjustable intensity',
+      category: 'Print Effects',
+      builtIn: true,
+      fragmentShader: `
+        uniform float uGranularity;
+        uniform vec3 uColor;
+        uniform vec3 uBackground;
+        uniform float uIntensity;
+        uniform float uLevels;
+        uniform bool uColorDither;
+        uniform vec2 resolution;
+
+        // Pseudo-random function for ordered dithering
+        float random(vec2 p) {
+          return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+        }
+
+        // Bayer matrix 4x4 for ordered dithering
+        float bayer4x4(vec2 p) {
+          int x = int(mod(p.x, 4.0));
+          int y = int(mod(p.y, 4.0));
+          
+          float matrix[16];
+          matrix[0] = 0.0; matrix[1] = 8.0; matrix[2] = 2.0; matrix[3] = 10.0;
+          matrix[4] = 12.0; matrix[5] = 4.0; matrix[6] = 14.0; matrix[7] = 6.0;
+          matrix[8] = 3.0; matrix[9] = 11.0; matrix[10] = 1.0; matrix[11] = 9.0;
+          matrix[12] = 15.0; matrix[13] = 7.0; matrix[14] = 13.0; matrix[15] = 5.0;
+          
+          return matrix[y * 4 + x] / 16.0;
+        }
+
+        float dither(float value, vec2 coord) {
+          float threshold = bayer4x4(coord * uGranularity);
+          threshold = (threshold - 0.5) * uIntensity + 0.5;
+          
+          float quantized = floor(value * uLevels) / uLevels;
+          float nextLevel = ceil(value * uLevels) / uLevels;
+          
+          return value > threshold ? nextLevel : quantized;
+        }
+
+        void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
+          vec2 pixelCoord = uv * resolution;
+          vec4 originalColor = texture2D(inputBuffer, uv);
+          
+          if (uColorDither) {
+            // Full color dithering - dither each RGB channel independently
+            float r = dither(originalColor.r, pixelCoord);
+            float g = dither(originalColor.g, pixelCoord + vec2(1.0, 0.0));
+            float b = dither(originalColor.b, pixelCoord + vec2(0.0, 1.0));
+            
+            outputColor = vec4(r, g, b, originalColor.a);
+          } else {
+            // Monochrome dithering - convert to single channel then apply custom/background colors
+            float gray = dot(originalColor.rgb, vec3(0.299, 0.587, 0.114));
+            float ditheredGray = dither(gray, pixelCoord);
+            
+            // Always use the color system (uColor/uBackground) for monochrome dithering
+            vec3 finalColor = mix(uBackground, uColor, ditheredGray);
+            outputColor = vec4(finalColor, originalColor.a);
+          }
+        }
+      `,
+      uniforms: {
+        uIntensity: { type: 'float', default: 0.5 },
+        uLevels: { type: 'float', default: 4.0 },
+        uColorDither: { type: 'bool', default: false },
+      },
+      controls: [
+        {
+          name: 'intensity',
+          type: 'range',
+          min: 0.1,
+          max: 1.0,
+          step: 0.05,
+          default: 0.5,
+          label: 'Dither Intensity',
+        },
+        {
+          name: 'levels',
+          type: 'range',
+          min: 2.0,
+          max: 16.0,
+          step: 1.0,
+          default: 4.0,
+          label: 'Color Levels',
+        },
+        {
+          name: 'colorDither',
+          type: 'boolean',
+          default: false,
+          label: 'Full Color Mode',
         },
       ],
     })

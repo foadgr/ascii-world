@@ -47,7 +47,7 @@ export const ShaderSelector = ({
         <span className={s.currentShader}>
           {currentShader
             ? shaderRegistry.get(currentShader)?.name || 'Unknown'
-            : 'ASCII Art'}
+            : 'ASCII'}
         </span>
         <svg
           className={`${s.chevron} ${isOpen ? s.open : ''}`}
@@ -70,6 +70,7 @@ export const ShaderSelector = ({
           <div className={s.header}>
             <h3>Shader Effects</h3>
             <button
+              type="button"
               className={s.createButton}
               onClick={() => {
                 onCreateShader()
@@ -84,6 +85,7 @@ export const ShaderSelector = ({
           <div className={s.categories}>
             {categories.map((category) => (
               <button
+                type="button"
                 key={category.id}
                 className={`${s.categoryButton} ${selectedCategory === category.id ? s.active : ''}`}
                 onClick={() => setSelectedCategory(category.id)}
@@ -96,7 +98,8 @@ export const ShaderSelector = ({
           <div className={s.shaderList}>
             {filteredShaders.length > 0 ? (
               filteredShaders.map((shader) => (
-                <div
+                <button
+                  type="button"
                   key={shader.id}
                   className={`${s.shaderItem} ${currentShader === shader.id ? s.current : ''}`}
                   onClick={() => handleShaderSelect(shader.id)}
@@ -112,6 +115,7 @@ export const ShaderSelector = ({
                   </div>
                   {shader.isCustom && (
                     <button
+                      type="button"
                       className={s.deleteButton}
                       onClick={(e) => {
                         e.stopPropagation()
@@ -130,7 +134,7 @@ export const ShaderSelector = ({
                       ×
                     </button>
                   )}
-                </div>
+                </button>
               ))
             ) : (
               <div className={s.emptyState}>No shaders in this category</div>
