@@ -995,14 +995,11 @@ export function ASCII({ children }) {
   const aiColorPalette = currentShaderData?.metadata?.colorPalette || null
 
   // Handle AI color selection
-  const handleAiColorSelect = useCallback(
-    (color, index) => {
-      // When user clicks an AI palette color, apply it as foreground
-      setColor(color)
-      setEnableColor(true) // Switch to custom mode
-    },
-    []
-  )
+  const handleAiColorSelect = useCallback((color, index) => {
+    // When user clicks an AI palette color, apply it as foreground
+    setColor(color)
+    setEnableColor(true) // Switch to custom mode
+  }, [])
 
   // Only render on client side to avoid SSR issues
   if (!isClient) {

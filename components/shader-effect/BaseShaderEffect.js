@@ -201,7 +201,10 @@ export const BaseShaderEffect = forwardRef((props, ref) => {
   }, [fragmentShader, uniforms, customProps])
 
   // Check if this is an AI shader that uses mixed tracking
-  const isAIShader = useMemo(() => fragmentShader.includes('uHandDetected'), [fragmentShader])
+  const isAIShader = useMemo(
+    () => fragmentShader.includes('uHandDetected'),
+    [fragmentShader]
+  )
 
   useEffect(() => {
     // Update basic uniforms
