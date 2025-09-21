@@ -189,7 +189,7 @@ const AIPalettePreview = ({ palette, onColorSelect }) => {
             key={index}
             className={s.paletteColor}
             style={{ backgroundColor: color }}
-            onClick={() => onColorSelect && onColorSelect(color, index)}
+            onClick={() => onColorSelect?.(color, index)}
             title={`Color ${index + 1}: ${color}`}
           />
         ))}

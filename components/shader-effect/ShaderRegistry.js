@@ -3,6 +3,7 @@ export class ShaderRegistry {
   constructor() {
     this.shaders = new Map()
     this.loadBuiltInShaders()
+    this.loadCustomShaders()
   }
 
   // Register a new shader
@@ -36,9 +37,18 @@ export class ShaderRegistry {
   }
 
   // Remove a shader
-  remove(id) {
+  async remove(id) {
     const shader = this.shaders.get(id)
     if (shader && !shader.builtIn) {
+      // Delete from database first
+      try {
+        await this.deleteShaderFromDatabase(id)
+      } catch (error) {
+        console.error('Failed to delete shader from database:', error)
+        // Continue with memory deletion even if database deletion fails
+      }
+
+      // Remove from memory
       this.shaders.delete(id)
       return true
     }
@@ -289,8 +299,66 @@ export class ShaderRegistry {
     })
   }
 
+  // Load custom shaders from database
+  async loadCustomShaders() {
+    try {
+      const response = await fetch('/api/shaders')
+      if (response.ok) {
+        const customShaders = await response.json()
+        customShaders.forEach((shader) => {
+          this.shaders.set(shader.id, shader)
+        })
+        console.log(
+          `Loaded ${customShaders.length} custom shaders from database`
+        )
+      }
+    } catch (error) {
+      console.warn('Failed to load custom shaders from database:', error)
+    }
+  }
+
+  // Save shader to database
+  async saveShaderToDatabase(shaderData) {
+    try {
+      const response = await fetch('/api/shaders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(shaderData),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Failed to save shader to database:', error)
+      throw error
+    }
+  }
+
+  // Delete shader from database
+  async deleteShaderFromDatabase(id) {
+    try {
+      const response = await fetch(`/api/shaders?id=${id}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Failed to delete shader from database:', error)
+      throw error
+    }
+  }
+
   // Import shader from LLM-generated content with structured metadata
-  importFromLLM(
+  async importFromLLM(
     name,
     description,
     fragmentShader,
@@ -300,7 +368,8 @@ export class ShaderRegistry {
   ) {
     const id = `custom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
-    this.register(id, {
+    const shaderData = {
+      id,
       name,
       description,
       category: 'Custom',
@@ -317,7 +386,20 @@ export class ShaderRegistry {
         generatedAt: new Date(),
         ...metadata,
       },
-    })
+    }
+
+    // Save to database
+    try {
+      await this.saveShaderToDatabase(shaderData)
+    } catch (error) {
+      console.error(
+        'Failed to save shader to database, proceeding with memory-only storage:',
+        error
+      )
+    }
+
+    // Register in memory
+    this.register(id, shaderData)
 
     return id
   }

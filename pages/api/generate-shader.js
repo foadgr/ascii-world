@@ -88,6 +88,21 @@ Available tracking uniforms you can use:
 - Hand: uHandDetected, uHandNormalizedDepth (-1 to 1, where -1 is close, 1 is far), uHandPalmX (0 to 1, left to right), uHandPalmY (0 to 1, top to bottom)
 - Standard: uGranularity, uColor, uBackground, uIntensity, uTime, resolution (vec2)
 
+CRITICAL GLSL NAMING REQUIREMENTS - FOLLOW EXACTLY:
+- Use ONLY standard GLSL function names: clamp(), mix(), step(), smoothstep(), texture2D(), etc.
+- NEVER use prefixed function names like "e0Saturate", "e0Resolution", "e0Mix", etc.
+- The main function MUST be named exactly "mainImage" - NOT "e0MainImage"
+- Use "resolution" for screen resolution - NOT "e0Resolution" 
+- Use standard uniform names without any prefixes: "uTime", "uColor", "resolution", etc.
+- Do NOT add random prefixes like "e0" to ANY variable or function names
+- All shader code must use standard GLSL syntax that compiles without errors
+
+EXAMPLES OF WHAT NOT TO DO:
+❌ void e0MainImage() - WRONG, use: void mainImage()
+❌ vec2 px = 1.0 / max(e0Resolution, vec2(1.0)); - WRONG, use: vec2 px = 1.0 / max(resolution, vec2(1.0));
+❌ float val = e0Mix(a, b, t); - WRONG, use: float val = mix(a, b, t);
+❌ color = e0Clamp(color, 0.0, 1.0); - WRONG, use: color = clamp(color, 0.0, 1.0);
+
 Create effects that are visually compelling and make creative use of multiple tracking inputs. Prioritize clear, responsive interactions over subtle effects.
 
 User request: ${prompt}
@@ -194,6 +209,54 @@ Return a JSON object with the exact structure expected by our Zod schema.`,
     try {
       // GPT-5 Responses API returns output_text which should contain our structured JSON
       parsedResponse = JSON.parse(response.output_text)
+
+      // Fix common GLSL naming issues in the shader code
+      if (parsedResponse.shaderCode) {
+        parsedResponse.shaderCode = parsedResponse.shaderCode
+          // Fix specific known problematic prefixes
+          .replace(/e0Resolution/g, 'resolution')
+          .replace(/e0Saturate/g, 'saturate') 
+          .replace(/e0MainImage/g, 'mainImage')
+          .replace(/e0Mix/g, 'mix')
+          .replace(/e0Clamp/g, 'clamp')
+          .replace(/e0Step/g, 'step')
+          .replace(/e0Smoothstep/g, 'smoothstep')
+          .replace(/e0Texture2D/g, 'texture2D')
+          .replace(/e0Max/g, 'max')
+          .replace(/e0Min/g, 'min')
+          .replace(/e0Length/g, 'length')
+          .replace(/e0Dot/g, 'dot')
+          .replace(/e0Cross/g, 'cross')
+          .replace(/e0Normalize/g, 'normalize')
+          .replace(/e0Abs/g, 'abs')
+          .replace(/e0Sin/g, 'sin')
+          .replace(/e0Cos/g, 'cos')
+          .replace(/e0Fract/g, 'fract')
+          .replace(/e0Floor/g, 'floor')
+          .replace(/e0Ceil/g, 'ceil')
+          // Remove any remaining e0 prefixes as fallback
+          .replace(/e0([A-Z][a-zA-Z0-9_]*)/g, (match, funcName) => {
+            // Convert e0CamelCase to camelCase (lowercase first letter)
+            return funcName.charAt(0).toLowerCase() + funcName.slice(1)
+          })
+          .replace(/e0([a-z][a-zA-Z0-9_]*)/g, '$1') // Remove e0 from already lowercase functions
+      }
+
+      // Fix color palette format issues
+      if (
+        parsedResponse.colorPalette &&
+        Array.isArray(parsedResponse.colorPalette)
+      ) {
+        parsedResponse.colorPalette = parsedResponse.colorPalette
+          .map((color) => {
+            if (typeof color === 'string') {
+              // Fix malformed hex colors and remove invalid characters
+              return color.replace(/[^#0-9A-Fa-f]/g, '').substring(0, 7)
+            }
+            return color
+          })
+          .filter((color) => /^#[0-9A-Fa-f]{6}$/.test(color)) // Only keep valid hex colors
+      }
 
       // Validate with our Zod schema
       const validatedResponse = ShaderGenerationResponse.parse(parsedResponse)

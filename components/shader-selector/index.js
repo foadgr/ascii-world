@@ -113,16 +113,21 @@ export const ShaderSelector = ({
                   {shader.isCustom && (
                     <button
                       className={s.deleteButton}
-                      onClick={(e) => {
+                      onClick={async (e) => {
                         e.stopPropagation()
                         if (confirm(`Delete shader "${shader.name}"?`)) {
-                          shaderRegistry.remove(shader.id)
-                          if (currentShader === shader.id) {
-                            onShaderChange('ascii') // Fall back to ASCII
+                          try {
+                            await shaderRegistry.remove(shader.id)
+                            if (currentShader === shader.id) {
+                              onShaderChange('ascii') // Fall back to ASCII
+                            }
+                            // Force re-render by closing and opening
+                            setIsOpen(false)
+                            setTimeout(() => setIsOpen(true), 50)
+                          } catch (error) {
+                            console.error('Failed to delete shader:', error)
+                            alert('Failed to delete shader. Please try again.')
                           }
-                          // Force re-render by closing and opening
-                          setIsOpen(false)
-                          setTimeout(() => setIsOpen(true), 50)
                         }
                       }}
                       title="Delete Shader"

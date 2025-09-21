@@ -378,7 +378,7 @@ export const ShaderCreator = ({ isOpen, onClose, onShaderCreated }) => {
     }
   }
 
-  const handleCreateShader = () => {
+  const handleCreateShader = async () => {
     if (!generatedShader) {
       setError('Please generate a shader first')
       return
@@ -418,7 +418,7 @@ export const ShaderCreator = ({ isOpen, onClose, onShaderCreated }) => {
         customUniforms: generatedShader.customUniforms,
       }
 
-      const shaderId = shaderRegistry.importFromLLM(
+      const shaderId = await shaderRegistry.importFromLLM(
         generatedShader.suggestedName,
         generatedShader.suggestedDescription,
         generatedShader.shaderCode,
