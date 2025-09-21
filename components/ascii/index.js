@@ -3,6 +3,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { EffectComposer } from '@react-three/postprocessing'
 import { DepthDisplay } from 'components/depth-display'
 import { FontEditor } from 'components/font-editor'
+import { ShaderChat } from 'components/shader-chat/index'
 import { ShaderCreator } from 'components/shader-creator/index'
 import { FlexibleShaderEffect } from 'components/shader-effect/FlexibleShaderEffect'
 import { ShaderSelector } from 'components/shader-selector/index'
@@ -788,6 +789,7 @@ function Inner() {
           }
         }}
       />
+      <ShaderChat onShaderCreated={handleShaderCreated} />
       <div className={s.shaderSelectorContainer}>
         <ShaderSelector
           currentShader={currentShader}
