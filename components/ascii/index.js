@@ -1,9 +1,12 @@
 import { OrbitControls, useAspect } from '@react-three/drei'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { EffectComposer } from '@react-three/postprocessing'
-import { ASCIIEffect } from 'components/ascii-effect/index'
 import { DepthDisplay } from 'components/depth-display'
 import { FontEditor } from 'components/font-editor'
+import { ShaderChat } from 'components/shader-chat/index'
+import { ShaderCreator } from 'components/shader-creator/index'
+import { FlexibleShaderEffect } from 'components/shader-effect/FlexibleShaderEffect'
+import { ShaderSelector } from 'components/shader-selector/index'
 import { useAudioTracking } from 'hooks/use-audio-tracking'
 import { useFaceTracking } from 'hooks/use-face-tracking'
 import { useHandTracking } from 'hooks/use-hand-tracking'
@@ -24,11 +27,10 @@ import tunnel from 'tunnel-rat'
 import { CameraControls } from '../camera-controls'
 import { ColorControls } from '../color-controls'
 import { ControlPanel } from '../control-panel'
-import { InfoButton } from '../info-button'
 import { IntroModal } from '../intro-modal'
 import { ModelSelector } from '../model-selector'
 import { TrackingOverlay } from '../tracking-overlay'
-import { UploadButton } from '../upload-button'
+import { UtilityMenu } from '../utility-menu'
 import s from './ascii.module.scss'
 import { AsciiContext } from './context'
 
@@ -685,30 +687,36 @@ function Postprocessing() {
     fit,
     trackingMode,
     faceTracking,
+    handTracking,
+    audioTracking,
+    currentShader = 'ascii',
+    shaderConfig = {},
   } = useContext(AsciiContext)
 
-  // Determine if we should use face depth mode
-  const faceDepthMode =
-    trackingMode === 'face' &&
-    faceTracking?.faceDetected &&
-    faceTracking?.depthMap
+  // Create shader configuration for ASCII effect
+  const asciiConfig = {
+    charactersTexture,
+    charactersLimit,
+    fillPixels,
+    greyscale,
+    invert,
+    matrix,
+    ...shaderConfig,
+  }
 
   return (
     <EffectComposer>
-      <ASCIIEffect
-        charactersTexture={charactersTexture}
+      <FlexibleShaderEffect
+        shaderId={currentShader}
+        shaderConfig={asciiConfig}
         granularity={granularity * viewport.dpr}
-        charactersLimit={charactersLimit}
-        fillPixels={fillPixels}
         color={color}
-        fit={fit}
-        greyscale={greyscale}
-        invert={invert}
-        matrix={matrix}
-        time={time}
         background={background}
-        faceDepthMode={faceDepthMode}
-        depthMap={faceTracking?.depthMap}
+        time={time}
+        trackingMode={trackingMode}
+        faceTracking={faceTracking}
+        handTracking={handTracking}
+        audioTracking={audioTracking}
         granularityRange={{ min: 1, max: 50 }}
       />
     </EffectComposer>
@@ -716,8 +724,43 @@ function Postprocessing() {
 }
 
 function Inner() {
-  const { uploadFunctionRef, currentAsset, setAssetFunction } =
-    useContext(AsciiContext)
+  const {
+    uploadFunctionRef,
+    currentAsset,
+    setAssetFunction,
+    currentShader,
+    setCurrentShader,
+    shaderConfig,
+    setShaderConfig,
+  } = useContext(AsciiContext)
+
+  const [isShaderCreatorOpen, setIsShaderCreatorOpen] = useState(false)
+  const [isShaderChatOpen, setIsShaderChatOpen] = useState(false)
+  const [is3DMenuOpen, setIs3DMenuOpen] = useState(false)
+
+  const handleShaderChange = (shaderId) => {
+    setCurrentShader(shaderId)
+  }
+
+  const handleCreateShader = () => {
+    setIsShaderCreatorOpen(true)
+  }
+
+  const handleShaderCreated = (shaderId) => {
+    setCurrentShader(shaderId)
+  }
+
+  const handleUploadClick = () => {
+    // Trigger the file input click
+    const fileInput = document.querySelector('input[type="file"]')
+    if (fileInput) {
+      fileInput.click()
+    }
+  }
+
+  const handle3DToggle = () => {
+    setIs3DMenuOpen(!is3DMenuOpen)
+  }
 
   return (
     <>
@@ -758,13 +801,43 @@ function Inner() {
             setAssetFunction.current(modelPath)
           }
         }}
+        hidden={!is3DMenuOpen}
       />
-      <UploadButton
-        onFileSelect={(fileData, filename) => {
-          if (uploadFunctionRef?.current) {
-            uploadFunctionRef.current(fileData, filename)
+      <ShaderChat
+        onShaderCreated={handleShaderCreated}
+        hidden={!isShaderChatOpen}
+      />
+      <div className={s.shaderSelectorContainer}>
+        <ShaderSelector
+          currentShader={currentShader}
+          onShaderChange={handleShaderChange}
+          onCreateShader={handleCreateShader}
+        />
+      </div>
+      <ShaderCreator
+        isOpen={isShaderCreatorOpen}
+        onClose={() => setIsShaderCreatorOpen(false)}
+        onShaderCreated={handleShaderCreated}
+      />
+      <UtilityMenu
+        onChatOpen={() => setIsShaderChatOpen(true)}
+        onUploadClick={handleUploadClick}
+        on3DToggle={handle3DToggle}
+      />
+      <input
+        type="file"
+        accept=".glb,.mp4,.mov,.webm,.png,.jpg,.jpeg,.webp,.avif,.ttf,.otf,.woff,.woff2"
+        onChange={(e) => {
+          const file = e.target.files[0]
+          if (file && uploadFunctionRef?.current) {
+            const reader = new FileReader()
+            reader.onload = (event) => {
+              uploadFunctionRef.current(event.target.result, file.name)
+            }
+            reader.readAsDataURL(file)
           }
         }}
+        style={{ display: 'none' }}
       />
       <ui.Out />
     </>
@@ -840,6 +913,10 @@ export function ASCII({ children }) {
   const [handTracking, setHandTracking] = useState(null)
   const [faceTracking, setFaceTracking] = useState(null)
   const [audioTracking, setAudioTracking] = useState(null)
+
+  // Shader system state
+  const [currentShader, setCurrentShader] = useState('ascii')
+  const [shaderConfig, setShaderConfig] = useState({})
 
   // Control states
   const [characters, setCharacters] = useState(DEFAULT.characters)
@@ -985,6 +1062,10 @@ export function ASCII({ children }) {
           uploadFunctionRef,
           setAssetFunction: setAssetFunctionRef,
           currentAsset,
+          currentShader,
+          setCurrentShader,
+          shaderConfig,
+          setShaderConfig,
           set,
         }}
       >
@@ -1002,6 +1083,12 @@ export function ASCII({ children }) {
           matrix={matrix}
           setTime={enableTime}
           time={time}
+          // Shader controls
+          currentShader={currentShader}
+          shaderConfig={shaderConfig}
+          onShaderConfigChange={(name, value) => {
+            setShaderConfig((prev) => ({ ...prev, [name]: value }))
+          }}
           // Audio tracking
           trackingMode={trackingMode}
           audioSensitivity={audioSensitivity}
@@ -1055,7 +1142,6 @@ export function ASCII({ children }) {
           onCalibrateAudio={handleCalibrateAudio}
           onResetCalibration={handleResetCalibration}
         />
-        <InfoButton />
         <IntroModal />
       </AsciiContext.Provider>
     </>

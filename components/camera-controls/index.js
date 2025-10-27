@@ -1,10 +1,4 @@
-import {
-  IconCameraRotate,
-  IconCameraSelfie,
-  IconMusic,
-} from '@tabler/icons-react'
 import { track } from '@vercel/analytics'
-import { Hand, ScanFace } from 'lucide-react'
 import { useEffect } from 'react'
 import s from './camera-controls.module.scss'
 
@@ -97,20 +91,7 @@ export function CameraControls({
             onCameraToggle()
           }}
         >
-          <div className={s.cameraIconContainer}>
-            <svg
-              width="23"
-              height="23"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <title>Camera</title>
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-              <circle cx="12" cy="13" r="4" />
-            </svg>
-          </div>
+          CAMERA
         </button>
 
         {/* Camera Flip Button - Below camera toggle for mobile space efficiency */}
@@ -121,11 +102,7 @@ export function CameraControls({
             onClick={onCameraSwitch}
             title={`Switch to ${cameraFacingMode === 'user' ? 'back' : 'front'} camera`}
           >
-            {cameraFacingMode === 'user' ? (
-              <IconCameraRotate size={23} />
-            ) : (
-              <IconCameraSelfie size={23} />
-            )}
+            FLIP
           </button>
         )}
       </div>
@@ -173,7 +150,7 @@ export function CameraControls({
                     : 'Hand detected - click to calibrate'
             }
           >
-            <Hand size={23} />
+            HAND
           </button>
 
           {/* Face Tracking Button */}
@@ -216,7 +193,7 @@ export function CameraControls({
                     : 'Face detected - click to calibrate'
             }
           >
-            <ScanFace size={23} />
+            SELFIE
           </button>
         </>
       )}
@@ -224,7 +201,7 @@ export function CameraControls({
       {/* Audio Tracking Button - Always available (doesn't need camera) */}
       <button
         type="button"
-        className={`${s.trackingButton} ${
+        className={`${s.trackingButton} ${s.audioButton} ${
           trackingMode === 'audio' ? s.active : ''
         } ${
           trackingMode === 'audio' && !audioTracking?.audioDetected
@@ -270,7 +247,7 @@ export function CameraControls({
                 : 'Audio detected - click to calibrate'
         }
       >
-        <IconMusic size={23} />
+        AUDIO
       </button>
     </div>
   )

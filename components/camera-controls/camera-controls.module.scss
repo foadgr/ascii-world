@@ -19,78 +19,85 @@
 .cameraButton {
   display: flex;
   align-items: center;
-  gap: 10px;
-  
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  padding: 16px 21px;
-  
-  font-family: inherit;
-  font-size: 18px;
-  font-weight: 500;
-  
+  justify-content: center;
+
+  background: #000000;
+  color: #ffffff;
+  border: none;
+  padding: 10px 16px;
+
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+
   cursor: pointer;
-  transition: all 0.2s ease;
-  backdrop-filter: blur(10px);
-  
-  &:hover {
-    background: rgba(0, 0, 0, 0.9);
-    border-color: rgba(255, 255, 255, 0.3);
-    transform: translateY(-1px);
+  transition: all 0.15s ease;
+
+  &::before {
+    content: '[ ';
   }
-  
+
+  &::after {
+    content: ' ]';
+  }
+
+  &:hover {
+    background: #ffffff;
+    color: #000000;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
   &.active {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.4);
-    color: #00ff88;
+    background: #ffffff;
+    color: #000000;
   }
 }
 
 // Camera icon container with status dot
 .cameraIconContainer {
-  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  
+
   svg {
-    width: 23px;
-    height: 23px;
+    width: 20px;
+    height: 20px;
     flex-shrink: 0;
   }
 }
-
-
 
 // Camera flip button
 .flipButton {
   display: flex;
   align-items: center;
   justify-content: center;
-  
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  padding: 16px;
-  
+
+  background: #000000;
+  color: #ffffff;
+  border: none;
+  padding: 10px 16px;
+
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+
   cursor: pointer;
-  transition: all 0.2s ease;
-  backdrop-filter: blur(10px);
-  
+  transition: all 0.15s ease;
+
   &:hover {
-    background: rgba(0, 0, 0, 0.9);
-    border-color: rgba(255, 255, 255, 0.3);
-    transform: translateY(-1px);
-    color: #00ff88;
+    background: #ffffff;
+    color: #000000;
   }
-  
-  svg {
-    width: 23px;
-    height: 23px;
-    flex-shrink: 0;
+
+  &:active {
+    transform: scale(0.98);
   }
 }
 
@@ -99,79 +106,61 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  padding: 16px;
-  
+
+  background: #000000;
+  color: #ffffff;
+  border: none;
+  padding: 10px 16px;
+
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+
   cursor: pointer;
-  transition: all 0.2s ease;
-  backdrop-filter: blur(10px);
-  
+  transition: all 0.15s ease;
+
   &:hover {
-    background: rgba(0, 0, 0, 0.9);
-    border-color: rgba(255, 255, 255, 0.3);
-    transform: translateY(-1px);
+    background: #ffffff;
+    color: #000000;
   }
-  
+
+  &:active {
+    transform: scale(0.98);
+  }
+
   // Active tracking mode
   &.active {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.4);
-    
-    &:hover {
-      background: rgba(255, 255, 255, 0.15);
-    }
-    
+    background: #ffffff;
+    color: #000000;
+
     // Detection states when active
     &.detected {
-      color: #00ff00;
-      border-color: rgba(0, 255, 0, 0.3);
-      box-shadow: 0 0 8px rgba(0, 255, 0, 0.2);
-      
-      &:hover {
-        background: rgba(0, 255, 0, 0.1);
-      }
+      background: #ffffff;
+      color: #000000;
     }
-    
+
     &.uncalibrated {
-      color: #ff8800;
-      border-color: rgba(255, 136, 0, 0.3);
-      box-shadow: 0 0 8px rgba(255, 136, 0, 0.2);
-      
-      &:hover {
-        background: rgba(255, 136, 0, 0.1);
-      }
+      background: #666666;
+      color: #ffffff;
     }
-    
+
     &.notDetected {
-      color: #ff0000;
-      border-color: rgba(255, 0, 0, 0.3);
-      box-shadow: 0 0 8px rgba(255, 0, 0, 0.2);
-      
-      &:hover {
-        background: rgba(255, 0, 0, 0.1);
-      }
+      background: #333333;
+      color: #ffffff;
     }
   }
-  
-  // Inactive mode - subtle styling
-  &:not(.active) {
-    opacity: 0.7;
-    color: rgba(255, 255, 255, 0.8);
-    
-    &:hover {
-      opacity: 1;
-      color: #00ff88;
-    }
+}
+
+// Audio button with square brackets
+.audioButton {
+  &::before {
+    content: '[ ';
   }
-  
-  svg {
-    width: 23px;
-    height: 23px;
-    flex-shrink: 0;
+
+  &::after {
+    content: ' ]';
   }
 }
 
@@ -182,38 +171,28 @@
     left: 16px;
     gap: 8px;
   }
-  
-  .cameraButtonsContainer {
-    gap: 4px; // Even tighter spacing on mobile
-  }
-  
-  .cameraButton {
-    padding: 13px 18px;
-    font-size: 16px;
-    
-    svg {
-      width: 21px;
-      height: 21px;
-    }
-  }
-  
-  .flipButton {
-    padding: 13px;
-    
-    svg {
-      width: 21px;
-      height: 21px;
-    }
-  }
-  
-  .trackingButton {
-    padding: 13px;
-    
-    svg {
-      width: 21px;
-      height: 21px;
-    }
-  }
-  
 
-} 
+  .cameraButtonsContainer {
+    gap: 4px;
+  }
+
+  .cameraButton {
+    padding: 8px 12px;
+    font-size: 11px;
+
+    svg {
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  .flipButton {
+    padding: 8px 12px;
+    font-size: 11px;
+  }
+
+  .trackingButton {
+    padding: 8px 12px;
+    font-size: 11px;
+  }
+}

@@ -1,6 +1,6 @@
-import { IconCube } from '@tabler/icons-react'
 import { track } from '@vercel/analytics'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { Drawer } from 'vaul'
 import s from './model-selector.module.scss'
 
 const models = [
@@ -19,10 +19,52 @@ const models = [
     name: 'Meta',
     path: '/meta.glb',
   },
+  {
+    id: 'bust',
+    name: 'Bust',
+    path: '/bust.glb',
+  },
+  {
+    id: 'darkroom',
+    name: 'Darkroom Move',
+    path: '/darkroom-move.glb',
+  },
+  {
+    id: 'dragonfly',
+    name: 'Dragonfly',
+    path: '/dragonfly.glb',
+  },
 ]
+
+// Hook to detect if we're on desktop
+const useIsDesktop = () => {
+  const [isDesktop, setIsDesktop] = useState(false)
+
+  useEffect(() => {
+    const checkIsDesktop = () => {
+      setIsDesktop(window.innerWidth >= 1024)
+    }
+
+    checkIsDesktop()
+    window.addEventListener('resize', checkIsDesktop)
+    return () => window.removeEventListener('resize', checkIsDesktop)
+  }, [])
+
+  return isDesktop
+}
 
 export function ModelSelector({ currentModel, onModelChange, hidden = false }) {
   const [isOpen, setIsOpen] = useState(false)
+  const isDesktop = useIsDesktop()
+
+  // Auto-open drawer when component becomes visible on mobile
+  useEffect(() => {
+    if (!hidden && !isDesktop) {
+      setIsOpen(true)
+    } else if (hidden) {
+      setIsOpen(false)
+    }
+  }, [hidden, isDesktop])
 
   const handleModelSelect = (model) => {
     track('Model Selection', {
@@ -31,60 +73,58 @@ export function ModelSelector({ currentModel, onModelChange, hidden = false }) {
       modelName: model.name,
     })
     onModelChange(model.path)
-    setIsOpen(false)
+    setIsOpen(false) // Close drawer after selection
   }
 
   if (hidden) return null
 
-  return (
-    <div className={s.container}>
-      {/* Trigger Button */}
-      <button
-        type="button"
-        className={s.trigger}
-        onClick={() => {
-          track('Model Selector', { action: 'open' })
-          setIsOpen(!isOpen)
-        }}
-        title="Choose 3D model"
-        aria-label="Choose 3D model"
-      >
-        <IconCube size={23} />
-      </button>
+  const modelList = (
+    <>
+      {models.map((model) => (
+        <button
+          key={model.id}
+          type="button"
+          className={`${s.modelButton} ${currentModel === model.path ? s.active : ''}`}
+          onClick={() => handleModelSelect(model)}
+          title={model.name}
+        >
+          {model.name.toUpperCase()}
+        </button>
+      ))}
+    </>
+  )
 
-      {/* Dropdown Menu */}
-      {isOpen && (
-        <>
-          <div
-            className={s.overlay}
-            onClick={() => setIsOpen(false)}
-            onKeyDown={(e) => e.key === 'Escape' && setIsOpen(false)}
-            role="button"
-            tabIndex={0}
-            aria-label="Close model selector"
-          />
-          <div className={s.dropdown}>
-            <div className={s.header}>
-              <span className={s.title}>Choose Model</span>
-            </div>
-            <div className={s.modelList}>
-              {models.map((model) => (
-                <button
-                  key={model.id}
-                  type="button"
-                  className={`${s.modelItem} ${currentModel === model.path ? s.active : ''}`}
-                  onClick={() => handleModelSelect(model)}
-                >
-                  <span className={s.modelName}>{model.name}</span>
-                  {currentModel === model.path && (
-                    <span className={s.activeIndicator}>✓</span>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-        </>
-      )}
+  return isDesktop ? (
+    // Desktop: Just show model list (no trigger, controlled by UtilityMenu)
+    <div className={s.container}>
+      {modelList}
     </div>
+  ) : (
+    // Mobile: Drawer
+    <Drawer.Root open={isOpen} onOpenChange={setIsOpen}>
+      <Drawer.Trigger asChild>
+        <button
+          type="button"
+          className={s.triggerMobile}
+          onClick={() => {
+            track('Model Selector', { action: 'toggle' })
+          }}
+          title="Toggle 3D models"
+          aria-label="Toggle 3D models"
+        >
+          3D
+        </button>
+      </Drawer.Trigger>
+      <Drawer.Portal>
+        <Drawer.Overlay className={s.overlay} />
+        <Drawer.Content className={s.drawerContent}>
+          <div className={s.drawerHeader}>
+            <div className={s.handle} />
+            <Drawer.Title className={s.drawerTitle}>3D MODELS</Drawer.Title>
+          </div>
+          <div className={s.drawerBody}>{modelList}</div>
+        </Drawer.Content>
+      </Drawer.Portal>
+    </Drawer.Root>
   )
 }

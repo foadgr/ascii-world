@@ -1,4 +1,3 @@
-import { IconUpload } from '@tabler/icons-react'
 import { track } from '@vercel/analytics'
 import { useRef } from 'react'
 import s from './upload-button.module.scss'
@@ -49,9 +48,7 @@ export function UploadButton({ onFileSelect, hidden = false }) {
         title="Upload file (.glb, .mp4, .mov, .webm, .png, .jpg, .webp, .avif, .ttf, .otf, .woff, .woff2)"
         aria-label="Upload file"
       >
-        <div className={s.iconContainer}>
-          <IconUpload size={23} />
-        </div>
+        UPLOAD
       </button>
     </>
   )

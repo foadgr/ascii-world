@@ -1,4 +1,3 @@
-import { IconInfoCircle } from '@tabler/icons-react'
 import { track } from '@vercel/analytics'
 import Link from 'next/link'
 import s from './info-button.module.scss'
@@ -12,7 +11,7 @@ export function InfoButton() {
         track('Contact Info', { action: 'click' })
       }}
     >
-      <IconInfoCircle size={23} />
+      INFO
     </Link>
   )
 }
