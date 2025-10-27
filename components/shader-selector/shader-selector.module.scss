@@ -40,7 +40,7 @@
   z-index: 1000;
 
   @media (max-width: 1024px) {
-    top: 65px;
+    top: 60px; // Positioned right below camera controls (16px + ~44px camera height)
     left: 16px;
   }
 }

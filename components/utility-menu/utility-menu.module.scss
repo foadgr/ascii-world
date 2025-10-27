@@ -1,7 +1,7 @@
 // Utility menu positioned in top-left (below COLOR button)
 .container {
   position: fixed;
-  top: 120px; // Raised to close gap, positioned below COLOR button
+  top: 120px; // Positioned below COLOR button on desktop
   left: 20px;
   z-index: 1000;
   display: flex;
@@ -9,7 +9,7 @@
   gap: 8px;
 
   @media (max-width: 1024px) {
-    top: 110px;
+    top: 152px; // Positioned below COLOR button on mobile (104px + ~40px button + 8px gap)
     left: 16px;
   }
 }

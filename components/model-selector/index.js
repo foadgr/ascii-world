@@ -96,25 +96,10 @@ export function ModelSelector({ currentModel, onModelChange, hidden = false }) {
 
   return isDesktop ? (
     // Desktop: Just show model list (no trigger, controlled by UtilityMenu)
-    <div className={s.container}>
-      {modelList}
-    </div>
+    <div className={s.container}>{modelList}</div>
   ) : (
-    // Mobile: Drawer
+    // Mobile: Drawer only (no trigger button, controlled by UtilityMenu's 3D button)
     <Drawer.Root open={isOpen} onOpenChange={setIsOpen}>
-      <Drawer.Trigger asChild>
-        <button
-          type="button"
-          className={s.triggerMobile}
-          onClick={() => {
-            track('Model Selector', { action: 'toggle' })
-          }}
-          title="Toggle 3D models"
-          aria-label="Toggle 3D models"
-        >
-          3D
-        </button>
-      </Drawer.Trigger>
       <Drawer.Portal>
         <Drawer.Overlay className={s.overlay} />
         <Drawer.Content className={s.drawerContent}>

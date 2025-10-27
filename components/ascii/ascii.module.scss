@@ -32,8 +32,9 @@
 }
 
 .shaderSelectorContainer {
-  // Desktop only - centers the shader selector at top
-  // On mobile, ShaderSelector renders its own positioned button
+  // Container for shader selector - component handles its own desktop/mobile layout
+  // Desktop: centers at top
+  // Mobile: renders positioned button below camera, above colors
   position: fixed;
   top: 20px;
   left: 50%;
@@ -41,7 +42,10 @@
   z-index: 1000;
 
   @media (max-width: 1024px) {
-    // On mobile, hide this container since ShaderSelector handles its own positioning
-    display: none;
+    // Reset positioning for mobile - ShaderSelector component handles its own positioning
+    position: static;
+    top: auto;
+    left: auto;
+    transform: none;
   }
 }

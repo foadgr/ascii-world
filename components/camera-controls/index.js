@@ -1,6 +1,24 @@
 import { track } from '@vercel/analytics'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { Drawer } from 'vaul'
 import s from './camera-controls.module.scss'
+
+// Hook to detect if we're on desktop
+const useIsDesktop = () => {
+  const [isDesktop, setIsDesktop] = useState(false)
+
+  useEffect(() => {
+    const checkIsDesktop = () => {
+      setIsDesktop(window.innerWidth >= 1024)
+    }
+
+    checkIsDesktop()
+    window.addEventListener('resize', checkIsDesktop)
+    return () => window.removeEventListener('resize', checkIsDesktop)
+  }, [])
+
+  return isDesktop
+}
 
 export function CameraControls({
   cameraActive,
@@ -24,6 +42,9 @@ export function CameraControls({
   onCalibrateAudio,
   onResetCalibration,
 }) {
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  const isDesktop = useIsDesktop()
+
   // Auto-enable tracking based on mode and camera state
   useEffect(() => {
     if (cameraActive) {
@@ -76,11 +97,23 @@ export function CameraControls({
     onAudioControlledGranularityChange,
   ])
 
-  return (
+  const handleModeSelect = (mode) => {
+    if (mode === 'flip' && supportsCameraSwitch) {
+      onCameraSwitch()
+    } else if (mode === 'hand') {
+      onTrackingModeChange('hand')
+    } else if (mode === 'face') {
+      onTrackingModeChange('face')
+    }
+    setIsDrawerOpen(false)
+  }
+
+  return isDesktop ? (
+    // Desktop: Original horizontal layout
     <div className={s.buttonGroup}>
       {/* Camera Buttons Container - Vertical layout */}
       <div className={s.cameraButtonsContainer}>
-        {/* Camera Toggle Button with Calibration Status Dot */}
+        {/* Camera Toggle Button */}
         <button
           type="button"
           className={`${s.cameraButton} ${cameraActive ? s.active : ''}`}
@@ -94,7 +127,7 @@ export function CameraControls({
           CAMERA
         </button>
 
-        {/* Camera Flip Button - Below camera toggle for mobile space efficiency */}
+        {/* Camera Flip Button */}
         {cameraActive && supportsCameraSwitch && (
           <button
             type="button"
@@ -250,5 +283,101 @@ export function CameraControls({
         AUDIO
       </button>
     </div>
+  ) : (
+    // Mobile: CAMERA button with drawer for FLIP, HAND, FACE
+    <>
+      <div className={s.mobileButtonGroup}>
+        <Drawer.Root open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+          <Drawer.Trigger asChild>
+            <button
+              type="button"
+              className={`${s.cameraButton} ${cameraActive ? s.active : ''}`}
+              onClick={() => {
+                if (cameraActive) {
+                  setIsDrawerOpen(true)
+                } else {
+                  track('Camera Toggle', { action: 'enable' })
+                  onCameraToggle()
+                }
+              }}
+            >
+              CAMERA
+            </button>
+          </Drawer.Trigger>
+          {cameraActive && (
+            <Drawer.Portal>
+              <Drawer.Overlay className={s.overlay} />
+              <Drawer.Content className={s.drawerContent}>
+                <div className={s.drawerHeader}>
+                  <div className={s.handle} />
+                  <Drawer.Title className={s.drawerTitle}>CAMERA CONTROLS</Drawer.Title>
+                </div>
+                <div className={s.drawerBody}>
+                  {/* FLIP button - only show if camera switching supported */}
+                  {supportsCameraSwitch && (
+                    <button
+                      type="button"
+                      className={s.circleButton}
+                      onClick={() => handleModeSelect('flip')}
+                    >
+                      FLIP
+                    </button>
+                  )}
+                  {/* HAND button */}
+                  <button
+                    type="button"
+                    className={`${s.circleButton} ${trackingMode === 'hand' ? s.active : ''}`}
+                    onClick={() => handleModeSelect('hand')}
+                  >
+                    HAND
+                  </button>
+                  {/* FACE button */}
+                  <button
+                    type="button"
+                    className={`${s.circleButton} ${trackingMode === 'face' ? s.active : ''}`}
+                    onClick={() => handleModeSelect('face')}
+                  >
+                    FACE
+                  </button>
+                </div>
+              </Drawer.Content>
+            </Drawer.Portal>
+          )}
+        </Drawer.Root>
+
+        {/* Audio Tracking Button - Always available on mobile */}
+        <button
+          type="button"
+          className={`${s.trackingButton} ${s.audioButton} ${
+            trackingMode === 'audio' ? s.active : ''
+          }`}
+          style={{
+            color:
+              trackingMode === 'audio' && audioTracking?.audioDetected
+                ? '#ff8c00'
+                : undefined,
+          }}
+          onClick={() => {
+            if (trackingMode === 'audio') {
+              if (
+                audioTracking?.currentAudioLevel > 0 &&
+                !audioTracking?.isCalibrated
+              ) {
+                track('Audio Calibrate', { action: 'calibrate_audio' })
+                onCalibrateAudio()
+              } else if (audioTracking?.isCalibrated) {
+                track('Audio Reset', { action: 'reset_calibration' })
+                onResetCalibration()
+              }
+            } else {
+              track('Audio Tracking', { action: 'enable' })
+              onTrackingModeChange('audio')
+            }
+          }}
+        >
+          AUDIO
+        </button>
+      </div>
+    </>
   )
 }

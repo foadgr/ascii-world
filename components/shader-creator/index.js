@@ -292,7 +292,9 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
               />
             </div>
             <div className={s.inputGroup}>
-              <label htmlFor="additional-requirements">Additional Requirements (optional)</label>
+              <label htmlFor="additional-requirements">
+                Additional Requirements (optional)
+              </label>
               <input
                 id="additional-requirements"
                 type="text"
@@ -368,7 +370,9 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
             </div>
 
             <div className={s.inputGroup}>
-              <label htmlFor="custom-uniforms">Custom Uniforms (optional)</label>
+              <label htmlFor="custom-uniforms">
+                Custom Uniforms (optional)
+              </label>
               <textarea
                 id="custom-uniforms"
                 value={customUniforms}
@@ -386,10 +390,18 @@ uniform bool myBool; // default: false`}
         </div>
 
         <div className={s.footer}>
-          <button type="button" className={s.cancelButton} onClick={handleClose}>
+          <button
+            type="button"
+            className={s.cancelButton}
+            onClick={handleClose}
+          >
             CANCEL
           </button>
-          <button type="button" className={s.createButton} onClick={handleCreateShader}>
+          <button
+            type="button"
+            className={s.createButton}
+            onClick={handleCreateShader}
+          >
             CREATE
           </button>
         </div>
