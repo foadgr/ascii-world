@@ -117,7 +117,9 @@ export function ColorControls({
             <Drawer.Content className={s.drawerContent}>
               <div className={s.drawerHeader}>
                 <div className={s.handle} />
-                <Drawer.Title className={s.drawerTitle}>CUSTOM COLORS</Drawer.Title>
+                <Drawer.Title className={s.drawerTitle}>
+                  CUSTOM COLORS
+                </Drawer.Title>
               </div>
               <div className={s.drawerBody}>
                 {/* Foreground Color Picker */}

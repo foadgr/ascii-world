@@ -310,7 +310,9 @@ export function CameraControls({
               <Drawer.Content className={s.drawerContent}>
                 <div className={s.drawerHeader}>
                   <div className={s.handle} />
-                  <Drawer.Title className={s.drawerTitle}>CAMERA CONTROLS</Drawer.Title>
+                  <Drawer.Title className={s.drawerTitle}>
+                    CAMERA CONTROLS
+                  </Drawer.Title>
                 </div>
                 <div className={s.drawerBody}>
                   {/* FLIP button - only show if camera switching supported */}
