@@ -271,8 +271,8 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
     <div className={s.overlay}>
       <div className={s.modal}>
         <div className={s.header}>
-          <h2>Create Custom Shader</h2>
-          <button className={s.closeButton} onClick={handleClose}>
+          <h2>NEW SHADER</h2>
+          <button type="button" className={s.closeButton} onClick={handleClose}>
             ×
           </button>
         </div>
@@ -280,10 +280,11 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
         <div className={s.content}>
           {/* LLM Generation Section */}
           <div className={s.section}>
-            <h3>🤖 Generate with AI</h3>
+            <h3>AI GENERATION</h3>
             <div className={s.inputGroup}>
-              <label>Effect Description</label>
+              <label htmlFor="effect-description">Effect Description</label>
               <textarea
+                id="effect-description"
                 value={generationPrompt}
                 onChange={(e) => setGenerationPrompt(e.target.value)}
                 placeholder="Describe the visual effect you want (e.g., 'wavy distortion that follows audio', 'spiral pattern that rotates', 'glitch effect with color shifting')"
@@ -291,8 +292,9 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
               />
             </div>
             <div className={s.inputGroup}>
-              <label>Additional Requirements (optional)</label>
+              <label htmlFor="additional-requirements">Additional Requirements (optional)</label>
               <input
+                id="additional-requirements"
                 type="text"
                 value={additionalRequirements}
                 onChange={(e) => setAdditionalRequirements(e.target.value)}
@@ -300,11 +302,12 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
               />
             </div>
             <button
+              type="button"
               className={s.generateButton}
               onClick={generateWithLLM}
               disabled={isGenerating}
             >
-              {isGenerating ? 'Generating...' : '✨ Generate Shader'}
+              {isGenerating ? 'GENERATING...' : 'GENERATE'}
             </button>
           </div>
 
@@ -312,11 +315,12 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
 
           {/* Manual Creation Section */}
           <div className={s.section}>
-            <h3>✏️ Write Manually</h3>
+            <h3>MANUAL ENTRY</h3>
 
             <div className={s.inputGroup}>
-              <label>Template</label>
+              <label htmlFor="template-select">Template</label>
               <select
+                id="template-select"
                 value={selectedTemplate}
                 onChange={(e) => handleTemplateChange(e.target.value)}
               >
@@ -328,8 +332,9 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
 
             <div className={s.row}>
               <div className={s.inputGroup}>
-                <label>Shader Name *</label>
+                <label htmlFor="shader-name">Shader Name *</label>
                 <input
+                  id="shader-name"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -337,8 +342,9 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
                 />
               </div>
               <div className={s.inputGroup}>
-                <label>Description</label>
+                <label htmlFor="shader-description">Description</label>
                 <input
+                  id="shader-description"
                   type="text"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -348,8 +354,9 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
             </div>
 
             <div className={s.inputGroup}>
-              <label>Fragment Shader Code *</label>
+              <label htmlFor="shader-code">Fragment Shader Code *</label>
               <textarea
+                id="shader-code"
                 ref={textareaRef}
                 value={shaderCode}
                 onChange={(e) => setShaderCode(e.target.value)}
@@ -361,8 +368,9 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
             </div>
 
             <div className={s.inputGroup}>
-              <label>Custom Uniforms (optional)</label>
+              <label htmlFor="custom-uniforms">Custom Uniforms (optional)</label>
               <textarea
+                id="custom-uniforms"
                 value={customUniforms}
                 onChange={(e) => setCustomUniforms(e.target.value)}
                 placeholder={`uniform float myFloat; // default: 1.0
@@ -378,11 +386,11 @@ uniform bool myBool; // default: false`}
         </div>
 
         <div className={s.footer}>
-          <button className={s.cancelButton} onClick={handleClose}>
-            Cancel
+          <button type="button" className={s.cancelButton} onClick={handleClose}>
+            CANCEL
           </button>
-          <button className={s.createButton} onClick={handleCreateShader}>
-            Create Shader
+          <button type="button" className={s.createButton} onClick={handleCreateShader}>
+            CREATE
           </button>
         </div>
       </div>

@@ -1,43 +1,40 @@
 .infoButton {
   position: fixed;
   top: 20px;
-  right: calc(20px + 65px + 10px); // 20px margin + 65px button width + 10px gap
+  right: calc(20px + 120px + 10px);
   z-index: 1000;
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 16px 21px;
-  background: rgba(0, 0, 0, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  color: white;
-  font-size: 18px;
-  font-weight: 500;
+  gap: 0;
+  padding: 10px 16px;
+  background: #000000;
+  border: none;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
-  backdrop-filter: blur(10px);
+  transition: all 0.15s ease;
+  font-family: monospace;
+  letter-spacing: 1px;
   text-decoration: none;
 
   &:hover {
-    background: rgba(0, 0, 0, 0.9);
-    border-color: rgba(255, 255, 255, 0.3);
-    transform: translateY(-1px);
+    background: #ffffff;
+    color: #000000;
   }
 
-  svg {
-    width: 23px;
-    height: 23px;
+  &::before {
+    content: '[ ';
+  }
+
+  &::after {
+    content: ' ]';
   }
 
   @media (max-width: 1024px) {
     top: 16px;
-    right: calc(16px + 57px + 8px); // 16px margin + 57px button width + 8px gap
-    padding: 13px 18px;
-    font-size: 16px;
-    
-    svg {
-      width: 21px;
-      height: 21px;
-    }
+    right: calc(16px + 105px + 8px);
+    padding: 8px 12px;
+    font-size: 11px;
   }
 } 

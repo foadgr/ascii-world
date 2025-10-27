@@ -1,4 +1,3 @@
-import { IconBrandX } from '@tabler/icons-react'
 import { isMobileOrTablet, supportsCameraSwitch } from 'lib/device'
 import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
@@ -97,7 +96,7 @@ const DraggableModal = ({ open, onOpenChange, children }) => {
           onMouseDown={handleMouseDown}
           style={{ cursor: 'grab' }}
         >
-          <h2 className={s.modalTitle}>Welcome to ASCII World</h2>
+          <h2 className={s.modalTitle}>SHADER WORLD</h2>
           <button
             type="button"
             className={s.closeButton}
@@ -174,32 +173,34 @@ export function IntroModal() {
   const modalContent = (
     <div className={s.content}>
       <div className={s.intro}>
-        <h3 className={s.subtitle}>Transform your world into ASCII art</h3>
+        <h3 className={s.subtitle}>
+          Real-time shader effects on your camera feed
+        </h3>
         <p className={s.description}>
-          A free project built by{' '}
+          Built by{' '}
           <a
             href="https://x.com/hafezverde"
             target="_blank"
             rel="noopener noreferrer"
             className={s.creditLink}
           >
-            @hafezverde <IconBrandX size={14} className={s.xIcon} />
+            @hafezverde
           </a>
         </p>
         <div className={s.quickLinks}>
-          <Link href="/contact">Contact & Support</Link>
+          <Link href="/contact">CONTACT</Link>
           <a
             href="https://ai.google.dev/edge/mediapipe/solutions/guide"
             target="_blank"
             rel="noopener noreferrer"
           >
-            Learn About Google AI MediaPipe
+            MEDIAPIPE DOCS
           </a>
         </div>
       </div>
 
       <div className={s.steps}>
-        <h4 className={s.stepsTitle}>How to get started:</h4>
+        <h4 className={s.stepsTitle}>SETUP:</h4>
         {steps.map((step) => (
           <div key={step.number} className={s.step}>
             <div className={s.stepNumber}>{step.number}</div>
@@ -216,7 +217,7 @@ export function IntroModal() {
         className={s.startButton}
         onClick={() => handleOpenChange(false)}
       >
-        Let&apos;s create some ASCII art!
+        START
       </button>
     </div>
   )
@@ -235,7 +236,7 @@ export function IntroModal() {
               <div className={s.drawerHeader}>
                 <div className={s.handle} />
                 <Drawer.Title className={s.drawerTitle}>
-                  Welcome to ASCII World
+                  SHADER WORLD
                 </Drawer.Title>
               </div>
               {modalContent}

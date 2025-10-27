@@ -1,5 +1,4 @@
 import { useChat } from '@ai-sdk/react'
-import { IconWand } from '@tabler/icons-react'
 import { track } from '@vercel/analytics'
 import { useState } from 'react'
 import { shaderRegistry } from '../shader-effect/ShaderRegistry'
@@ -103,7 +102,7 @@ export function ShaderChat({ onShaderCreated, hidden = false }) {
         title="Chat to create shader"
         aria-label="Chat to create shader"
       >
-        <IconWand size={23} />
+        CHAT
       </button>
 
       {/* Chat Sidebar */}
@@ -119,7 +118,7 @@ export function ShaderChat({ onShaderCreated, hidden = false }) {
           />
           <div className={s.sidebar}>
             <div className={s.header}>
-              <h3 className={s.title}>Create Shader</h3>
+              <h3 className={s.title}>SHADER CHAT</h3>
               <button
                 type="button"
                 className={s.closeButton}

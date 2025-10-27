@@ -289,7 +289,7 @@ export function ControlPanel({
               handleOpenChange(true)
             }}
           >
-            <Settings2 size={23} />
+            CONTROLS
           </button>
 
           <DraggableModal
@@ -496,7 +496,7 @@ export function ControlPanel({
                 track('Control Panel', { action: 'open' })
               }}
             >
-              <Settings2 size={23} />
+              CONTROLS
             </button>
           </Drawer.Trigger>
           <Drawer.Portal>

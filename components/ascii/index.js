@@ -27,11 +27,10 @@ import tunnel from 'tunnel-rat'
 import { CameraControls } from '../camera-controls'
 import { ColorControls } from '../color-controls'
 import { ControlPanel } from '../control-panel'
-import { InfoButton } from '../info-button'
 import { IntroModal } from '../intro-modal'
 import { ModelSelector } from '../model-selector'
 import { TrackingOverlay } from '../tracking-overlay'
-import { UploadButton } from '../upload-button'
+import { UtilityMenu } from '../utility-menu'
 import s from './ascii.module.scss'
 import { AsciiContext } from './context'
 
@@ -736,6 +735,8 @@ function Inner() {
   } = useContext(AsciiContext)
 
   const [isShaderCreatorOpen, setIsShaderCreatorOpen] = useState(false)
+  const [isShaderChatOpen, setIsShaderChatOpen] = useState(false)
+  const [is3DMenuOpen, setIs3DMenuOpen] = useState(false)
 
   const handleShaderChange = (shaderId) => {
     setCurrentShader(shaderId)
@@ -747,6 +748,18 @@ function Inner() {
 
   const handleShaderCreated = (shaderId) => {
     setCurrentShader(shaderId)
+  }
+
+  const handleUploadClick = () => {
+    // Trigger the file input click
+    const fileInput = document.querySelector('input[type="file"]')
+    if (fileInput) {
+      fileInput.click()
+    }
+  }
+
+  const handle3DToggle = () => {
+    setIs3DMenuOpen(!is3DMenuOpen)
   }
 
   return (
@@ -788,8 +801,12 @@ function Inner() {
             setAssetFunction.current(modelPath)
           }
         }}
+        hidden={!is3DMenuOpen}
       />
-      <ShaderChat onShaderCreated={handleShaderCreated} />
+      <ShaderChat
+        onShaderCreated={handleShaderCreated}
+        hidden={!isShaderChatOpen}
+      />
       <div className={s.shaderSelectorContainer}>
         <ShaderSelector
           currentShader={currentShader}
@@ -802,12 +819,25 @@ function Inner() {
         onClose={() => setIsShaderCreatorOpen(false)}
         onShaderCreated={handleShaderCreated}
       />
-      <UploadButton
-        onFileSelect={(fileData, filename) => {
-          if (uploadFunctionRef?.current) {
-            uploadFunctionRef.current(fileData, filename)
+      <UtilityMenu
+        onChatOpen={() => setIsShaderChatOpen(true)}
+        onUploadClick={handleUploadClick}
+        on3DToggle={handle3DToggle}
+      />
+      <input
+        type="file"
+        accept=".glb,.mp4,.mov,.webm,.png,.jpg,.jpeg,.webp,.avif,.ttf,.otf,.woff,.woff2"
+        onChange={(e) => {
+          const file = e.target.files[0]
+          if (file && uploadFunctionRef?.current) {
+            const reader = new FileReader()
+            reader.onload = (event) => {
+              uploadFunctionRef.current(event.target.result, file.name)
+            }
+            reader.readAsDataURL(file)
           }
         }}
+        style={{ display: 'none' }}
       />
       <ui.Out />
     </>
@@ -1112,7 +1142,6 @@ export function ASCII({ children }) {
           onCalibrateAudio={handleCalibrateAudio}
           onResetCalibration={handleResetCalibration}
         />
-        <InfoButton />
         <IntroModal />
       </AsciiContext.Provider>
     </>

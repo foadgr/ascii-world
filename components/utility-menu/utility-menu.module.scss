@@ -1,16 +1,15 @@
-// Color controls positioned in top-left (below camera controls)
+// Utility menu positioned in top-left (below COLOR button)
 .container {
   position: fixed;
-  top: 70px; // Raised to close gap, positioned right below camera controls
+  top: 120px; // Raised to close gap, positioned below COLOR button
   left: 20px;
   z-index: 1000;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  align-items: flex-start;
 
   @media (max-width: 1024px) {
-    top: 60px;
+    top: 110px;
     left: 16px;
   }
 }
@@ -54,52 +53,34 @@
   }
 }
 
-.pickers {
-  display: flex;
-  gap: 8px;
+.utilityButton {
+  padding: 10px 16px;
+  border: none;
   background: #000000;
-  padding: 8px;
-  border: 1px solid #333333;
-}
-
-.pickerGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  align-items: center;
-}
-
-.label {
-  font-size: 9px;
-  font-weight: 700;
-  color: #ffffff;
-  font-family: monospace;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.colorInput {
-  width: 40px;
-  height: 40px;
-  border: 1px solid #666666;
-  background: transparent;
   cursor: pointer;
-  padding: 0;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: monospace;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-decoration: none;
 
   &:hover {
-    border-color: #ffffff;
+    background: #ffffff;
+    color: #000000;
   }
 
-  &::-webkit-color-swatch-wrapper {
-    padding: 2px;
-  }
-
-  &::-webkit-color-swatch {
-    border: none;
+  &:active {
+    transform: scale(0.98);
   }
 
   @media (max-width: 1024px) {
-    width: 36px;
-    height: 36px;
+    padding: 8px 12px;
+    font-size: 11px;
   }
 }

@@ -1,153 +1,225 @@
-// Model selector positioned in bottom-left corner (above upload button)
+// Model selector positioned adjacent to utility menu's 3D button
+// Desktop: Horizontal layout slides out from 3D button
+// Mobile: Hidden (drawer controlled by UtilityMenu)
 .container {
   position: fixed;
-  bottom: 90px; // Above the upload button
-  left: 20px;
+  top: 162px; // Aligns with 3D button when utility menu is expanded
+  left: 120px; // Positioned to the right of utility menu buttons (20px + ~100px button width)
   z-index: 1000;
-  
+  display: flex;
+  gap: 10px; // Same gap as camera controls for consistent spacing
+
   @media (max-width: 1024px) {
-    bottom: 80px;
-    left: 16px;
+    display: none; // Hide on mobile, drawer is used instead
   }
 }
 
 .trigger {
-  width: 60px;
-  height: 60px;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.8);
+  padding: 10px 16px;
+  border: none;
+  background: #000000;
   cursor: pointer;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
-  padding: 0;
+  transition: all 0.15s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  position: relative;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: monospace;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+
+  &::before {
+    content: '[ ';
+  }
+
+  &::after {
+    content: ' ]';
+  }
 
   &:hover {
-    transform: scale(1.1);
-    border-color: rgba(255, 255, 255, 0.4);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    background: rgba(0, 0, 0, 0.9);
-    color: #00ff88;
+    background: #ffffff;
+    color: #000000;
   }
 
   &:active {
-    transform: scale(0.95);
+    transform: scale(0.98);
   }
 
   @media (max-width: 1024px) {
-    width: 50px;
-    height: 50px;
-  }
-
-  svg {
-    width: 23px;
-    height: 23px;
-    flex-shrink: 0;
-    
-    @media (max-width: 1024px) {
-      width: 21px;
-      height: 21px;
-    }
+    padding: 8px 12px;
+    font-size: 11px;
   }
 }
 
-
-// Overlay
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 49;
-  background: rgba(0, 0, 0, 0.1);
-}
-
-// Dropdown
-.dropdown {
-  position: absolute;
-  bottom: 70px;
-  left: 0;
-  z-index: 50;
-  min-width: 200px;
-  background: rgba(26, 26, 26, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
-  animation: slideUp 0.2s ease-out;
-  color: white;
-
-  @media (max-width: 1024px) {
-    bottom: 60px;
-    min-width: 180px;
-  }
-}
-
-.header {
-  padding: 12px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.title {
-  font-size: 14px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.modelList {
-  padding: 8px;
-}
-
-.modelItem {
-  width: 100%;
+.modelButton {
+  padding: 10px 16px;
+  border: none;
+  background: #000000;
+  cursor: pointer;
+  transition: all 0.15s ease;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px;
-  background: transparent;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 14px;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: monospace;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
+    background: #ffffff;
+    color: #000000;
+  }
+
+  &:active {
+    transform: scale(0.98);
   }
 
   &.active {
-    background: rgba(0, 255, 136, 0.15);
-    color: #00ff88;
-    border: 1px solid rgba(0, 255, 136, 0.3);
+    background: #ffffff;
+    color: #000000;
+  }
+
+  @media (max-width: 1024px) {
+    padding: 8px 12px;
+    font-size: 11px;
   }
 }
 
+// Mobile trigger button
+.triggerMobile {
+  padding: 10px 16px;
+  border: none;
+  background: #000000;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: monospace;
+  letter-spacing: 1px;
+  text-transform: uppercase;
 
-.modelName {
+  &::before {
+    content: '[ ';
+  }
+
+  &::after {
+    content: ' ]';
+  }
+
+  &:hover {
+    background: #ffffff;
+    color: #000000;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  @media (max-width: 1024px) {
+    padding: 8px 12px;
+    font-size: 11px;
+  }
+}
+
+// Drawer styles for mobile
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.drawerContent {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 51;
+  max-height: 85vh;
+  background: #000000;
+  border-top: 1px solid #333333;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s ease-out;
+  color: #ffffff;
+}
+
+.drawerHeader {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid #333333;
+  position: relative;
+  background: #000000;
+}
+
+.handle {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 4px;
+  background: #666666;
+  border-radius: 2px;
+}
+
+.drawerTitle {
+  font-size: 11px;
+  font-weight: 700;
+  margin: 0;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-family: monospace;
+  color: #ffffff;
+}
+
+.drawerBody {
   flex: 1;
-  text-align: left;
-  font-weight: 500;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+  }
 }
 
-.activeIndicator {
-  color: #00ff88;
-  font-weight: 600;
-  font-size: 16px;
-}
-
-// Animation
-@keyframes slideUp {
+// Animations
+@keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
   }
   to {
     opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
     transform: translateY(0);
   }
 }
