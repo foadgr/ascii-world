@@ -1,6 +1,6 @@
 ## ASCII World
 
-An open-source ASCII tool built by darkroom.engineering to generate and customize character-based imagery.
+An open-source ASCII tool built by @foadgr to generate and customize character-based imagery.
 
 <br/>
 
